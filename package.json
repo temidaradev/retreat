@@ -7,6 +7,7 @@
         "dev:frontend": "cd frontend && npm run dev",
         "dev:backend": "cd backend && go run cmd/server/main.go",
         "build": "cd frontend && npm run build",
+        "build:frontend": "cd frontend && npm run build",
         "start": "cd backend && go run cmd/server/main.go",
         "docker:up": "docker-compose up -d",
         "docker:down": "docker-compose down",
