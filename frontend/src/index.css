@@ -1,0 +1,469 @@
+@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+/* Golden Ratio Variables: φ = 1.618 */
+:root {
+  /* Base unit: 16px */
+  --phi: 1.618;
+
+  /* Golden Ratio Spacing Scale */
+  --space-xs: 0.618rem;
+  /* 10px - 1/φ */
+  --space-sm: 1rem;
+  /* 16px - base */
+  --space-md: 1.618rem;
+  /* 26px - φ */
+  --space-lg: 2.618rem;
+  /* 42px - φ² */
+  --space-xl: 4.236rem;
+  /* 68px - φ³ */
+  --space-2xl: 6.854rem;
+  /* 110px - φ⁴ */
+  --space-3xl: 11.089rem;
+  /* 177px - φ⁵ */
+
+  /* Golden Ratio Typography Scale */
+  --text-xs: 0.75rem;
+  /* 12px */
+  --text-sm: 0.927rem;
+  /* 14.8px ≈ 15px */
+  --text-base: 1rem;
+  /* 16px */
+  --text-md: 1.194rem;
+  /* 19px */
+  --text-lg: 1.618rem;
+  /* 26px */
+  --text-xl: 2.618rem;
+  /* 42px */
+  --text-2xl: 4.236rem;
+  /* 68px */
+  --text-3xl: 6.854rem;
+  /* 110px */
+
+  /* Golden Ratio Line Heights (font-size × φ) */
+  --leading-xs: 1.214rem;
+  /* 12px × 1.618 */
+  --leading-sm: 1.5rem;
+  /* 15px × 1.618 */
+  --leading-base: 1.618rem;
+  /* 16px × 1.618 */
+  --leading-md: 1.932rem;
+  /* 19px × 1.618 */
+  --leading-lg: 2.618rem;
+  /* 26px × 1.618 */
+  --leading-xl: 4.236rem;
+  /* 42px × 1.618 */
+  --leading-2xl: 6.854rem;
+  /* 68px × 1.618 */
+  --leading-3xl: 11.089rem;
+  /* 110px × 1.618 */
+
+  /* Golden Ratio Button Sizes (width × φ = height relationship) */
+  --btn-height-sm: var(--space-lg);
+  /* 42px */
+  --btn-height-md: var(--space-xl);
+  /* 68px */
+  --btn-height-lg: var(--space-2xl);
+  /* 110px */
+
+  --btn-width-sm: calc(var(--btn-height-sm) * var(--phi));
+  /* 68px */
+  --btn-width-md: calc(var(--btn-height-md) * var(--phi));
+  /* 110px */
+  --btn-width-lg: calc(var(--btn-height-lg) * var(--phi));
+  /* 178px */
+
+  /* Golden Ratio Input Sizes */
+  --input-height-sm: var(--space-lg);
+  /* 42px */
+  --input-height-md: var(--space-xl);
+  /* 68px */
+
+  /* Golden Ratio Icon Container Sizes */
+  --icon-sm: var(--space-md);
+  /* 26px */
+  --icon-md: var(--space-lg);
+  /* 42px */
+  --icon-lg: var(--space-xl);
+  /* 68px */
+  --icon-xl: var(--space-2xl);
+  /* 110px */
+
+  /* Golden Ratio Border Radius (proportion of element size) */
+  --radius-sm: calc(var(--space-xs) * 1.618);
+  /* 16px */
+  --radius-md: var(--space-md);
+  /* 26px */
+  --radius-lg: var(--space-lg);
+  /* 42px */
+  --radius-full: 999px;
+  /* Perfect pill */
+
+  /* Modern Neutral Color System - Calm & Professional */
+  /* Base: 60% neutral grays, Accent: 30% single color, Status: 10% */
+
+  /* Neutral Base (60% - main UI) */
+  --color-bg-primary: #0f172a;
+  /* slate-900 - main background */
+  --color-bg-secondary: #1e293b;
+  /* slate-800 - cards */
+  --color-bg-tertiary: #334155;
+  /* slate-700 - hover states */
+
+  --color-text-primary: #f1f5f9;
+  /* slate-100 - main text */
+  --color-text-secondary: #cbd5e1;
+  /* slate-300 - secondary text */
+  --color-text-tertiary: #94a3b8;
+  /* slate-400 - muted text */
+
+  --color-border: #334155;
+  /* slate-700 - default borders */
+  --color-border-light: #475569;
+  /* slate-600 - hover borders */
+
+  /* Single Accent Color (30% - CTAs and highlights) */
+  --color-accent-50: #eff6ff;
+  --color-accent-100: #dbeafe;
+  --color-accent-200: #bfdbfe;
+  --color-accent-300: #93c5fd;
+  --color-accent-400: #60a5fa;
+  /* Primary accent */
+  --color-accent-500: #3b82f6;
+  /* Main accent */
+  --color-accent-600: #2563eb;
+  /* Accent hover */
+  --color-accent-700: #1d4ed8;
+  --color-accent-800: #1e40af;
+  --color-accent-900: #1e3a8a;
+
+  /* Status Colors (10% - only for data/alerts) */
+  --color-success: #22c55e;
+  --color-success-bg: rgba(34, 197, 94, 0.1);
+
+  --color-warning: #f59e0b;
+  --color-warning-bg: rgba(245, 158, 11, 0.1);
+
+  --color-danger: #ef4444;
+  --color-danger-bg: rgba(239, 68, 68, 0.1);
+
+  --color-info: #60a5fa;
+  --color-info-bg: rgba(96, 165, 250, 0.1);
+
+  /* Golden Ratio Proportions */
+  --ratio-major: 61.8%;
+  --ratio-minor: 38.2%;
+  --ratio-accent: 23.6%;
+}
+
+@layer base {
+  html {
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    scroll-behavior: smooth;
+    font-size: 16px;
+  }
+
+  body {
+    background-color: var(--color-bg-primary);
+    color: var(--color-text-primary);
+  }
+
+  /* Apply golden ratio line heights globally */
+  h1 {
+    line-height: var(--leading-3xl);
+  }
+
+  h2 {
+    line-height: var(--leading-2xl);
+  }
+
+  h3 {
+    line-height: var(--leading-xl);
+  }
+
+  h4 {
+    line-height: var(--leading-lg);
+  }
+
+  p {
+    line-height: var(--leading-base);
+  }
+
+  small {
+    line-height: var(--leading-sm);
+  }
+}
+
+@layer utilities {
+
+  /* Glass morphism - Subtle */
+  .glass {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--color-border);
+  }
+
+  /* Golden ratio spacing utilities */
+  .gap-phi {
+    gap: var(--space-md);
+  }
+
+  .gap-phi-lg {
+    gap: var(--space-lg);
+  }
+
+  .gap-phi-xl {
+    gap: var(--space-xl);
+  }
+
+  .p-phi {
+    padding: var(--space-md);
+  }
+
+  .p-phi-lg {
+    padding: var(--space-lg);
+  }
+
+  .p-phi-xl {
+    padding: var(--space-xl);
+  }
+
+  .px-phi {
+    padding-left: var(--space-md);
+    padding-right: var(--space-md);
+  }
+
+  .py-phi {
+    padding-top: var(--space-md);
+    padding-bottom: var(--space-md);
+  }
+
+  .px-phi-lg {
+    padding-left: var(--space-lg);
+    padding-right: var(--space-lg);
+  }
+
+  .py-phi-lg {
+    padding-top: var(--space-lg);
+    padding-bottom: var(--space-lg);
+  }
+
+  .px-phi-xl {
+    padding-left: var(--space-xl);
+    padding-right: var(--space-xl);
+  }
+
+  .py-phi-xl {
+    padding-top: var(--space-xl);
+    padding-bottom: var(--space-xl);
+  }
+
+  .m-phi {
+    margin: var(--space-md);
+  }
+
+  .mb-phi {
+    margin-bottom: var(--space-md);
+  }
+
+  .mb-phi-lg {
+    margin-bottom: var(--space-lg);
+  }
+
+  .mb-phi-xl {
+    margin-bottom: var(--space-xl);
+  }
+
+  .mb-phi-2xl {
+    margin-bottom: var(--space-2xl);
+  }
+
+  .mt-phi {
+    margin-top: var(--space-md);
+  }
+
+  .mt-phi-xl {
+    margin-top: var(--space-xl);
+  }
+
+  /* Golden ratio typography with line heights */
+  .text-phi-xs {
+    font-size: var(--text-xs);
+    line-height: var(--leading-xs);
+  }
+
+  .text-phi-sm {
+    font-size: var(--text-sm);
+    line-height: var(--leading-sm);
+  }
+
+  .text-phi-base {
+    font-size: var(--text-base);
+    line-height: var(--leading-base);
+  }
+
+  .text-phi-md {
+    font-size: var(--text-md);
+    line-height: var(--leading-md);
+  }
+
+  .text-phi-lg {
+    font-size: var(--text-lg);
+    line-height: var(--leading-lg);
+  }
+
+  .text-phi-xl {
+    font-size: var(--text-xl);
+    line-height: var(--leading-xl);
+  }
+
+  .text-phi-2xl {
+    font-size: var(--text-2xl);
+    line-height: var(--leading-2xl);
+  }
+
+  .text-phi-3xl {
+    font-size: var(--text-3xl);
+    line-height: var(--leading-3xl);
+  }
+
+  /* Golden ratio sizing */
+  .w-phi {
+    width: calc(var(--space-md) * var(--phi));
+  }
+
+  .h-phi {
+    height: calc(var(--space-md) * var(--phi));
+  }
+
+  .w-phi-icon {
+    width: var(--space-lg);
+  }
+
+  .h-phi-icon {
+    height: var(--space-lg);
+  }
+
+  .w-phi-2xl {
+    width: var(--space-2xl);
+  }
+
+  .h-phi-2xl {
+    height: var(--space-2xl);
+  }
+
+  /* Golden ratio aspect ratios */
+  .aspect-phi {
+    aspect-ratio: 1.618 / 1;
+  }
+
+  .aspect-phi-inverse {
+    aspect-ratio: 1 / 1.618;
+  }
+
+  /* Golden Ratio Button Sizes */
+  .btn-phi-sm {
+    height: var(--btn-height-sm);
+    min-width: var(--btn-width-sm);
+    padding: 0 var(--space-md);
+    font-size: var(--text-sm);
+    border-radius: var(--radius-full);
+  }
+
+  .btn-phi-md {
+    height: var(--btn-height-md);
+    min-width: var(--btn-width-md);
+    padding: 0 var(--space-lg);
+    font-size: var(--text-base);
+    border-radius: var(--radius-full);
+  }
+
+  .btn-phi-lg {
+    height: var(--btn-height-lg);
+    min-width: var(--btn-width-lg);
+    padding: 0 var(--space-xl);
+    font-size: var(--text-md);
+    border-radius: var(--radius-full);
+  }
+
+  /* Golden Ratio Input Sizes */
+  .input-phi-sm {
+    height: var(--input-height-sm);
+    padding: 0 var(--space-md);
+    font-size: var(--text-sm);
+    border-radius: var(--radius-full);
+  }
+
+  .input-phi-md {
+    height: var(--input-height-md);
+    padding: 0 var(--space-lg);
+    font-size: var(--text-base);
+    border-radius: var(--radius-full);
+  }
+
+  /* Icon Container Sizes */
+  .icon-phi-sm {
+    width: var(--icon-sm);
+    height: var(--icon-sm);
+  }
+
+  .icon-phi-md {
+    width: var(--icon-md);
+    height: var(--icon-md);
+  }
+
+  .icon-phi-lg {
+    width: var(--icon-lg);
+    height: var(--icon-lg);
+  }
+
+  .icon-phi-xl {
+    width: var(--icon-xl);
+    height: var(--icon-xl);
+  }
+
+  /* Border Radius Utilities */
+  .rounded-phi-sm {
+    border-radius: var(--radius-sm);
+  }
+
+  .rounded-phi-md {
+    border-radius: var(--radius-md);
+  }
+
+  .rounded-phi-lg {
+    border-radius: var(--radius-lg);
+  }
+
+  .rounded-phi-full {
+    border-radius: var(--radius-full);
+  }
+
+  /* Subtle accent gradient - ONLY for primary CTAs */
+  .bg-accent-gradient {
+    background: linear-gradient(135deg, var(--color-accent-500), var(--color-accent-600));
+  }
+
+  /* Subtle hover effects */
+  .hover-lift {
+    transition: transform 200ms ease, box-shadow 200ms ease;
+  }
+
+  .hover-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  /* Focus ring for accessibility */
+  .focus-ring {
+    transition: box-shadow 200ms ease;
+  }
+
+  .focus-ring:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+  }
+}

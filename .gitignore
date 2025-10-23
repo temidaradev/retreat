@@ -1,0 +1,69 @@
+# Dependencies
+node_modules/
+frontend/node_modules/
+backend/vendor/
+
+# Environment variables (NEVER commit these!)
+.env
+.env.local
+.env.production
+.env.production.local
+frontend/.env.local
+frontend/.env.production
+backend/.env
+backend/.env.production
+
+# Build outputs
+frontend/dist/
+frontend/build/
+backend/main
+backend/bin/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+
+# Testing
+coverage/
+.nyc_output/
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+
+# Vercel
+.vercel
+
+# Go specific
+backend/*.exe
+backend/*.test
+backend/*.prof
+backend/go.work
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
