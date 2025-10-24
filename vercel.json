@@ -43,7 +43,6 @@
         }
     ],
     "env": {
-        "VITE_API_URL": "@vite_api_url",
         "VITE_CLERK_PUBLISHABLE_KEY": "@vite_clerk_publishable_key"
     }
 }
