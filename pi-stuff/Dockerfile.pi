@@ -1,0 +1,83 @@
+# Multi-stage build for Raspberry Pi 5 (ARM64)
+# Build stage
+FROM golang:1.25.1-alpine AS builder
+
+# Set build arguments for ARM64 architecture
+ARG GOOS=linux
+ARG GOARCH=arm64
+ARG CGO_ENABLED=0
+
+WORKDIR /app
+
+# Install build dependencies optimized for ARM64
+RUN apk add --no-cache \
+    git \
+    gcc \
+    musl-dev \
+    ca-certificates \
+    tzdata \
+    && apk upgrade --no-cache
+
+# Copy go mod files first for better caching
+COPY go.mod go.sum ./
+
+# Download dependencies with checksum verification
+RUN go mod download && go mod verify
+
+# Copy source code
+COPY . .
+
+# Build the application optimized for ARM64
+RUN CGO_ENABLED=${CGO_ENABLED} GOOS=${GOOS} GOARCH=${GOARCH} \
+    go build \
+    -ldflags="-w -s -X main.version=1.0.0" \
+    -trimpath \
+    -o main cmd/server/main.go
+
+# Runtime stage - Alpine Linux optimized for ARM64
+FROM alpine:3.19
+
+# Set architecture labels
+LABEL architecture="arm64"
+LABEL platform="linux/arm64"
+
+WORKDIR /app
+
+# Install runtime dependencies optimized for ARM64
+RUN apk --no-cache add \
+    ca-certificates \
+    tzdata \
+    wget \
+    curl \
+    && apk upgrade --no-cache \
+    && rm -rf /var/cache/apk/*
+
+# Create non-root user with specific UID/GID for security
+RUN addgroup -g 1001 -S appgroup && \
+    adduser -u 1001 -S appuser -G appgroup
+
+# Copy the binary from builder stage
+COPY --from=builder /app/main .
+
+# Create necessary directories with proper permissions
+RUN mkdir -p /tmp/uploads /app/logs && \
+    chown -R appuser:appgroup /app /tmp/uploads
+
+# Switch to non-root user for security
+USER appuser
+
+# Expose port
+EXPOSE 8080
+
+# Health check optimized for ARM64
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+    CMD wget --no-verbose --tries=1 --spider http://localhost:8080/api/v1/health || exit 1
+
+# Add labels for better container management
+LABEL maintainer="receipt-store-team" \
+    version="1.0.0" \
+    description="Receipt Store Backend API for Raspberry Pi 5" \
+    architecture="arm64"
+
+# Run the application
+CMD ["./main"]

@@ -5,7 +5,9 @@
     "installCommand": "echo 'Skipping root install'",
     "framework": "vite",
     "functions": {
-        "backend/main": {}
+        "backend/main": {
+            "runtime": "go1.21.5"
+        }
     },
     "rewrites": [
         {
@@ -23,7 +25,7 @@
             "headers": [
                 {
                     "key": "Access-Control-Allow-Origin",
-                    "value": "https://retreat-app.tech"
+                    "value": "https://temidara.rocks"
                 },
                 {
                     "key": "Access-Control-Allow-Methods",
