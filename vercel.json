@@ -1,45 +1,13 @@
 {
-    "buildCommand": "cd frontend && npm install && npm run build && cd ../backend && go build -o main cmd/server/main.go",
+    "buildCommand": "cd frontend && npm install && npm run build",
     "outputDirectory": "frontend/dist",
     "devCommand": "cd frontend && npm run dev",
     "installCommand": "echo 'Skipping root install'",
     "framework": "vite",
-    "functions": {
-        "backend/main": {
-            "runtime": "go1.21.5"
-        }
-    },
     "rewrites": [
-        {
-            "source": "/api/(.*)",
-            "destination": "/backend/main"
-        },
         {
             "source": "/(.*)",
             "destination": "/index.html"
-        }
-    ],
-    "headers": [
-        {
-            "source": "/api/(.*)",
-            "headers": [
-                {
-                    "key": "Access-Control-Allow-Origin",
-                    "value": "https://temidara.rocks"
-                },
-                {
-                    "key": "Access-Control-Allow-Methods",
-                    "value": "GET, POST, PUT, DELETE, OPTIONS"
-                },
-                {
-                    "key": "Access-Control-Allow-Headers",
-                    "value": "Origin, Content-Type, Accept, Authorization, X-Requested-With, x-user-id"
-                },
-                {
-                    "key": "Access-Control-Allow-Credentials",
-                    "value": "true"
-                }
-            ]
         }
     ]
 }
