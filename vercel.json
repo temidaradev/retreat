@@ -6,7 +6,7 @@
     "framework": "vite",
     "functions": {
         "backend/main": {
-            "runtime": "go1.x"
+            "runtime": "go1.25.1"
         }
     },
     "rewrites": [
