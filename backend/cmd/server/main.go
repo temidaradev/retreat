@@ -52,12 +52,23 @@ func main() {
 
 	// Configure CORS FIRST - before any other middleware
 	app.Use(cors.New(cors.Config{
-		AllowOrigins:     "*",
+		AllowOrigins:     "https://retreat-app.tech,https://www.retreat-app.tech,http://localhost:3000,http://localhost:5173",
 		AllowMethods:     "GET,POST,PUT,DELETE,OPTIONS",
 		AllowHeaders:     "Origin,Content-Type,Accept,Authorization,X-Requested-With,x-user-id",
-		AllowCredentials: false,
+		AllowCredentials: true,
 		MaxAge:           86400,
+		ExposeHeaders:    "Content-Length,Content-Type",
 	}))
+
+	// Additional CORS handling for Vercel
+	app.Use(func(c *fiber.Ctx) error {
+		origin := c.Get("Origin")
+		if origin != "" {
+			c.Set("Access-Control-Allow-Origin", origin)
+			c.Set("Access-Control-Allow-Credentials", "true")
+		}
+		return c.Next()
+	})
 
 	// Setup production middleware AFTER CORS
 	middleware.SetupProductionMiddleware(app)
@@ -74,6 +85,11 @@ func main() {
 	// API routes
 	api := app.Group("/api/v1")
 	{
+		// Handle OPTIONS requests for CORS preflight
+		api.Options("/*", func(c *fiber.Ctx) error {
+			return c.SendStatus(fiber.StatusOK)
+		})
+
 		// Enhanced health check endpoint
 		api.Get("/health", func(c *fiber.Ctx) error {
 			return c.JSON(fiber.Map{"status": "healthy"})

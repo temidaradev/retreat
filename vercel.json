@@ -19,6 +19,29 @@
             "destination": "/index.html"
         }
     ],
+    "headers": [
+        {
+            "source": "/api/(.*)",
+            "headers": [
+                {
+                    "key": "Access-Control-Allow-Origin",
+                    "value": "https://retreat-app.tech"
+                },
+                {
+                    "key": "Access-Control-Allow-Methods",
+                    "value": "GET, POST, PUT, DELETE, OPTIONS"
+                },
+                {
+                    "key": "Access-Control-Allow-Headers",
+                    "value": "Origin, Content-Type, Accept, Authorization, X-Requested-With, x-user-id"
+                },
+                {
+                    "key": "Access-Control-Allow-Credentials",
+                    "value": "true"
+                }
+            ]
+        }
+    ],
     "env": {
         "VITE_API_URL": "@vite_api_url",
         "VITE_CLERK_PUBLISHABLE_KEY": "@vite_clerk_publishable_key"
