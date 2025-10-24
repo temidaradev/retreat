@@ -1,30 +1,18 @@
 import { ClerkProvider, SignedIn, SignedOut } from '@clerk/clerk-react'
 import { dark } from '@clerk/themes'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
-import Dashboard from './components/Dashboard'
-import Landing from './components/Landing'
+import Dashboard from './components/layout/Dashboard'
+import Landing from './components/layout/Landing'
+import { clerk, validateConfig } from './config'
 import './App.css'
 
-// Get Clerk publishable key from environment variables
-const clerkPubKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY
-
-// Better error handling for missing Clerk key
-if (!clerkPubKey) {
-  console.error('Missing Clerk Publishable Key')
-  console.error('Please set VITE_CLERK_PUBLISHABLE_KEY in your environment variables')
-  
-  // In production, show a more user-friendly error
-  if (import.meta.env.PROD) {
-    throw new Error('Authentication service is not configured. Please contact support.')
-  } else {
-    throw new Error('Missing Clerk Publishable Key. Please check your environment variables.')
-  }
-}
+// Validate configuration on startup
+validateConfig()
 
 function App() {
   return (
     <ClerkProvider 
-      publishableKey={clerkPubKey}
+      publishableKey={clerk.publishableKey}
       appearance={{
         baseTheme: dark,
         variables: {
@@ -40,6 +28,7 @@ function App() {
           <SignedIn>
             <Routes>
               <Route path="/" element={<Dashboard />} />
+              <Route path="*" element={<Dashboard />} />
             </Routes>
           </SignedIn>
         </div>

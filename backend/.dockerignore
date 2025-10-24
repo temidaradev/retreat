@@ -1,9 +1,0 @@
-*.log
-.env
-.env.local
-tmp/
-vendor/
-.git/
-.gitignore
-README.md
-

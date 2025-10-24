@@ -37,6 +37,42 @@ export interface ParsedEmailData {
     confidence: number
 }
 
+export interface ParsedPDFData {
+    store: string
+    item: string
+    purchase_date: string
+    warranty_expiry: string
+    amount: number
+    currency: string
+    confidence: number
+}
+
+
+export interface SponsorshipInfo {
+    platforms: Array<{
+        name: string
+        id: string
+        url: string
+        description: string
+        instructions: string
+    }>
+    benefits: string[]
+}
+
+export interface SponsorshipStatus {
+    status: 'none' | 'pending' | 'active' | 'cancelled'
+    plan?: string
+    created_at?: string
+    updated_at?: string
+    message?: string
+}
+
+export interface SponsorshipVerificationRequest {
+    platform: 'buymeacoffee'
+    username: string
+    proof?: string
+}
+
 class ApiService {
     private async request<T>(
         endpoint: string,
@@ -95,6 +131,49 @@ class ApiService {
             method: 'POST',
             body: JSON.stringify({ email_content: emailContent }),
         })
+    }
+
+    // PDF parsing
+    async parsePDF(pdfContent: string): Promise<{ parsed_data: ParsedPDFData }> {
+        return this.request<{ parsed_data: ParsedPDFData }>('/parse-pdf', {
+            method: 'POST',
+            body: JSON.stringify({ pdf_content: pdfContent }),
+        })
+    }
+
+
+    // Sponsorship operations
+    async getSponsorshipInfo(): Promise<SponsorshipInfo> {
+        return this.request<SponsorshipInfo>('/sponsorship/info')
+    }
+
+    async getSponsorshipStatus(): Promise<SponsorshipStatus> {
+        return this.request<SponsorshipStatus>('/sponsorship/status')
+    }
+
+    async requestSponsorshipVerification(data: SponsorshipVerificationRequest | FormData): Promise<{ message: string; status: string }> {
+        const url = `${API_BASE_URL}/api/v1/sponsorship/verify`
+
+        const headers: Record<string, string> = {
+            'X-User-ID': 'demo-user', // TODO: Get from Clerk auth
+        }
+
+        // Don't set Content-Type for FormData - let the browser set it with boundary
+        if (!(data instanceof FormData)) {
+            headers['Content-Type'] = 'application/json'
+        }
+
+        const response = await fetch(url, {
+            method: 'POST',
+            headers,
+            body: data instanceof FormData ? data : JSON.stringify(data),
+        })
+
+        if (!response.ok) {
+            throw new Error(`API request failed: ${response.statusText}`)
+        }
+
+        return response.json()
     }
 
     // Health check

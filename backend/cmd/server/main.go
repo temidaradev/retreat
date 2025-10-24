@@ -2,76 +2,148 @@ package main
 
 import (
 	"log"
-	"os"
 
-	"github.com/gin-contrib/cors"
-	"github.com/gin-gonic/gin"
-	"github.com/joho/godotenv"
+	"receiptlocker/internal/config"
 	"receiptlocker/internal/database"
 	"receiptlocker/internal/handlers"
+	"receiptlocker/internal/logging"
+	"receiptlocker/internal/middleware"
+	"receiptlocker/internal/services"
+
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/joho/godotenv"
 )
 
 func main() {
 	// Load environment variables
 	if err := godotenv.Load(); err != nil {
-		log.Println("No .env file found")
+		logging.Info("No .env file found")
 	}
+
+	// Load configuration
+	cfg := config.Load()
+
+	// Initialize logging
+	logging.Info("Starting Receipt Store application", map[string]interface{}{
+		"version": "1.0.0",
+		"env":     cfg.Server.GinMode,
+	})
 
 	// Initialize database
 	db, err := database.InitDB()
 	if err != nil {
-		log.Fatal("Failed to connect to database:", err)
+		logging.Fatal("Failed to connect to database", map[string]interface{}{
+			"error": err.Error(),
+		})
 	}
 	defer db.Close()
 
-	// Set Gin mode
-	if os.Getenv("GIN_MODE") == "release" {
-		gin.SetMode(gin.ReleaseMode)
-	}
+	// Create Fiber app
+	app := fiber.New(fiber.Config{
+		ErrorHandler: func(c *fiber.Ctx, err error) error {
+			code := fiber.StatusInternalServerError
+			if e, ok := err.(*fiber.Error); ok {
+				code = e.Code
+			}
+			return c.Status(code).JSON(fiber.Map{"error": err.Error()})
+		},
+	})
 
-	// Create Gin router
-	r := gin.Default()
+	// Setup production middleware
+	middleware.SetupProductionMiddleware(app)
 
-	// Configure CORS
-	config := cors.DefaultConfig()
-	config.AllowOrigins = []string{"http://localhost:5173", "http://localhost:3000"}
-	config.AllowMethods = []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}
-	config.AllowHeaders = []string{"Origin", "Content-Type", "Accept", "Authorization", "X-Requested-With", "X-User-ID"}
-	config.AllowCredentials = true
-	r.Use(cors.New(config))
+	// Configure CORS with proper headers
+	app.Use(cors.New(cors.Config{
+		AllowOrigins:     "*",
+		AllowMethods:     "GET,POST,PUT,DELETE,OPTIONS",
+		AllowHeaders:     "Origin,Content-Type,Accept,Authorization,X-Requested-With",
+		AllowCredentials: false,
+		MaxAge:           86400,
+	}))
 
 	// Initialize handlers
 	receiptHandler := handlers.NewReceiptHandler(db)
+	sponsorshipHandler := handlers.NewSponsorshipHandler(db)
+
+	// Initialize services
+	cronService := services.NewCronService(db)
+	cronService.Start()
+	defer cronService.Stop()
 
 	// API routes
-	api := r.Group("/api/v1")
+	api := app.Group("/api/v1")
 	{
-		api.GET("/health", func(c *gin.Context) {
-			c.JSON(200, gin.H{"status": "ok"})
+		// Enhanced health check endpoint
+		api.Get("/health", func(c *fiber.Ctx) error {
+			return c.JSON(fiber.Map{"status": "healthy"})
 		})
 
-		// Receipt routes
-		receipts := api.Group("/receipts")
+		// Readiness probe
+		api.Get("/ready", func(c *fiber.Ctx) error {
+			if err := db.Ping(); err != nil {
+				return c.Status(fiber.StatusServiceUnavailable).JSON(fiber.Map{
+					"ready": false,
+					"error": "database not ready",
+				})
+			}
+			return c.JSON(fiber.Map{"ready": true})
+		})
+
+		// Liveness probe
+		api.Get("/live", func(c *fiber.Ctx) error {
+			return c.JSON(fiber.Map{"alive": true})
+		})
+
+		// CORS test endpoint
+		api.Get("/cors-test", func(c *fiber.Ctx) error {
+			return c.JSON(fiber.Map{
+				"message": "CORS test successful",
+				"headers": c.GetReqHeaders(),
+			})
+		})
+
+		// Protected routes (require authentication)
+		protected := api.Group("", middleware.ClerkAuthMiddleware())
 		{
-			receipts.GET("", receiptHandler.GetReceipts)
-			receipts.POST("", receiptHandler.CreateReceipt)
-			receipts.GET("/:id", receiptHandler.GetReceipt)
-			receipts.PUT("/:id", receiptHandler.UpdateReceipt)
-			receipts.DELETE("/:id", receiptHandler.DeleteReceipt)
+			// Receipt routes
+			receipts := protected.Group("/receipts")
+			{
+				receipts.Get("", receiptHandler.GetReceipts)
+				receipts.Post("", receiptHandler.CreateReceipt)
+				receipts.Get("/:id", receiptHandler.GetReceipt)
+				receipts.Put("/:id", receiptHandler.UpdateReceipt)
+				receipts.Delete("/:id", receiptHandler.DeleteReceipt)
+			}
+
+			// Email parsing route
+			protected.Post("/parse-email", receiptHandler.ParseEmail)
+
+			// PDF parsing route
+			protected.Post("/parse-pdf", receiptHandler.ParsePDF)
+
+			// Sponsorship routes
+			log.Println("Registering sponsorship routes...")
+			sponsorship := protected.Group("/sponsorship")
+			{
+				sponsorship.Get("/test", sponsorshipHandler.TestSponsorshipEndpoint)
+				sponsorship.Get("/info", sponsorshipHandler.GetSponsorshipInfo)
+				sponsorship.Get("/status", sponsorshipHandler.GetSponsorshipStatus)
+				sponsorship.Post("/verify", sponsorshipHandler.RequestSponsorshipVerification)
+			}
+			log.Println("Sponsorship routes registered successfully")
 		}
 
-		// Email parsing route
-		api.POST("/parse-email", receiptHandler.ParseEmail)
 	}
 
 	// Start server
-	port := os.Getenv("PORT")
+	port := cfg.Server.Port
 	if port == "" {
 		port = "8080"
 	}
 
 	log.Printf("Server starting on port %s", port)
-	if err := r.Run(":" + port); err != nil {
+	if err := app.Listen(":" + port); err != nil {
 		log.Fatal("Failed to start server:", err)
 	}
 }
