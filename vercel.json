@@ -1,13 +1,26 @@
 {
-    "buildCommand": "cd frontend && npm install && npm run build",
+    "buildCommand": "cd frontend && npm install && npm run build && cd ../backend && go build -o main cmd/server/main.go",
     "outputDirectory": "frontend/dist",
     "devCommand": "cd frontend && npm run dev",
     "installCommand": "echo 'Skipping root install'",
     "framework": "vite",
+    "functions": {
+        "backend/main": {
+            "runtime": "go1.x"
+        }
+    },
     "rewrites": [
+        {
+            "source": "/api/(.*)",
+            "destination": "/backend/main"
+        },
         {
             "source": "/(.*)",
             "destination": "/index.html"
         }
-    ]
+    ],
+    "env": {
+        "VITE_API_URL": "@vite_api_url",
+        "VITE_CLERK_PUBLISHABLE_KEY": "@vite_clerk_publishable_key"
+    }
 }
