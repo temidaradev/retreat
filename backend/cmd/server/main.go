@@ -50,10 +50,7 @@ func main() {
 		},
 	})
 
-	// Setup production middleware
-	middleware.SetupProductionMiddleware(app)
-
-	// Configure CORS with proper headers
+	// Configure CORS FIRST - before any other middleware
 	app.Use(cors.New(cors.Config{
 		AllowOrigins:     "*",
 		AllowMethods:     "GET,POST,PUT,DELETE,OPTIONS",
@@ -61,6 +58,9 @@ func main() {
 		AllowCredentials: false,
 		MaxAge:           86400,
 	}))
+
+	// Setup production middleware AFTER CORS
+	middleware.SetupProductionMiddleware(app)
 
 	// Initialize handlers
 	receiptHandler := handlers.NewReceiptHandler(db)
