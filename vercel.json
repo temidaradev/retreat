@@ -5,9 +5,7 @@
     "installCommand": "echo 'Skipping root install'",
     "framework": "vite",
     "functions": {
-        "backend/main": {
-            "runtime": "go1.25.1"
-        }
+        "backend/main": {}
     },
     "rewrites": [
         {
