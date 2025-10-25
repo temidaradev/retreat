@@ -52,16 +52,23 @@ export interface ParsedPDFData {
 class ApiService {
     private async request<T>(
         endpoint: string,
-        options: RequestInit = {}
+        options: RequestInit = {},
+        token?: string
     ): Promise<T> {
         const url = `${API_BASE_URL}/api/v1${endpoint}`
 
+        const headers: Record<string, string> = {
+            'Content-Type': 'application/json',
+            ...(options.headers as Record<string, string>),
+        }
+
+        // Add Authorization header with Clerk JWT token if provided
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`
+        }
+
         const response = await fetch(url, {
-            headers: {
-                'Content-Type': 'application/json',
-                'X-User-ID': 'demo-user', // TODO: Get from Clerk auth
-                ...options.headers,
-            },
+            headers,
             ...options,
         })
 
@@ -73,55 +80,53 @@ class ApiService {
     }
 
     // Receipt operations
-    async getReceipts(): Promise<{ receipts: ReceiptData[] }> {
-        return this.request<{ receipts: ReceiptData[] }>('/receipts')
+    async getReceipts(token?: string): Promise<{ receipts: ReceiptData[] }> {
+        return this.request<{ receipts: ReceiptData[] }>('/receipts', {}, token)
     }
 
-    async getReceipt(id: string): Promise<ReceiptData> {
-        return this.request<ReceiptData>(`/receipts/${id}`)
+    async getReceipt(id: string, token?: string): Promise<ReceiptData> {
+        return this.request<ReceiptData>(`/receipts/${id}`, {}, token)
     }
 
-    async createReceipt(data: CreateReceiptRequest): Promise<ReceiptData> {
+    async createReceipt(data: CreateReceiptRequest, token?: string): Promise<ReceiptData> {
         return this.request<ReceiptData>('/receipts', {
             method: 'POST',
             body: JSON.stringify(data),
-        })
+        }, token)
     }
 
-    async updateReceipt(id: string, data: CreateReceiptRequest): Promise<ReceiptData> {
+    async updateReceipt(id: string, data: CreateReceiptRequest, token?: string): Promise<ReceiptData> {
         return this.request<ReceiptData>(`/receipts/${id}`, {
             method: 'PUT',
             body: JSON.stringify(data),
-        })
+        }, token)
     }
 
-    async deleteReceipt(id: string): Promise<{ message: string }> {
+    async deleteReceipt(id: string, token?: string): Promise<{ message: string }> {
         return this.request<{ message: string }>(`/receipts/${id}`, {
             method: 'DELETE',
-        })
+        }, token)
     }
 
     // Email parsing
-    async parseEmail(emailContent: string): Promise<{ parsed_data: ParsedEmailData }> {
+    async parseEmail(emailContent: string, token?: string): Promise<{ parsed_data: ParsedEmailData }> {
         return this.request<{ parsed_data: ParsedEmailData }>('/parse-email', {
             method: 'POST',
             body: JSON.stringify({ email_content: emailContent }),
-        })
+        }, token)
     }
 
     // PDF parsing
-    async parsePDF(pdfContent: string): Promise<{ parsed_data: ParsedPDFData }> {
+    async parsePDF(pdfContent: string, token?: string): Promise<{ parsed_data: ParsedPDFData }> {
         return this.request<{ parsed_data: ParsedPDFData }>('/parse-pdf', {
             method: 'POST',
             body: JSON.stringify({ pdf_content: pdfContent }),
-        })
+        }, token)
     }
 
-
-
     // Health check
-    async healthCheck(): Promise<{ status: string }> {
-        return this.request<{ status: string }>('/health')
+    async healthCheck(token?: string): Promise<{ status: string }> {
+        return this.request<{ status: string }>('/health', {}, token)
     }
 }
 

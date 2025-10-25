@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom'
 import { apiService, type ReceiptData } from '../../services/api'
 
 export default function Dashboard() {
-  const { has } = useAuth()
+  const { has, getToken } = useAuth()
   const [searchTerm, setSearchTerm] = useState('')
   const [showUploadModal, setShowUploadModal] = useState(false)
   const [receipts, setReceipts] = useState<ReceiptData[]>([])
@@ -34,7 +34,8 @@ export default function Dashboard() {
   const loadReceipts = async () => {
     try {
       setLoading(true)
-      const response = await apiService.getReceipts()
+      const token = await getToken()
+      const response = await apiService.getReceipts(token || undefined)
       setReceipts(response.receipts || [])
     } catch (err) {
       setError('Failed to load receipts')
@@ -109,6 +110,7 @@ export default function Dashboard() {
 
     setProcessing(true)
     try {
+      const token = await getToken()
       let parsedData;
       
       if (selectedFile) {
@@ -126,11 +128,11 @@ export default function Dashboard() {
         })
 
         // Parse PDF
-        const response = await apiService.parsePDF(base64Content)
+        const response = await apiService.parsePDF(base64Content, token || undefined)
         parsedData = response.parsed_data
       } else {
         // Parse email
-        const response = await apiService.parseEmail(emailText)
+        const response = await apiService.parseEmail(emailText, token || undefined)
         parsedData = response.parsed_data
       }
 
@@ -145,7 +147,7 @@ export default function Dashboard() {
         original_email: selectedFile ? `PDF: ${selectedFile.name}` : emailText
       }
 
-      await apiService.createReceipt(receiptData)
+      await apiService.createReceipt(receiptData, token || undefined)
       
       // Refresh receipts list
       await loadReceipts()

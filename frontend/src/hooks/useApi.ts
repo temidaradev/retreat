@@ -1,11 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useAuth } from '@clerk/clerk-react';
 import { apiService } from '../services/api';
 
-// Generic hook for API calls
+// Generic hook for API calls with Clerk authentication
 export const useApi = <T>(
-    apiCall: () => Promise<T>,
+    apiCall: (token?: string) => Promise<T>,
     dependencies: any[] = []
 ) => {
+    const { getToken } = useAuth();
     const [data, setData] = useState<T | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -14,14 +16,15 @@ export const useApi = <T>(
         try {
             setLoading(true);
             setError(null);
-            const result = await apiCall();
+            const token = await getToken();
+            const result = await apiCall(token || undefined);
             setData(result);
         } catch (err) {
             setError(err instanceof Error ? err.message : 'An error occurred');
         } finally {
             setLoading(false);
         }
-    }, dependencies);
+    }, [getToken, ...dependencies]);
 
     useEffect(() => {
         fetchData();
@@ -32,13 +35,14 @@ export const useApi = <T>(
 
 // Hook for receipts
 export const useReceipts = () => {
-    return useApi(() => apiService.getReceipts());
+    return useApi((token) => apiService.getReceipts(token));
 };
 
-// Hook for form submission
+// Hook for form submission with Clerk authentication
 export const useFormSubmission = <T>(
-    submitFn: (data: T) => Promise<any>
+    submitFn: (data: T, token?: string) => Promise<any>
 ) => {
+    const { getToken } = useAuth();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState(false);
@@ -48,14 +52,15 @@ export const useFormSubmission = <T>(
             setLoading(true);
             setError(null);
             setSuccess(false);
-            await submitFn(data);
+            const token = await getToken();
+            await submitFn(data, token || undefined);
             setSuccess(true);
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Submission failed');
         } finally {
             setLoading(false);
         }
-    }, [submitFn]);
+    }, [submitFn, getToken]);
 
     const reset = useCallback(() => {
         setError(null);
