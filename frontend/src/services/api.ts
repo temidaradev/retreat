@@ -1,5 +1,5 @@
 // API service for connecting to the backend
-const API_BASE_URL = import.meta.env.VITE_API_URL || (import.meta.env.MODE === 'production' ? 'https://api.retreat-app.tech' : 'http://localhost:8080')
+const API_BASE_URL = import.meta.env.VITE_API_URL || (import.meta.env.MODE === 'production' ? 'https://api.retreat-app.tech/api/v1' : 'http://localhost:8080/api/v1')
 
 export interface ReceiptData {
     id: string
@@ -55,7 +55,7 @@ class ApiService {
         options: RequestInit = {},
         token?: string
     ): Promise<T> {
-        const url = `${API_BASE_URL}/api/v1${endpoint}`
+        const url = `${API_BASE_URL}${endpoint}`
 
         const headers: Record<string, string> = {
             'Content-Type': 'application/json',
