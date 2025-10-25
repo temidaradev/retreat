@@ -8,14 +8,16 @@ services:
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-receiptlocker}
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --lc-collate=en_US.UTF-8 --lc-ctype=en_US.UTF-8"
+      PGDATA: /var/lib/postgresql/data/pgdata
     ports:
-      - "${POSTGRES_PORT:-5433}:5432"
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./backups:/backups
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}" ]
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-receiptlocker}" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -26,20 +28,24 @@ services:
     deploy:
       resources:
         limits:
+          cpus: '1.0'
           memory: 512M
         reservations:
           memory: 256M
+    security_opt:
+      - no-new-privileges:true
 
   # Redis for caching and sessions
   redis:
     image: redis:7-alpine
     container_name: receiptlocker-redis
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redis123}
     ports:
-      - "${REDIS_PORT:-6379}:6379"
+      - "127.0.0.1:${REDIS_PORT:-6379}:6379"
     volumes:
       - redis_data:/data
     healthcheck:
-      test: [ "CMD", "redis-cli", "ping" ]
+      test: [ "CMD", "redis-cli", "--no-auth-warning", "-a", "${REDIS_PASSWORD:-redis123}", "ping" ]
       interval: 10s
       timeout: 3s
       retries: 3
@@ -49,33 +55,63 @@ services:
     deploy:
       resources:
         limits:
+          cpus: '0.5'
           memory: 256M
         reservations:
           memory: 128M
+    security_opt:
+      - no-new-privileges:true
 
   # Backend API
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
+      args:
+        - GO_VERSION=1.25.1
     container_name: receiptlocker-backend
     ports:
-      - "${BACKEND_PORT:-8080}:8080"
+      - "127.0.0.1:${BACKEND_PORT:-8080}:8080"
     environment:
-      DATABASE_URL: postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-receiptlocker}?sslmode=disable
-      REDIS_URL: redis://redis:6379
-      PORT: 8080
-      GIN_MODE: ${GIN_MODE:-release}
-      CLERK_SECRET_KEY: ${CLERK_SECRET_KEY}
-      DEV_MODE: ${DEV_MODE:-false}
-      LOG_LEVEL: ${LOG_LEVEL:-info}
-      LOG_FORMAT: ${LOG_FORMAT:-json}
-      RATE_LIMIT_REQUESTS: ${RATE_LIMIT_REQUESTS:-100}
-      RATE_LIMIT_WINDOW: ${RATE_LIMIT_WINDOW:-60}
+      # Database
+      DATABASE_URL: postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-receiptlocker}?sslmode=disable
+      DB_SSLMODE: disable
       DB_MAX_OPEN_CONNS: ${DB_MAX_OPEN_CONNS:-25}
       DB_MAX_IDLE_CONNS: ${DB_MAX_IDLE_CONNS:-5}
       DB_CONN_MAX_LIFETIME: ${DB_CONN_MAX_LIFETIME:-5m}
       DB_CONN_MAX_IDLE_TIME: ${DB_CONN_MAX_IDLE_TIME:-1m}
+
+      # Redis
+      REDIS_URL: redis://:${REDIS_PASSWORD:-redis123}@redis:6379
+
+      # Server
+      PORT: 8080
+      GIN_MODE: ${GIN_MODE:-release}
+      DEV_MODE: ${DEV_MODE:-false}
+      READ_TIMEOUT: ${READ_TIMEOUT:-10s}
+      WRITE_TIMEOUT: ${WRITE_TIMEOUT:-30s}
+      IDLE_TIMEOUT: ${IDLE_TIMEOUT:-120s}
+      SHUTDOWN_TIMEOUT: ${SHUTDOWN_TIMEOUT:-30s}
+
+      # Auth
+      CLERK_SECRET_KEY: ${CLERK_SECRET_KEY}
+
+      # Logging
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      LOG_FORMAT: ${LOG_FORMAT:-json}
+
+      # Security
+      RATE_LIMIT_REQUESTS: ${RATE_LIMIT_REQUESTS:-100}
+      RATE_LIMIT_WINDOW: ${RATE_LIMIT_WINDOW:-60}
+      MAX_FILE_SIZE: ${MAX_FILE_SIZE:-10485760}
+      TRUSTED_PROXIES: ${TRUSTED_PROXIES:-}
+
+      # Email (optional)
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USERNAME: ${SMTP_USERNAME:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      FROM_EMAIL: ${FROM_EMAIL:-noreply@retreat-app.tech}
     depends_on:
       postgres:
         condition: service_healthy
@@ -87,6 +123,7 @@ services:
     deploy:
       resources:
         limits:
+          cpus: '1.0'
           memory: 512M
         reservations:
           memory: 256M
@@ -96,8 +133,15 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /app/logs
 
-  # Frontend
+  # Frontend (Optional - only if serving via Docker)
+  # In production on Hetzner, you might serve frontend separately via Vercel/Netlify
   frontend:
     build:
       context: ./frontend
@@ -107,7 +151,7 @@ services:
         - VITE_CLERK_PUBLISHABLE_KEY=${VITE_CLERK_PUBLISHABLE_KEY}
     container_name: receiptlocker-frontend
     ports:
-      - "${FRONTEND_PORT:-3000}:80"
+      - "127.0.0.1:${FRONTEND_PORT:-3000}:80"
     depends_on:
       backend:
         condition: service_healthy
@@ -117,6 +161,7 @@ services:
     deploy:
       resources:
         limits:
+          cpus: '0.5'
           memory: 256M
         reservations:
           memory: 128M
@@ -126,6 +171,12 @@ services:
       timeout: 10s
       retries: 3
       start_period: 30s
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /var/cache/nginx
+      - /var/run
 
 volumes:
   postgres_data:

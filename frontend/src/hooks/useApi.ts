@@ -4,28 +4,26 @@ import { apiService } from '../services/api';
 
 // Generic hook for API calls with Clerk authentication
 export const useApi = <T>(
-    apiCall: (token?: string) => Promise<T>,
+    apiCall: () => Promise<T>,
     dependencies: any[] = []
 ) => {
-    const { getToken } = useAuth();
     const [data, setData] = useState<T | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const { getToken } = useAuth();
 
     const fetchData = useCallback(async () => {
         try {
             setLoading(true);
             setError(null);
+
+            // Get auth token from Clerk
             const token = await getToken();
-            console.log('useApi - Token retrieved:', {
-                hasToken: !!token,
-                tokenLength: token?.length || 0,
-                tokenStart: token ? token.substring(0, 20) + '...' : 'none'
-            });
-            const result = await apiCall(token || undefined);
+            apiService.setAuthToken(token);
+
+            const result = await apiCall();
             setData(result);
         } catch (err) {
-            console.error('useApi - Error:', err);
             setError(err instanceof Error ? err.message : 'An error occurred');
         } finally {
             setLoading(false);
@@ -41,32 +39,36 @@ export const useApi = <T>(
 
 // Hook for receipts
 export const useReceipts = () => {
-    return useApi((token) => apiService.getReceipts(token));
+    return useApi(() => apiService.getReceipts());
 };
 
 // Hook for form submission with Clerk authentication
 export const useFormSubmission = <T>(
-    submitFn: (data: T, token?: string) => Promise<any>
+    submitFn: (data: T) => Promise<any>
 ) => {
-    const { getToken } = useAuth();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState(false);
+    const { getToken } = useAuth();
 
     const submit = useCallback(async (data: T) => {
         try {
             setLoading(true);
             setError(null);
             setSuccess(false);
+
+            // Get auth token from Clerk
             const token = await getToken();
-            await submitFn(data, token || undefined);
+            apiService.setAuthToken(token);
+
+            await submitFn(data);
             setSuccess(true);
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Submission failed');
         } finally {
             setLoading(false);
         }
-    }, [submitFn, getToken]);
+    }, [getToken, submitFn]);
 
     const reset = useCallback(() => {
         setError(null);

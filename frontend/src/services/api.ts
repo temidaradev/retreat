@@ -1,5 +1,5 @@
 // API service for connecting to the backend
-const API_BASE_URL = import.meta.env.VITE_API_URL || (import.meta.env.MODE === 'production' ? 'https://api.retreat-app.tech/api/v1' : 'http://localhost:8080/api/v1')
+const API_BASE_URL = import.meta.env.VITE_API_URL || (import.meta.env.MODE === 'production' ? 'https://api.retreat-app.tech' : 'http://localhost:8080')
 
 export interface ReceiptData {
     id: string
@@ -47,94 +47,133 @@ export interface ParsedPDFData {
     confidence: number
 }
 
-
+export interface ApiError {
+    error: string
+    status: number
+    request_id?: string
+    timestamp?: string
+}
 
 class ApiService {
+    private authToken: string | null = null
+
+    /**
+     * Set the authentication token from Clerk
+     * This should be called after user authentication
+     */
+    setAuthToken(token: string | null) {
+        this.authToken = token
+    }
+
+    /**
+     * Make an authenticated API request
+     */
     private async request<T>(
         endpoint: string,
-        options: RequestInit = {},
-        token?: string
+        options: RequestInit = {}
     ): Promise<T> {
-        const url = `${API_BASE_URL}${endpoint}`
+        const url = `${API_BASE_URL}/api/v1${endpoint}`
 
         const headers: Record<string, string> = {
             'Content-Type': 'application/json',
-            ...(options.headers as Record<string, string>),
         }
 
-        // Add Authorization header with Clerk JWT token if provided
-        if (token) {
-            headers['Authorization'] = `Bearer ${token}`
-            console.log('API Request with token:', {
-                url,
-                hasToken: !!token,
-                tokenLength: token.length,
-                tokenStart: token.substring(0, 20) + '...'
+        // Add authentication token if available
+        if (this.authToken) {
+            headers['Authorization'] = `Bearer ${this.authToken}`
+        }
+
+        // Merge with provided headers
+        if (options.headers) {
+            Object.assign(headers, options.headers)
+        }
+
+        try {
+            const response = await fetch(url, {
+                ...options,
+                headers,
+                credentials: 'include', // Include cookies for CORS
             })
-        } else {
-            console.log('API Request without token:', { url })
+
+            if (!response.ok) {
+                // Try to parse error response
+                let errorMessage = `API request failed: ${response.statusText}`
+                try {
+                    const errorData: ApiError = await response.json()
+                    errorMessage = errorData.error || errorMessage
+                } catch {
+                    // If parsing fails, use status text
+                }
+
+                const error = new Error(errorMessage) as Error & { status?: number }
+                error.status = response.status
+                throw error
+            }
+
+            return response.json()
+        } catch (error) {
+            // Re-throw with additional context
+            if (error instanceof Error) {
+                console.error('API request failed:', {
+                    url,
+                    error: error.message,
+                    endpoint,
+                })
+            }
+            throw error
         }
-
-        const response = await fetch(url, {
-            headers,
-            ...options,
-        })
-
-        if (!response.ok) {
-            throw new Error(`API request failed: ${response.statusText}`)
-        }
-
-        return response.json()
     }
 
     // Receipt operations
-    async getReceipts(token?: string): Promise<{ receipts: ReceiptData[] }> {
-        return this.request<{ receipts: ReceiptData[] }>('/receipts', {}, token)
+    async getReceipts(): Promise<{ receipts: ReceiptData[] }> {
+        return this.request<{ receipts: ReceiptData[] }>('/receipts')
     }
 
-    async getReceipt(id: string, token?: string): Promise<ReceiptData> {
-        return this.request<ReceiptData>(`/receipts/${id}`, {}, token)
+    async getReceipt(id: string): Promise<ReceiptData> {
+        return this.request<ReceiptData>(`/receipts/${id}`)
     }
 
-    async createReceipt(data: CreateReceiptRequest, token?: string): Promise<ReceiptData> {
+    async createReceipt(data: CreateReceiptRequest): Promise<ReceiptData> {
         return this.request<ReceiptData>('/receipts', {
             method: 'POST',
             body: JSON.stringify(data),
-        }, token)
+        })
     }
 
-    async updateReceipt(id: string, data: CreateReceiptRequest, token?: string): Promise<ReceiptData> {
+    async updateReceipt(id: string, data: CreateReceiptRequest): Promise<ReceiptData> {
         return this.request<ReceiptData>(`/receipts/${id}`, {
             method: 'PUT',
             body: JSON.stringify(data),
-        }, token)
+        })
     }
 
-    async deleteReceipt(id: string, token?: string): Promise<{ message: string }> {
+    async deleteReceipt(id: string): Promise<{ message: string }> {
         return this.request<{ message: string }>(`/receipts/${id}`, {
             method: 'DELETE',
-        }, token)
+        })
     }
 
     // Email parsing
-    async parseEmail(emailContent: string, token?: string): Promise<{ parsed_data: ParsedEmailData }> {
+    async parseEmail(emailContent: string): Promise<{ parsed_data: ParsedEmailData }> {
         return this.request<{ parsed_data: ParsedEmailData }>('/parse-email', {
             method: 'POST',
             body: JSON.stringify({ email_content: emailContent }),
-        }, token)
+        })
     }
 
     // PDF parsing
-    async parsePDF(pdfContent: string, token?: string): Promise<{ parsed_data: ParsedPDFData }> {
+    async parsePDF(pdfContent: string): Promise<{ parsed_data: ParsedPDFData }> {
         return this.request<{ parsed_data: ParsedPDFData }>('/parse-pdf', {
             method: 'POST',
             body: JSON.stringify({ pdf_content: pdfContent }),
-        }, token)
+        })
     }
 
+
+
     // Health check
-    async healthCheck(token?: string): Promise<{ status: string }> {
-        return this.request<{ status: string }>('/health', {}, token)
+    async healthCheck(): Promise<{ status: string }> {
+        return this.request<{ status: string }>('/health')
     }
 }
 

@@ -1,12 +1,13 @@
 package database
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
-	"log"
 	"time"
 
 	"receiptlocker/internal/config"
+	"receiptlocker/internal/logging"
 
 	_ "github.com/lib/pq"
 )
@@ -47,14 +48,22 @@ func InitDB() (*sql.DB, error) {
 	retryDelay := 2 * time.Second
 
 	for i := 0; i < maxRetries; i++ {
-		if err := db.Ping(); err != nil {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		if err := db.PingContext(ctx); err != nil {
+			cancel()
 			if i == maxRetries-1 {
 				return nil, fmt.Errorf("failed to ping database after %d retries: %w", maxRetries, err)
 			}
-			log.Printf("Database ping failed, retrying in %v (attempt %d/%d)", retryDelay, i+1, maxRetries)
+			logging.Warn("Database ping failed, retrying", map[string]interface{}{
+				"attempt":     i + 1,
+				"max_retries": maxRetries,
+				"retry_delay": retryDelay.String(),
+				"error":       err.Error(),
+			})
 			time.Sleep(retryDelay)
 			continue
 		}
+		cancel()
 		break
 	}
 
@@ -64,12 +73,18 @@ func InitDB() (*sql.DB, error) {
 	}
 
 	DB = db
-	log.Printf("Database connected successfully (max_open=%d, max_idle=%d)", cfg.Database.MaxOpenConns, cfg.Database.MaxIdleConns)
+	logging.Info("Database connected successfully", map[string]interface{}{
+		"max_open_conns": cfg.Database.MaxOpenConns,
+		"max_idle_conns": cfg.Database.MaxIdleConns,
+	})
 	return db, nil
 }
 
 // runMigrations creates the necessary tables
 func runMigrations(db *sql.DB) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
 	createTableSQL := `
 	CREATE TABLE IF NOT EXISTS users (
 		id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -127,11 +142,11 @@ func runMigrations(db *sql.DB) error {
 	CREATE INDEX IF NOT EXISTS idx_sponsorship_verifications_platform ON sponsorship_verifications(platform);
 	`
 
-	_, err := db.Exec(createTableSQL)
+	_, err := db.ExecContext(ctx, createTableSQL)
 	if err != nil {
 		return fmt.Errorf("failed to create tables: %w", err)
 	}
 
-	log.Println("Database migrations completed")
+	logging.Info("Database migrations completed successfully")
 	return nil
 }

@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom'
 import { apiService, type ReceiptData } from '../../services/api'
 
 export default function Dashboard() {
-  const { has, getToken } = useAuth()
+  const { has } = useAuth()
   const [searchTerm, setSearchTerm] = useState('')
   const [showUploadModal, setShowUploadModal] = useState(false)
   const [receipts, setReceipts] = useState<ReceiptData[]>([])
@@ -34,13 +34,7 @@ export default function Dashboard() {
   const loadReceipts = async () => {
     try {
       setLoading(true)
-      const token = await getToken()
-      console.log('Dashboard - loadReceipts token:', {
-        hasToken: !!token,
-        tokenLength: token?.length || 0,
-        tokenStart: token ? token.substring(0, 20) + '...' : 'none'
-      })
-      const response = await apiService.getReceipts(token || undefined)
+      const response = await apiService.getReceipts()
       setReceipts(response.receipts || [])
     } catch (err) {
       setError('Failed to load receipts')
@@ -115,7 +109,6 @@ export default function Dashboard() {
 
     setProcessing(true)
     try {
-      const token = await getToken()
       let parsedData;
       
       if (selectedFile) {
@@ -133,11 +126,11 @@ export default function Dashboard() {
         })
 
         // Parse PDF
-        const response = await apiService.parsePDF(base64Content, token || undefined)
+        const response = await apiService.parsePDF(base64Content)
         parsedData = response.parsed_data
       } else {
         // Parse email
-        const response = await apiService.parseEmail(emailText, token || undefined)
+        const response = await apiService.parseEmail(emailText)
         parsedData = response.parsed_data
       }
 
@@ -152,7 +145,7 @@ export default function Dashboard() {
         original_email: selectedFile ? `PDF: ${selectedFile.name}` : emailText
       }
 
-      await apiService.createReceipt(receiptData, token || undefined)
+      await apiService.createReceipt(receiptData)
       
       // Refresh receipts list
       await loadReceipts()

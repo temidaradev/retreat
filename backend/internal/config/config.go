@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"os"
 	"strconv"
 	"time"
@@ -29,9 +30,13 @@ type Config struct {
 
 // ServerConfig holds server-related configuration
 type ServerConfig struct {
-	Port    string
-	GinMode string
-	DevMode bool
+	Port            string
+	GinMode         string
+	DevMode         bool
+	ReadTimeout     time.Duration
+	WriteTimeout    time.Duration
+	IdleTimeout     time.Duration
+	ShutdownTimeout time.Duration
 }
 
 // DatabaseConfig holds database-related configuration
@@ -70,6 +75,7 @@ type SecurityConfig struct {
 	RateLimitWindow   int
 	MaxFileSize       int64
 	UploadPath        string
+	TrustedProxies    []string
 }
 
 // LoggingConfig holds logging-related configuration
@@ -80,20 +86,24 @@ type LoggingConfig struct {
 
 // Load loads configuration from environment variables
 func Load() *Config {
-	return &Config{
+	cfg := &Config{
 		Server: ServerConfig{
-			Port:    getEnv("PORT", "8080"),
-			GinMode: getEnv("GIN_MODE", "release"),
-			DevMode: getEnvBool("DEV_MODE", false),
+			Port:            getEnv("PORT", "8080"),
+			GinMode:         getEnv("GIN_MODE", "release"),
+			DevMode:         getEnvBool("DEV_MODE", false),
+			ReadTimeout:     getEnvDuration("READ_TIMEOUT", 10*time.Second),
+			WriteTimeout:    getEnvDuration("WRITE_TIMEOUT", 30*time.Second),
+			IdleTimeout:     getEnvDuration("IDLE_TIMEOUT", 120*time.Second),
+			ShutdownTimeout: getEnvDuration("SHUTDOWN_TIMEOUT", 30*time.Second),
 		},
 		Database: DatabaseConfig{
 			URL:             getEnv("DATABASE_URL", ""),
 			Host:            getEnv("DB_HOST", "localhost"),
 			Port:            getEnv("DB_PORT", "5432"),
 			User:            getEnv("DB_USER", "postgres"),
-			Password:        getEnv("DB_PASSWORD", "password"),
+			Password:        getEnv("DB_PASSWORD", ""),
 			Name:            getEnv("DB_NAME", "receiptlocker"),
-			SSLMode:         getEnv("DB_SSLMODE", "disable"),
+			SSLMode:         getEnv("DB_SSLMODE", "require"),
 			MaxOpenConns:    getEnvInt("DB_MAX_OPEN_CONNS", 25),
 			MaxIdleConns:    getEnvInt("DB_MAX_IDLE_CONNS", 5),
 			ConnMaxLifetime: getEnvDuration("DB_CONN_MAX_LIFETIME", 5*time.Minute),
@@ -107,7 +117,7 @@ func Load() *Config {
 			SMTPPort:     getEnvInt("SMTP_PORT", 587),
 			SMTPUsername: getEnv("SMTP_USERNAME", ""),
 			SMTPPassword: getEnv("SMTP_PASSWORD", ""),
-			FromEmail:    getEnv("FROM_EMAIL", "noreply@retreat.com"),
+			FromEmail:    getEnv("FROM_EMAIL", "noreply@retreat-app.tech"),
 		},
 		Security: SecurityConfig{
 			JWTSecret:         getEnv("JWT_SECRET", ""),
@@ -115,12 +125,49 @@ func Load() *Config {
 			RateLimitWindow:   getEnvInt("RATE_LIMIT_WINDOW", 60),
 			MaxFileSize:       getEnvInt64("MAX_FILE_SIZE", 10485760), // 10MB
 			UploadPath:        getEnv("UPLOAD_PATH", "/tmp/uploads"),
+			TrustedProxies:    getEnvSlice("TRUSTED_PROXIES", []string{}),
 		},
 		Logging: LoggingConfig{
 			Level:  getEnv("LOG_LEVEL", "info"),
-			Format: getEnv("LOG_FORMAT", "text"),
+			Format: getEnv("LOG_FORMAT", "json"),
 		},
 	}
+
+	return cfg
+}
+
+// Validate validates the configuration
+func (c *Config) Validate() error {
+	// Validate required fields in production mode
+	if !c.Server.DevMode {
+		if c.Database.URL == "" && c.Database.Password == "" {
+			return fmt.Errorf("database password is required in production mode")
+		}
+		if c.Auth.ClerkSecretKey == "" {
+			return fmt.Errorf("CLERK_SECRET_KEY is required in production mode")
+		}
+	}
+
+	// Validate numeric ranges
+	if c.Database.MaxOpenConns < 1 {
+		return fmt.Errorf("DB_MAX_OPEN_CONNS must be at least 1")
+	}
+	if c.Database.MaxIdleConns < 1 {
+		return fmt.Errorf("DB_MAX_IDLE_CONNS must be at least 1")
+	}
+	if c.Database.MaxIdleConns > c.Database.MaxOpenConns {
+		return fmt.Errorf("DB_MAX_IDLE_CONNS cannot exceed DB_MAX_OPEN_CONNS")
+	}
+
+	// Validate timeouts
+	if c.Server.ReadTimeout < 1*time.Second {
+		return fmt.Errorf("READ_TIMEOUT must be at least 1 second")
+	}
+	if c.Server.WriteTimeout < 1*time.Second {
+		return fmt.Errorf("WRITE_TIMEOUT must be at least 1 second")
+	}
+
+	return nil
 }
 
 // Helper functions for environment variable parsing
@@ -165,4 +212,50 @@ func getEnvDuration(key string, defaultValue time.Duration) time.Duration {
 		}
 	}
 	return defaultValue
+}
+
+func getEnvSlice(key string, defaultValue []string) []string {
+	if value := os.Getenv(key); value != "" {
+		// Split by comma
+		result := []string{}
+		for _, item := range splitByComma(value) {
+			if trimmed := trim(item); trimmed != "" {
+				result = append(result, trimmed)
+			}
+		}
+		if len(result) > 0 {
+			return result
+		}
+	}
+	return defaultValue
+}
+
+func splitByComma(s string) []string {
+	result := []string{}
+	current := ""
+	for _, char := range s {
+		if char == ',' {
+			result = append(result, current)
+			current = ""
+		} else {
+			current += string(char)
+		}
+	}
+	if current != "" {
+		result = append(result, current)
+	}
+	return result
+}
+
+func trim(s string) string {
+	// Simple trim function to remove spaces
+	start := 0
+	end := len(s)
+	for start < end && (s[start] == ' ' || s[start] == '\t' || s[start] == '\n') {
+		start++
+	}
+	for end > start && (s[end-1] == ' ' || s[end-1] == '\t' || s[end-1] == '\n') {
+		end--
+	}
+	return s[start:end]
 }
