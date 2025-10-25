@@ -52,7 +52,22 @@ func main() {
 
 	// Configure CORS FIRST - before any other middleware
 	app.Use(cors.New(cors.Config{
-		AllowOrigins:     "https://retreat-app.tech,https://www.retreat-app.tech,https://temidara.rocks,https://www.temidara.rocks,http://localhost:3000,http://localhost:5173",
+		AllowOriginsFunc: func(origin string) bool {
+			allowedOrigins := []string{
+				"https://retreat-app.tech",
+				"https://www.retreat-app.tech",
+				"https://temidara.rocks",
+				"https://www.temidara.rocks",
+				"http://localhost:3000",
+				"http://localhost:5173",
+			}
+			for _, allowed := range allowedOrigins {
+				if origin == allowed {
+					return true
+				}
+			}
+			return false
+		},
 		AllowMethods:     "GET,POST,PUT,DELETE,OPTIONS",
 		AllowHeaders:     "Origin,Content-Type,Accept,Authorization,X-Requested-With,x-user-id",
 		AllowCredentials: true,
