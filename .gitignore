@@ -2,6 +2,7 @@
 node_modules/
 frontend/node_modules/
 backend/vendor/
+sample-receipts/
 
 # Environment variables (NEVER commit these!)
 .env

@@ -25,5 +25,8 @@
         "postgresql"
     ],
     "author": "Your Name",
-    "license": "MIT"
+    "license": "MIT",
+    "dependencies": {
+        "pdfkit": "^0.17.2"
+    }
 }
