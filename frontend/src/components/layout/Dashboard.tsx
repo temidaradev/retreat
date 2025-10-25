@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom'
 import { apiService, type ReceiptData } from '../../services/api'
 
 export default function Dashboard() {
-  const { has } = useAuth()
+  const { has, getToken } = useAuth()
   const [searchTerm, setSearchTerm] = useState('')
   const [showUploadModal, setShowUploadModal] = useState(false)
   const [receipts, setReceipts] = useState<ReceiptData[]>([])
@@ -34,6 +34,10 @@ export default function Dashboard() {
   const loadReceipts = async () => {
     try {
       setLoading(true)
+      // Get the Clerk authentication token
+      const token = await getToken()
+      apiService.setAuthToken(token)
+      
       const response = await apiService.getReceipts()
       setReceipts(response.receipts || [])
     } catch (err) {
@@ -109,6 +113,10 @@ export default function Dashboard() {
 
     setProcessing(true)
     try {
+      // Get the Clerk authentication token
+      const token = await getToken()
+      apiService.setAuthToken(token)
+      
       let parsedData;
       
       if (selectedFile) {
