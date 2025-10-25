@@ -17,9 +17,15 @@ export const useApi = <T>(
             setLoading(true);
             setError(null);
             const token = await getToken();
+            console.log('useApi - Token retrieved:', {
+                hasToken: !!token,
+                tokenLength: token?.length || 0,
+                tokenStart: token ? token.substring(0, 20) + '...' : 'none'
+            });
             const result = await apiCall(token || undefined);
             setData(result);
         } catch (err) {
+            console.error('useApi - Error:', err);
             setError(err instanceof Error ? err.message : 'An error occurred');
         } finally {
             setLoading(false);

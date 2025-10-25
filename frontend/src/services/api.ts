@@ -65,6 +65,14 @@ class ApiService {
         // Add Authorization header with Clerk JWT token if provided
         if (token) {
             headers['Authorization'] = `Bearer ${token}`
+            console.log('API Request with token:', {
+                url,
+                hasToken: !!token,
+                tokenLength: token.length,
+                tokenStart: token.substring(0, 20) + '...'
+            })
+        } else {
+            console.log('API Request without token:', { url })
         }
 
         const response = await fetch(url, {

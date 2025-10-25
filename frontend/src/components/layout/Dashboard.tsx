@@ -35,6 +35,11 @@ export default function Dashboard() {
     try {
       setLoading(true)
       const token = await getToken()
+      console.log('Dashboard - loadReceipts token:', {
+        hasToken: !!token,
+        tokenLength: token?.length || 0,
+        tokenStart: token ? token.substring(0, 20) + '...' : 'none'
+      })
       const response = await apiService.getReceipts(token || undefined)
       setReceipts(response.receipts || [])
     } catch (err) {
