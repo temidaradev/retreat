@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom'
 import { apiService, type ReceiptData } from '../../services/api'
 
 export default function Dashboard() {
-  const { has, isLoaded } = useAuth()
+  const { has } = useAuth()
   const [searchTerm, setSearchTerm] = useState('')
   const [showUploadModal, setShowUploadModal] = useState(false)
   const [receipts, setReceipts] = useState<ReceiptData[]>([])
@@ -17,10 +17,10 @@ export default function Dashboard() {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Premium features access control
-  const hasRetreatPlan = has({ plan: 'retreat' })
-  const hasAdvancedAnalytics = has({ feature: 'advanced_analytics' })
-  const hasExportData = has({ feature: 'export_data' })
-  const hasApiAccess = has({ feature: 'api_access' })
+  const hasRetreatPlan = has?.({ plan: 'retreat' }) ?? false
+  const hasAdvancedAnalytics = has?.({ feature: 'advanced_analytics' }) ?? false
+  const hasExportData = has?.({ feature: 'export_data' }) ?? false
+  const hasApiAccess = has?.({ feature: 'api_access' }) ?? false
   
   // Free plan limits
   const FREE_PLAN_LIMIT = 10
