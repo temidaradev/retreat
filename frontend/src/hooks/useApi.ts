@@ -30,19 +30,9 @@ export const useApi = <T>(
     return { data, loading, error, refetch: fetchData };
 };
 
-// Hook for sponsorship status
-export const useSponsorshipStatus = () => {
-    return useApi(() => apiService.getSponsorshipStatus());
-};
-
 // Hook for receipts
 export const useReceipts = () => {
     return useApi(() => apiService.getReceipts());
-};
-
-// Hook for sponsorship info
-export const useSponsorshipInfo = () => {
-    return useApi(() => apiService.getSponsorshipInfo());
 };
 
 // Hook for form submission

@@ -12,19 +12,6 @@ export const RECEIPT_STATUS = {
     EXPIRED: 'expired',
 } as const;
 
-// Sponsorship Status
-export const SPONSORSHIP_STATUS = {
-    NONE: 'none',
-    PENDING: 'pending',
-    ACTIVE: 'active',
-    EXPIRED: 'expired',
-} as const;
-
-// Sponsorship Platform
-export const SPONSORSHIP_PLATFORM = {
-    BUY_ME_A_COFFEE: 'buymeacoffee',
-} as const;
-
 // Buy Me a Coffee URL
 export const BUY_ME_A_COFFEE_URL = 'https://buymeacoffee.com/temidaradev';
 
@@ -62,5 +49,4 @@ export const SUCCESS_MESSAGES = {
     RECEIPT_CREATED: 'Receipt created successfully!',
     RECEIPT_UPDATED: 'Receipt updated successfully!',
     RECEIPT_DELETED: 'Receipt deleted successfully!',
-    VERIFICATION_SUBMITTED: 'Verification request submitted successfully!',
 } as const;

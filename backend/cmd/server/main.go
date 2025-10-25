@@ -75,7 +75,6 @@ func main() {
 
 	// Initialize handlers
 	receiptHandler := handlers.NewReceiptHandler(db)
-	sponsorshipHandler := handlers.NewSponsorshipHandler(db)
 
 	// Initialize services
 	cronService := services.NewCronService(db)
@@ -138,16 +137,6 @@ func main() {
 			// PDF parsing route
 			protected.Post("/parse-pdf", receiptHandler.ParsePDF)
 
-			// Sponsorship routes
-			log.Println("Registering sponsorship routes...")
-			sponsorship := protected.Group("/sponsorship")
-			{
-				sponsorship.Get("/test", sponsorshipHandler.TestSponsorshipEndpoint)
-				sponsorship.Get("/info", sponsorshipHandler.GetSponsorshipInfo)
-				sponsorship.Get("/status", sponsorshipHandler.GetSponsorshipStatus)
-				sponsorship.Post("/verify", sponsorshipHandler.RequestSponsorshipVerification)
-			}
-			log.Println("Sponsorship routes registered successfully")
 		}
 
 	}

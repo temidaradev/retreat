@@ -3,6 +3,8 @@ import { dark } from '@clerk/themes'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import Dashboard from './components/layout/Dashboard'
 import Landing from './components/layout/Landing'
+import Pricing from './components/layout/Pricing'
+import SubscriptionStatus from './components/common/SubscriptionStatus'
 import { clerk, validateConfig } from './config'
 import './App.css'
 
@@ -28,6 +30,8 @@ function App() {
           <SignedIn>
             <Routes>
               <Route path="/" element={<Dashboard />} />
+              <Route path="/pricing" element={<Pricing />} />
+              <Route path="/subscription" element={<SubscriptionStatus />} />
               <Route path="*" element={<Dashboard />} />
             </Routes>
           </SignedIn>

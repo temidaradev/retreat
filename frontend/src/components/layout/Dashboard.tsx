@@ -1,11 +1,11 @@
-import { UserButton } from '@clerk/clerk-react'
-import { Plus, Receipt, Calendar, AlertTriangle, Upload, Search, TrendingUp, Heart } from 'lucide-react'
+import { UserButton, useAuth, Protect } from '@clerk/clerk-react'
+import { Plus, Receipt, Calendar, AlertTriangle, Upload, Search, TrendingUp, Crown, Lock, ExternalLink } from 'lucide-react'
 import { useState, useEffect, useRef } from 'react'
-import { apiService, type ReceiptData, type SponsorshipStatus } from '../../services/api'
-import { SPONSORSHIP_STATUS } from '../../constants'
-import SponsorshipModal from '../forms/SponsorshipModal'
+import { Link } from 'react-router-dom'
+import { apiService, type ReceiptData } from '../../services/api'
 
 export default function Dashboard() {
+  const { has, isLoaded } = useAuth()
   const [searchTerm, setSearchTerm] = useState('')
   const [showUploadModal, setShowUploadModal] = useState(false)
   const [receipts, setReceipts] = useState<ReceiptData[]>([])
@@ -14,23 +14,22 @@ export default function Dashboard() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [emailText, setEmailText] = useState('')
   const [processing, setProcessing] = useState(false)
-  const [showSponsorshipModal, setShowSponsorshipModal] = useState(false)
-  const [sponsorshipStatus, setSponsorshipStatus] = useState<SponsorshipStatus | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // Premium features access control
+  const hasRetreatPlan = has({ plan: 'retreat' })
+  const hasAdvancedAnalytics = has({ feature: 'advanced_analytics' })
+  const hasExportData = has({ feature: 'export_data' })
+  const hasApiAccess = has({ feature: 'api_access' })
+  
+  // Free plan limits
+  const FREE_PLAN_LIMIT = 10
+  const isAtFreeLimit = !hasRetreatPlan && receipts.length >= FREE_PLAN_LIMIT
 
   useEffect(() => {
     loadReceipts()
-    loadSponsorshipStatus()
   }, [])
 
-  const loadSponsorshipStatus = async () => {
-    try {
-      const status = await apiService.getSponsorshipStatus()
-      setSponsorshipStatus(status)
-    } catch (err) {
-      console.error('Error loading sponsorship status:', err)
-    }
-  }
 
   const loadReceipts = async () => {
     try {
@@ -193,27 +192,40 @@ export default function Dashboard() {
             <span className="text-phi-lg font-bold" style={{ color: 'var(--color-text-primary)' }}>
               Retreat
             </span>
-            {sponsorshipStatus?.status === 'active' && (
-              <div className="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium" style={{ background: 'var(--color-warning-bg)', color: 'var(--color-warning)' }}>
-                <Heart className="w-3 h-3" />
-                Supporter
+            {hasRetreatPlan && (
+              <div className="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium" style={{ background: 'var(--color-accent-500)', color: 'white' }}>
+                <Crown className="w-3 h-3" />
+                Retreat
               </div>
             )}
           </div>
           <div className="flex items-center gap-phi">
-            <button
-              onClick={() => {
-                setShowSponsorshipModal(true)
-              }}
-              className="flex items-center gap-phi px-phi py-phi-sm rounded-phi-md text-phi-sm font-medium transition-all duration-200 hover-lift"
-              style={{
-                background: sponsorshipStatus?.status === SPONSORSHIP_STATUS.ACTIVE ? 'var(--color-bg-tertiary)' : 'var(--color-accent-500)',
-                color: sponsorshipStatus?.status === SPONSORSHIP_STATUS.ACTIVE ? 'var(--color-text-primary)' : 'white'
-              }}
+            {!hasRetreatPlan && (
+              <Link
+                to="/pricing"
+                className="flex items-center gap-phi px-phi py-phi-sm rounded-phi-md text-phi-sm font-medium transition-all duration-200 hover-lift"
+                style={{
+                  background: 'linear-gradient(135deg, var(--color-accent-500), var(--color-accent-600))',
+                  color: 'white',
+                  boxShadow: '0 4px 16px rgba(59, 130, 246, 0.3)'
+                }}
+              >
+                <Crown className="w-4 h-4" />
+                Upgrade
+              </Link>
+            )}
+            <a 
+              href="https://www.buymeacoffee.com/temidaradev" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="inline-block"
             >
-              <Heart className="w-4 h-4" />
-              {sponsorshipStatus?.status === SPONSORSHIP_STATUS.ACTIVE ? 'Manage' : 'Support'}
-            </button>
+              <img 
+                src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=☕&slug=temidaradev&button_colour=FFDD00&font_colour=000000&font_family=Cookie&outline_colour=000000&coffee_colour=ffffff" 
+                alt="Buy me a coffee"
+                className="h-8"
+              />
+            </a>
             <UserButton afterSignOutUrl="/" />
           </div>
         </div>
@@ -221,6 +233,44 @@ export default function Dashboard() {
 
       <main className="px-phi-lg py-phi-xl">
         <div className="max-w-7xl mx-auto w-full">
+          {/* Free Plan Limit Warning */}
+          {isAtFreeLimit && (
+            <div 
+              className="rounded-phi-lg p-phi-lg border mb-phi-lg"
+              style={{
+                background: 'var(--color-warning-bg)',
+                borderColor: 'var(--color-warning)',
+                borderWidth: '2px'
+              }}
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-phi">
+                  <Lock className="w-5 h-5" style={{ color: 'var(--color-warning)' }} />
+                  <div>
+                    <h3 className="text-phi-base font-semibold" style={{ color: 'var(--color-warning)' }}>
+                      Free Plan Limit Reached
+                    </h3>
+                    <p className="text-phi-sm" style={{ color: 'var(--color-text-secondary)' }}>
+                      You've reached the {FREE_PLAN_LIMIT} receipt limit. Upgrade to Retreat for unlimited receipts.
+                    </p>
+                  </div>
+                </div>
+                <Link
+                  to="/pricing"
+                  className="flex items-center gap-phi px-phi py-phi-sm rounded-phi-md text-phi-sm font-medium transition-all duration-200 hover-lift"
+                  style={{
+                    background: 'var(--color-warning)',
+                    color: 'white'
+                  }}
+                >
+                  <Crown className="w-4 h-4" />
+                  Upgrade Now
+                </Link>
+              </div>
+            </div>
+          )}
+
+
           {/* Stats Cards - Minimal with subtle backgrounds */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-phi-lg mb-phi-xl">
             <div 
@@ -316,6 +366,81 @@ export default function Dashboard() {
             </div>
           </div>
 
+          {/* Premium Features Section */}
+          {(hasAdvancedAnalytics || hasExportData || hasApiAccess) && (
+            <div 
+              className="rounded-phi-lg border mb-phi-xl overflow-hidden"
+              style={{
+                background: 'var(--color-bg-secondary)',
+                borderColor: 'var(--color-border)'
+              }}
+            >
+              <div className="p-phi-lg border-b" style={{ borderColor: 'var(--color-border)' }}>
+                <div className="flex items-center gap-phi">
+                  <Crown className="w-5 h-5" style={{ color: 'var(--color-accent-500)' }} />
+                  <h2 className="text-phi-lg font-semibold" style={{ color: 'var(--color-text-primary)' }}>
+                    Premium Features
+                  </h2>
+                </div>
+              </div>
+              
+              <div className="p-phi-lg">
+                <div className="grid md:grid-cols-3 gap-phi-lg">
+                  {hasAdvancedAnalytics && (
+                    <div className="text-center">
+                      <div 
+                        className="icon-phi-xl rounded-phi-lg flex items-center justify-center mx-auto mb-phi"
+                        style={{ background: 'var(--color-accent-500)' }}
+                      >
+                        <TrendingUp className="w-8 h-8 text-white" />
+                      </div>
+                      <h3 className="text-phi-base font-semibold mb-phi" style={{ color: 'var(--color-text-primary)' }}>
+                        Advanced Analytics
+                      </h3>
+                      <p className="text-phi-sm" style={{ color: 'var(--color-text-secondary)' }}>
+                        Detailed insights into your spending patterns and warranty trends
+                      </p>
+                    </div>
+                  )}
+                  
+                  {hasExportData && (
+                    <div className="text-center">
+                      <div 
+                        className="icon-phi-xl rounded-phi-lg flex items-center justify-center mx-auto mb-phi"
+                        style={{ background: 'var(--color-success)' }}
+                      >
+                        <ExternalLink className="w-8 h-8 text-white" />
+                      </div>
+                      <h3 className="text-phi-base font-semibold mb-phi" style={{ color: 'var(--color-text-primary)' }}>
+                        Export Data
+                      </h3>
+                      <p className="text-phi-sm" style={{ color: 'var(--color-text-secondary)' }}>
+                        Export your receipts and data in CSV, PDF, or JSON formats
+                      </p>
+                    </div>
+                  )}
+                  
+                  {hasApiAccess && (
+                    <div className="text-center">
+                      <div 
+                        className="icon-phi-xl rounded-phi-lg flex items-center justify-center mx-auto mb-phi"
+                        style={{ background: 'var(--color-warning)' }}
+                      >
+                        <ExternalLink className="w-8 h-8 text-white" />
+                      </div>
+                      <h3 className="text-phi-base font-semibold mb-phi" style={{ color: 'var(--color-text-primary)' }}>
+                        API Access
+                      </h3>
+                      <p className="text-phi-sm" style={{ color: 'var(--color-text-secondary)' }}>
+                        Integrate with your existing systems using our REST API
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Search and Add Button */}
           <div className="flex flex-col sm:flex-row gap-phi mb-phi-lg items-stretch sm:items-center">
             <div className="relative flex-1">
@@ -339,23 +464,46 @@ export default function Dashboard() {
                 }}
               />
             </div>
-            <button
-              onClick={() => setShowUploadModal(true)}
-              className="font-medium transition-all duration-200 hover-lift flex items-center justify-center gap-phi whitespace-nowrap border-0"
-              style={{
-                height: 'var(--input-height-sm)',
-                minWidth: 'auto',
-                padding: '0 var(--space-lg)',
-                fontSize: 'var(--text-sm)',
-                borderRadius: 'var(--radius-full)',
-                background: 'linear-gradient(135deg, var(--color-accent-500), var(--color-accent-600))',
-                color: 'white',
-                boxShadow: '0 4px 16px rgba(59, 130, 246, 0.3)'
-              }}
+            <Protect
+              plan="retreat"
+              fallback={
+                <Link
+                  to="/pricing"
+                  className="font-medium transition-all duration-200 hover-lift flex items-center justify-center gap-phi whitespace-nowrap border-0"
+                  style={{
+                    height: 'var(--input-height-sm)',
+                    minWidth: 'auto',
+                    padding: '0 var(--space-lg)',
+                    fontSize: 'var(--text-sm)',
+                    borderRadius: 'var(--radius-full)',
+                    background: 'linear-gradient(135deg, var(--color-accent-500), var(--color-accent-600))',
+                    color: 'white',
+                    boxShadow: '0 4px 16px rgba(59, 130, 246, 0.3)'
+                  }}
+                >
+                  <Lock className="w-5 h-5" />
+                  <span>Upgrade to Add More</span>
+                </Link>
+              }
             >
-              <Plus className="w-5 h-5" />
-              <span>Add Receipt</span>
-            </button>
+              <button
+                onClick={() => setShowUploadModal(true)}
+                className="font-medium transition-all duration-200 hover-lift flex items-center justify-center gap-phi whitespace-nowrap border-0"
+                style={{
+                  height: 'var(--input-height-sm)',
+                  minWidth: 'auto',
+                  padding: '0 var(--space-lg)',
+                  fontSize: 'var(--text-sm)',
+                  borderRadius: 'var(--radius-full)',
+                  background: 'linear-gradient(135deg, var(--color-accent-500), var(--color-accent-600))',
+                  color: 'white',
+                  boxShadow: '0 4px 16px rgba(59, 130, 246, 0.3)'
+                }}
+              >
+                <Plus className="w-5 h-5" />
+                <span>Add Receipt</span>
+              </button>
+            </Protect>
           </div>
 
           {/* Receipts List */}
@@ -658,15 +806,6 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Sponsorship Modal */}
-      <SponsorshipModal
-        isOpen={showSponsorshipModal}
-        onClose={() => setShowSponsorshipModal(false)}
-        onSponsorshipChange={() => {
-          loadSponsorshipStatus()
-          loadReceipts()
-        }}
-      />
     </div>
   )
 }

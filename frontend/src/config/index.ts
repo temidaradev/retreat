@@ -2,13 +2,19 @@
 export const config = {
     // API Configuration
     api: {
-        baseUrl: import.meta.env.VITE_API_URL || (import.meta.env.MODE === 'production' ? 'https://api.temidara.rocks/api/v1' : 'http://localhost:8080/api/v1'),
+        baseUrl: import.meta.env.VITE_API_URL || (import.meta.env.MODE === 'production' ? 'https://api.retreat-app.tech/api/v1' : 'http://localhost:8080/api/v1'),
         timeout: 10000, // 10 seconds
     },
 
     // Clerk Authentication
     clerk: {
         publishableKey: import.meta.env.VITE_CLERK_PUBLISHABLE_KEY,
+        // Billing configuration
+        billing: {
+            enabled: true,
+            // Clerk billing costs 0.7% per transaction + Stripe fees
+            transactionFee: 0.007,
+        },
     },
 
     // Application Settings
