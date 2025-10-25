@@ -1,4 +1,4 @@
-import { UserButton, useAuth, Protect } from '@clerk/clerk-react'
+import { UserButton, useAuth } from '@clerk/clerk-react'
 import { Plus, Receipt, Calendar, AlertTriangle, Upload, Search, TrendingUp, Crown, Lock, ExternalLink } from 'lucide-react'
 import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
@@ -241,38 +241,68 @@ export default function Dashboard() {
 
       <main className="px-phi-lg py-phi-xl">
         <div className="max-w-7xl mx-auto w-full">
-          {/* Free Plan Limit Warning */}
-          {isAtFreeLimit && (
+          {/* Free Plan Limit Warning or Progress */}
+          {!hasRetreatPlan && (
             <div 
               className="rounded-phi-lg p-phi-lg border mb-phi-lg"
               style={{
-                background: 'var(--color-warning-bg)',
-                borderColor: 'var(--color-warning)',
+                background: isAtFreeLimit ? 'var(--color-warning-bg)' : 'var(--color-info-bg)',
+                borderColor: isAtFreeLimit ? 'var(--color-warning)' : 'var(--color-accent-500)',
                 borderWidth: '2px'
               }}
             >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-phi">
-                  <Lock className="w-5 h-5" style={{ color: 'var(--color-warning)' }} />
-                  <div>
-                    <h3 className="text-phi-base font-semibold" style={{ color: 'var(--color-warning)' }}>
-                      Free Plan Limit Reached
+              <div className="flex items-center justify-between flex-wrap gap-phi">
+                <div className="flex items-center gap-phi flex-1">
+                  {isAtFreeLimit ? (
+                    <Lock className="w-5 h-5" style={{ color: 'var(--color-warning)' }} />
+                  ) : (
+                    <Receipt className="w-5 h-5" style={{ color: 'var(--color-accent-500)' }} />
+                  )}
+                  <div className="flex-1">
+                    <h3 className="text-phi-base font-semibold" style={{ color: isAtFreeLimit ? 'var(--color-warning)' : 'var(--color-accent-500)' }}>
+                      {isAtFreeLimit ? 'Free Plan Limit Reached' : 'Free Plan'}
                     </h3>
                     <p className="text-phi-sm" style={{ color: 'var(--color-text-secondary)' }}>
-                      You've reached the {FREE_PLAN_LIMIT} receipt limit. Upgrade to Retreat for unlimited receipts.
+                      {isAtFreeLimit 
+                        ? `You've reached the ${FREE_PLAN_LIMIT} receipt limit. Upgrade to Retreat for unlimited receipts.`
+                        : `You have ${FREE_PLAN_LIMIT - receipts.length} receipt${FREE_PLAN_LIMIT - receipts.length !== 1 ? 's' : ''} remaining. Upgrade for unlimited receipts and premium features.`
+                      }
                     </p>
+                    
+                    {/* Progress bar */}
+                    {!isAtFreeLimit && (
+                      <div className="mt-phi-sm">
+                        <div 
+                          className="h-2 rounded-full overflow-hidden"
+                          style={{ background: 'rgba(148, 163, 184, 0.2)' }}
+                        >
+                          <div 
+                            className="h-full transition-all duration-300"
+                            style={{
+                              width: `${(receipts.length / FREE_PLAN_LIMIT) * 100}%`,
+                              background: receipts.length >= FREE_PLAN_LIMIT * 0.8 
+                                ? 'var(--color-warning)' 
+                                : 'var(--color-accent-500)'
+                            }}
+                          />
+                        </div>
+                        <p className="text-phi-xs mt-1" style={{ color: 'var(--color-text-tertiary)' }}>
+                          {receipts.length} of {FREE_PLAN_LIMIT} receipts used
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
                 <Link
                   to="/pricing"
-                  className="flex items-center gap-phi px-phi py-phi-sm rounded-phi-md text-phi-sm font-medium transition-all duration-200 hover-lift"
+                  className="flex items-center gap-phi px-phi py-phi-sm rounded-phi-md text-phi-sm font-medium transition-all duration-200 hover-lift whitespace-nowrap"
                   style={{
-                    background: 'var(--color-warning)',
+                    background: isAtFreeLimit ? 'var(--color-warning)' : 'var(--color-accent-500)',
                     color: 'white'
                   }}
                 >
                   <Crown className="w-4 h-4" />
-                  Upgrade Now
+                  {isAtFreeLimit ? 'Upgrade Now' : 'View Plans'}
                 </Link>
               </div>
             </div>
@@ -472,9 +502,20 @@ export default function Dashboard() {
                 }}
               />
             </div>
-            <Protect
-              plan="retreat"
-              fallback={
+            
+            {/* Show appropriate button based on plan and receipt count */}
+            <div className="flex items-center gap-phi">
+              {/* Receipt count indicator for free users */}
+              {!hasRetreatPlan && (
+                <div className="text-phi-sm" style={{ color: 'var(--color-text-secondary)' }}>
+                  <span className="font-medium" style={{ color: receipts.length >= FREE_PLAN_LIMIT ? 'var(--color-warning)' : 'var(--color-text-primary)' }}>
+                    {receipts.length}/{FREE_PLAN_LIMIT}
+                  </span> receipts
+                </div>
+              )}
+              
+              {/* Show "Upgrade to Add More" only when at limit */}
+              {isAtFreeLimit ? (
                 <Link
                   to="/pricing"
                   className="font-medium transition-all duration-200 hover-lift flex items-center justify-center gap-phi whitespace-nowrap border-0"
@@ -492,26 +533,26 @@ export default function Dashboard() {
                   <Lock className="w-5 h-5" />
                   <span>Upgrade to Add More</span>
                 </Link>
-              }
-            >
-              <button
-                onClick={() => setShowUploadModal(true)}
-                className="font-medium transition-all duration-200 hover-lift flex items-center justify-center gap-phi whitespace-nowrap border-0"
-                style={{
-                  height: 'var(--input-height-sm)',
-                  minWidth: 'auto',
-                  padding: '0 var(--space-lg)',
-                  fontSize: 'var(--text-sm)',
-                  borderRadius: 'var(--radius-full)',
-                  background: 'linear-gradient(135deg, var(--color-accent-500), var(--color-accent-600))',
-                  color: 'white',
-                  boxShadow: '0 4px 16px rgba(59, 130, 246, 0.3)'
-                }}
-              >
-                <Plus className="w-5 h-5" />
-                <span>Add Receipt</span>
-              </button>
-            </Protect>
+              ) : (
+                <button
+                  onClick={() => setShowUploadModal(true)}
+                  className="font-medium transition-all duration-200 hover-lift flex items-center justify-center gap-phi whitespace-nowrap border-0"
+                  style={{
+                    height: 'var(--input-height-sm)',
+                    minWidth: 'auto',
+                    padding: '0 var(--space-lg)',
+                    fontSize: 'var(--text-sm)',
+                    borderRadius: 'var(--radius-full)',
+                    background: 'linear-gradient(135deg, var(--color-accent-500), var(--color-accent-600))',
+                    color: 'white',
+                    boxShadow: '0 4px 16px rgba(59, 130, 246, 0.3)'
+                  }}
+                >
+                  <Plus className="w-5 h-5" />
+                  <span>Add Receipt</span>
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Receipts List */}

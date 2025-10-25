@@ -126,26 +126,28 @@ func validateClerkToken(tokenString string) (*ClerkClaims, error) {
 
 // getClerkPublicKey fetches and parses the public key from Clerk
 func getClerkPublicKey(kid string) (*rsa.PublicKey, error) {
-	// Get Clerk secret key from environment
-	clerkSecretKey := os.Getenv("CLERK_SECRET_KEY")
-	if clerkSecretKey == "" {
-		return nil, fmt.Errorf("CLERK_SECRET_KEY environment variable not set")
+	// Get Clerk JWKS URL from environment (e.g., https://your-instance.clerk.accounts.dev/.well-known/jwks.json)
+	jwksURL := os.Getenv("CLERK_JWKS_URL")
+	if jwksURL == "" {
+		// Default to extracting from secret key environment variable
+		clerkSecretKey := os.Getenv("CLERK_SECRET_KEY")
+		if clerkSecretKey == "" {
+			return nil, fmt.Errorf("CLERK_SECRET_KEY or CLERK_JWKS_URL environment variable not set")
+		}
+
+		// For Clerk, we can derive the JWKS URL from the frontend domain
+		// This is a fallback - it's better to set CLERK_JWKS_URL explicitly
+		// The JWKS is at: https://<clerk-frontend-api>/.well-known/jwks.json
+		clerkFrontendAPI := os.Getenv("CLERK_FRONTEND_API")
+		if clerkFrontendAPI == "" {
+			return nil, fmt.Errorf("CLERK_FRONTEND_API environment variable not set (e.g., heroic-dragon-8.clerk.accounts.dev)")
+		}
+		jwksURL = fmt.Sprintf("https://%s/.well-known/jwks.json", clerkFrontendAPI)
 	}
 
-	// Extract the publishable key from the secret key
-	// Clerk secret keys are in format: sk_test_xxxxx or sk_live_xxxxx
-	// We need to convert to publishable key format: pk_test_xxxxx or pk_live_xxxxx
-	var publishableKey string
-	if strings.HasPrefix(clerkSecretKey, "sk_test_") {
-		publishableKey = strings.Replace(clerkSecretKey, "sk_test_", "pk_test_", 1)
-	} else if strings.HasPrefix(clerkSecretKey, "sk_live_") {
-		publishableKey = strings.Replace(clerkSecretKey, "sk_live_", "pk_live_", 1)
-	} else {
-		return nil, fmt.Errorf("invalid Clerk secret key format")
-	}
+	log.Printf("Fetching JWKS from: %s", jwksURL)
 
 	// Fetch JWKS from Clerk
-	jwksURL := fmt.Sprintf("https://api.clerk.com/v1/jwks?key=%s", publishableKey)
 	resp, err := http.Get(jwksURL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch JWKS: %v", err)
@@ -173,7 +175,7 @@ func getClerkPublicKey(kid string) (*rsa.PublicKey, error) {
 	}
 
 	if !found {
-		return nil, fmt.Errorf("key with kid %s not found", kid)
+		return nil, fmt.Errorf("key with kid %s not found in JWKS", kid)
 	}
 
 	// Parse the RSA public key
