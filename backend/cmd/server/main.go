@@ -60,16 +60,6 @@ func main() {
 		ExposeHeaders:    "Content-Length,Content-Type",
 	}))
 
-	// Additional CORS handling for Vercel
-	app.Use(func(c *fiber.Ctx) error {
-		origin := c.Get("Origin")
-		if origin != "" {
-			c.Set("Access-Control-Allow-Origin", origin)
-			c.Set("Access-Control-Allow-Credentials", "true")
-		}
-		return c.Next()
-	})
-
 	// Setup production middleware AFTER CORS
 	middleware.SetupProductionMiddleware(app)
 
@@ -115,6 +105,14 @@ func main() {
 			return c.JSON(fiber.Map{
 				"message": "CORS test successful",
 				"headers": c.GetReqHeaders(),
+			})
+		})
+
+		// Sponsorship status endpoint (public)
+		api.Get("/sponsorship/status", func(c *fiber.Ctx) error {
+			return c.JSON(fiber.Map{
+				"status":  "none",
+				"message": "No active sponsorship",
 			})
 		})
 
