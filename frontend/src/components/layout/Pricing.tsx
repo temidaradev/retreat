@@ -1,6 +1,7 @@
 import { ArrowLeft, Coffee, Mail, Crown } from "lucide-react";
 import { Link } from "react-router-dom";
 import { external } from "../../config";
+import ThemeSelector from "../common/ThemeSelector";
 
 export default function Pricing() {
   return (
@@ -27,6 +28,7 @@ export default function Pricing() {
               <span className="sm:hidden">Back</span>
             </Link>
           </div>
+          <ThemeSelector />
         </div>
       </header>
 

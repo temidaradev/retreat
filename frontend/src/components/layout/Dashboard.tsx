@@ -16,6 +16,7 @@ import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { apiService, type ReceiptData } from "../../services/api";
 import { formatCompactCurrency } from "../../utils";
+import ThemeSelector from "../common/ThemeSelector";
 
 export default function Dashboard() {
   const { has, getToken } = useAuth();
@@ -292,6 +293,7 @@ export default function Dashboard() {
                 className="h-8"
               />
             </a>
+            <ThemeSelector />
             <UserButton afterSignOutUrl="/" />
           </div>
         </div>
