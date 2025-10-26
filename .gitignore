@@ -68,3 +68,4 @@ backend/go.work
 *.db
 *.sqlite
 *.sqlite3
+.claude

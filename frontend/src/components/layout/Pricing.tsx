@@ -1,194 +1,286 @@
-import { PricingTable } from '@clerk/clerk-react'
-import { ArrowLeft, Check, Star } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { ArrowLeft, Coffee, Mail, Crown } from "lucide-react";
+import { Link } from "react-router-dom";
+import { external } from "../../config";
 
 export default function Pricing() {
   return (
-    <div className="min-h-screen" style={{ background: 'var(--color-bg-primary)' }}>
+    <div
+      className="min-h-screen"
+      style={{ background: "var(--color-bg-primary)" }}
+    >
       {/* Header */}
-      <header 
-        className="border-b"
-        style={{ 
-          background: 'var(--color-bg-secondary)',
-          borderColor: 'var(--color-border)' 
+      <header
+        className="border-b sticky top-0 z-40 backdrop-blur-modern"
+        style={{
+          borderColor: "var(--color-border)",
         }}
       >
-        <div className="px-phi-lg py-phi flex justify-between items-center">
-          <div className="flex items-center gap-phi">
-            <Link 
+        <div className="px-4 md:px-phi-lg py-3 md:py-phi flex justify-between items-center">
+          <div className="flex items-center gap-2 md:gap-phi">
+            <Link
               to="/"
-              className="flex items-center gap-phi text-phi-base hover:opacity-80 transition-opacity"
-              style={{ color: 'var(--color-text-secondary)' }}
+              className="flex items-center gap-2 md:gap-phi text-sm md:text-phi-base hover:opacity-80 transition-opacity"
+              style={{ color: "var(--color-text-secondary)" }}
             >
-              <ArrowLeft className="w-5 h-5" />
-              Back to Dashboard
+              <ArrowLeft className="w-4 h-4 md:w-5 md:h-5" />
+              <span className="hidden sm:inline">Back to Dashboard</span>
+              <span className="sm:hidden">Back</span>
             </Link>
           </div>
         </div>
       </header>
 
-      <main className="px-phi-lg py-phi-xl">
-        <div className="max-w-6xl mx-auto w-full">
+      <main className="px-4 md:px-phi-lg py-6 md:py-phi-xl">
+        <div className="max-w-4xl mx-auto w-full">
           {/* Hero Section */}
-          <div className="text-center mb-phi-2xl">
-            <div className="flex items-center justify-center gap-phi mb-phi-lg">
-              <Star className="w-8 h-8" style={{ color: 'var(--color-accent-500)' }} />
-              <h1 className="text-phi-3xl font-bold" style={{ color: 'var(--color-text-primary)' }}>
-                Choose Your Plan
+          <div className="text-center mb-8 md:mb-phi-2xl">
+            <div className="flex items-center justify-center gap-2 md:gap-phi mb-4 md:mb-phi-lg">
+              <Coffee
+                className="w-6 h-6 md:w-8 md:h-8"
+                style={{ color: "var(--color-accent-500)" }}
+              />
+              <h1
+                className="text-2xl md:text-4xl font-bold"
+                style={{ color: "var(--color-text-primary)" }}
+              >
+                Support Retreat
               </h1>
             </div>
-            <p className="text-phi-lg max-w-2xl mx-auto" style={{ color: 'var(--color-text-secondary)' }}>
-              Unlock premium features to get the most out of your receipt management experience
+            <p
+              className="text-sm md:text-phi-lg max-w-2xl mx-auto px-4"
+              style={{ color: "var(--color-text-secondary)" }}
+            >
+              Help keep Retreat running by becoming a sponsor
             </p>
           </div>
 
-          {/* Features Comparison */}
-          <div 
-            className="rounded-phi-lg border mb-phi-2xl overflow-hidden"
+          {/* Sponsorship Instructions */}
+          <div
+            className="rounded-phi-lg border overflow-hidden mb-6 md:mb-phi-xl"
             style={{
-              background: 'var(--color-bg-secondary)',
-              borderColor: 'var(--color-border)'
+              background: "var(--color-bg-secondary)",
+              borderColor: "var(--color-border)",
             }}
           >
-            <div className="p-phi-lg border-b" style={{ borderColor: 'var(--color-border)' }}>
-              <h2 className="text-phi-lg font-semibold text-center" style={{ color: 'var(--color-text-primary)' }}>
-                Feature Comparison
-              </h2>
+            <div
+              className="p-4 md:p-phi-lg border-b"
+              style={{ borderColor: "var(--color-border)" }}
+            >
+              <div className="flex items-center gap-2 md:gap-phi">
+                <Crown
+                  className="w-5 h-5"
+                  style={{ color: "var(--color-accent-500)" }}
+                />
+                <h3
+                  className="text-base md:text-phi-lg font-semibold"
+                  style={{ color: "var(--color-text-primary)" }}
+                >
+                  Become a Sponsor
+                </h3>
+              </div>
             </div>
-            
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b" style={{ borderColor: 'var(--color-border)' }}>
-                    <th className="text-left p-phi-lg font-medium" style={{ color: 'var(--color-text-primary)' }}>
-                      Features
-                    </th>
-                    <th className="text-center p-phi-lg font-medium" style={{ color: 'var(--color-text-primary)' }}>
-                      Free
-                    </th>
-                    <th className="text-center p-phi-lg font-medium" style={{ color: 'var(--color-text-primary)' }}>
-                      Retreat
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {[
-                    { feature: 'Receipt Storage', free: '10 receipts', retreat: 'Unlimited' },
-                    { feature: 'Email Forwarding', free: '✓', retreat: '✓' },
-                    { feature: 'PDF Upload', free: '✓', retreat: '✓' },
-                    { feature: 'Warranty Tracking', free: '✓', retreat: '✓' },
-                    { feature: 'Advanced Analytics', free: '✗', retreat: '✓' },
-                    { feature: 'Export Data', free: '✗', retreat: '✓' },
-                    { feature: 'Priority Support', free: '✗', retreat: '✓' },
-                  ].map((row, index) => (
-                    <tr 
-                      key={index}
-                      className="border-b" 
-                      style={{ 
-                        borderColor: 'var(--color-border)',
-                        background: index % 2 === 0 ? 'transparent' : 'var(--color-bg-tertiary)'
+
+            <div className="p-4 md:p-phi-xl">
+              <div className="space-y-6 md:space-y-phi-xl">
+                {/* Step 1 */}
+                <div className="flex gap-3 md:gap-phi">
+                  <div
+                    className="w-10 h-10 md:icon-phi-md rounded-phi-md flex items-center justify-center flex-shrink-0"
+                    style={{ background: "var(--color-accent-500)" }}
+                  >
+                    <span className="text-base md:text-phi-lg font-bold text-white">
+                      1
+                    </span>
+                  </div>
+                  <div className="flex-1">
+                    <h4
+                      className="text-sm md:text-phi-base font-semibold mb-2 md:mb-phi"
+                      style={{ color: "var(--color-text-primary)" }}
+                    >
+                      Buy the Retreat Sponsor on Buy Me a Coffee
+                    </h4>
+                    <p
+                      className="text-xs md:text-phi-sm mb-3 md:mb-phi"
+                      style={{ color: "var(--color-text-secondary)" }}
+                    >
+                      Visit our Buy Me a Coffee page and purchase the "Retreat
+                      Sponsor" membership to support the app.
+                    </p>
+                    <a
+                      href={external.buyMeACoffee}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 md:gap-phi px-3 md:px-phi py-2 md:py-phi-sm rounded-phi-md text-xs md:text-phi-sm font-medium transition-all duration-200 hover-lift"
+                      style={{
+                        background: "#FFDD00",
+                        color: "#000000",
                       }}
                     >
-                      <td className="p-phi-lg font-medium" style={{ color: 'var(--color-text-primary)' }}>
-                        {row.feature}
-                      </td>
-                      <td className="p-phi-lg text-center" style={{ color: 'var(--color-text-secondary)' }}>
-                        {row.free === '✓' ? (
-                          <Check className="w-5 h-5 mx-auto" style={{ color: 'var(--color-success)' }} />
-                        ) : row.free === '✗' ? (
-                          <span style={{ color: 'var(--color-text-tertiary)' }}>—</span>
-                        ) : (
-                          row.free
-                        )}
-                      </td>
-                      <td className="p-phi-lg text-center" style={{ color: 'var(--color-text-secondary)' }}>
-                        {row.retreat === '✓' ? (
-                          <Check className="w-5 h-5 mx-auto" style={{ color: 'var(--color-success)' }} />
-                        ) : row.retreat === '✗' ? (
-                          <span style={{ color: 'var(--color-text-tertiary)' }}>—</span>
-                        ) : (
-                          row.retreat
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                      <Coffee className="w-4 h-4" />
+                      Visit Buy Me a Coffee
+                    </a>
+                  </div>
+                </div>
+
+                {/* Step 2 */}
+                <div className="flex gap-3 md:gap-phi">
+                  <div
+                    className="w-10 h-10 md:icon-phi-md rounded-phi-md flex items-center justify-center flex-shrink-0"
+                    style={{ background: "var(--color-accent-500)" }}
+                  >
+                    <span className="text-base md:text-phi-lg font-bold text-white">
+                      2
+                    </span>
+                  </div>
+                  <div className="flex-1">
+                    <h4
+                      className="text-sm md:text-phi-base font-semibold mb-2 md:mb-phi"
+                      style={{ color: "var(--color-text-primary)" }}
+                    >
+                      Email us your details
+                    </h4>
+                    <p
+                      className="text-xs md:text-phi-sm mb-3 md:mb-phi"
+                      style={{ color: "var(--color-text-secondary)" }}
+                    >
+                      After purchasing, send an email with your Buy Me a Coffee
+                      username and the email you use for Retreat.
+                    </p>
+                    <a
+                      href="mailto:support@retreat-app.tech?subject=Retreat Sponsor Activation&body=Buy Me a Coffee Username: %0D%0ARetreat Email: "
+                      className="inline-flex items-center gap-2 md:gap-phi px-3 md:px-phi py-2 md:py-phi-sm rounded-phi-md text-xs md:text-phi-sm font-medium transition-all duration-200 hover-lift"
+                      style={{
+                        background: "var(--color-accent-500)",
+                        color: "white",
+                      }}
+                    >
+                      <Mail className="w-4 h-4" />
+                      Send Email
+                    </a>
+                  </div>
+                </div>
+
+                {/* Step 3 */}
+                <div className="flex gap-3 md:gap-phi">
+                  <div
+                    className="w-10 h-10 md:icon-phi-md rounded-phi-md flex items-center justify-center flex-shrink-0"
+                    style={{ background: "var(--color-accent-500)" }}
+                  >
+                    <span className="text-base md:text-phi-lg font-bold text-white">
+                      3
+                    </span>
+                  </div>
+                  <div className="flex-1">
+                    <h4
+                      className="text-sm md:text-phi-base font-semibold mb-2 md:mb-phi"
+                      style={{ color: "var(--color-text-primary)" }}
+                    >
+                      Get unlimited access
+                    </h4>
+                    <p
+                      className="text-xs md:text-phi-sm"
+                      style={{ color: "var(--color-text-secondary)" }}
+                    >
+                      We'll verify your sponsorship and upgrade your account to
+                      unlimited receipts and premium features within 24 hours!
+                    </p>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* Pricing Table */}
-          <div 
+          {/* Benefits Section */}
+          <div
             className="rounded-phi-lg border overflow-hidden"
             style={{
-              background: 'var(--color-bg-secondary)',
-              borderColor: 'var(--color-border)'
+              background: "var(--color-bg-secondary)",
+              borderColor: "var(--color-border)",
             }}
           >
-            <div className="p-phi-lg border-b" style={{ borderColor: 'var(--color-border)' }}>
-              <h2 className="text-phi-lg font-semibold text-center" style={{ color: 'var(--color-text-primary)' }}>
-                Select Your Plan
-              </h2>
-              <p className="text-phi-base text-center mt-phi" style={{ color: 'var(--color-text-secondary)' }}>
-                All plans include 0.7% transaction fee + Stripe processing fees
-              </p>
+            <div
+              className="p-4 md:p-phi-lg border-b"
+              style={{ borderColor: "var(--color-border)" }}
+            >
+              <h3
+                className="text-base md:text-phi-lg font-semibold"
+                style={{ color: "var(--color-text-primary)" }}
+              >
+                Sponsor Benefits
+              </h3>
             </div>
-            
-            <div className="p-phi-lg">
-              <PricingTable />
-            </div>
-          </div>
 
-          {/* FAQ Section */}
-          <div 
-            className="mt-phi-2xl rounded-phi-lg border overflow-hidden"
-            style={{
-              background: 'var(--color-bg-secondary)',
-              borderColor: 'var(--color-border)'
-            }}
-          >
-            <div className="p-phi-lg border-b" style={{ borderColor: 'var(--color-border)' }}>
-              <h2 className="text-phi-lg font-semibold text-center" style={{ color: 'var(--color-text-primary)' }}>
-                Frequently Asked Questions
-              </h2>
-            </div>
-            
-            <div className="p-phi-lg space-y-phi-lg">
-              {[
-                {
-                  question: "What payment methods do you accept?",
-                  answer: "We accept all major credit cards, debit cards, and digital wallets through Stripe. All payments are processed securely."
-                },
-                {
-                  question: "Can I change my plan anytime?",
-                  answer: "Yes! You can upgrade or downgrade your plan at any time. Changes take effect immediately, and we'll prorate any billing differences."
-                },
-                {
-                  question: "What happens to my data if I cancel?",
-                  answer: "Your data remains accessible for 30 days after cancellation. You can export your receipts during this period. After 30 days, data is permanently deleted."
-                },
-                {
-                  question: "Do you offer refunds?",
-                  answer: "We offer a 30-day money-back guarantee for all paid plans. Contact support if you're not satisfied with your subscription."
-                },
-                {
-                  question: "Is my data secure?",
-                  answer: "Absolutely. We use enterprise-grade encryption, secure cloud storage, and follow industry best practices for data protection and privacy."
-                }
-              ].map((faq, index) => (
-                <div key={index}>
-                  <h3 className="text-phi-base font-semibold mb-phi" style={{ color: 'var(--color-text-primary)' }}>
-                    {faq.question}
-                  </h3>
-                  <p className="text-phi-base" style={{ color: 'var(--color-text-secondary)' }}>
-                    {faq.answer}
-                  </p>
+            <div className="p-4 md:p-phi-lg">
+              <div className="space-y-4 md:space-y-phi-lg">
+                <div>
+                  <h4
+                    className="text-sm md:text-phi-base font-semibold mb-3 md:mb-phi"
+                    style={{ color: "var(--color-text-primary)" }}
+                  >
+                    Sponsor-Only Features
+                  </h4>
+                  <div className="space-y-2 md:space-y-phi-sm">
+                    {[
+                      "Unlimited receipt storage",
+                      "Export data in multiple formats",
+                      "Priority support from the developer",
+                    ].map((benefit, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center gap-2 md:gap-phi"
+                      >
+                        <Crown
+                          className="w-4 h-4 flex-shrink-0"
+                          style={{ color: "var(--color-accent-500)" }}
+                        />
+                        <span
+                          className="text-xs md:text-phi-sm font-medium"
+                          style={{ color: "var(--color-text-primary)" }}
+                        >
+                          {benefit}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              ))}
+
+                <div>
+                  <h4
+                    className="text-sm md:text-phi-base font-semibold mb-3 md:mb-phi"
+                    style={{ color: "var(--color-text-primary)" }}
+                  >
+                    Available on All Plans
+                  </h4>
+                  <div className="space-y-2 md:space-y-phi-sm">
+                    {[
+                      "Email forwarding",
+                      "PDF upload",
+                      "Warranty tracking",
+                      "Smart reminders",
+                    ].map((benefit, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center gap-2 md:gap-phi"
+                      >
+                        <div
+                          className="w-2 h-2 rounded-full flex-shrink-0"
+                          style={{ background: "var(--color-success)" }}
+                        />
+                        <span
+                          className="text-xs md:text-phi-sm"
+                          style={{ color: "var(--color-text-secondary)" }}
+                        >
+                          {benefit}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </main>
     </div>
-  )
+  );
 }

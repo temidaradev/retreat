@@ -171,29 +171,29 @@
     color: var(--color-text-primary);
   }
 
-  /* Apply golden ratio line heights globally */
+  /* Apply reasonable line heights globally */
   h1 {
-    line-height: var(--leading-3xl);
+    line-height: 1.2;
   }
 
   h2 {
-    line-height: var(--leading-2xl);
+    line-height: 1.3;
   }
 
   h3 {
-    line-height: var(--leading-xl);
+    line-height: 1.4;
   }
 
   h4 {
-    line-height: var(--leading-lg);
+    line-height: 1.5;
   }
 
   p {
-    line-height: var(--leading-base);
+    line-height: 1.6;
   }
 
   small {
-    line-height: var(--leading-sm);
+    line-height: 1.5;
   }
 }
 
@@ -447,6 +447,11 @@
     background: linear-gradient(135deg, var(--color-accent-500), var(--color-accent-600));
   }
 
+  /* Accent glow shadow for primary CTAs */
+  .shadow-accent-glow {
+    box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3);
+  }
+
   /* Subtle hover effects */
   .hover-lift {
     transition: transform 200ms ease, box-shadow 200ms ease;
@@ -465,5 +470,194 @@
   .focus-ring:focus {
     outline: none;
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+  }
+
+  /* Modern Animations */
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes slideIn {
+    from {
+      opacity: 0;
+      transform: translateX(-20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes scaleIn {
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.4s ease-out forwards;
+  }
+
+  .animate-slide-in {
+    animation: slideIn 0.4s ease-out forwards;
+  }
+
+  .animate-scale-in {
+    animation: scaleIn 0.3s ease-out forwards;
+  }
+
+  /* Stagger animation delays */
+  .stagger-1 {
+    animation-delay: 0.1s;
+  }
+
+  .stagger-2 {
+    animation-delay: 0.2s;
+  }
+
+  .stagger-3 {
+    animation-delay: 0.3s;
+  }
+
+  .stagger-4 {
+    animation-delay: 0.4s;
+  }
+
+  /* Modern Card Styles */
+  .card-modern {
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .card-modern:hover {
+    border-color: var(--color-border-light);
+    transform: translateY(-2px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
+  }
+
+  /* Gradient Overlays */
+  .gradient-overlay {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .gradient-overlay::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 200px;
+    background: linear-gradient(180deg, rgba(59, 130, 246, 0.1) 0%, transparent 100%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Mobile-specific spacing utilities */
+  @media (max-width: 640px) {
+    .px-phi-lg {
+      padding-left: var(--space-md);
+      padding-right: var(--space-md);
+    }
+
+    .py-phi-xl {
+      padding-top: var(--space-lg);
+      padding-bottom: var(--space-lg);
+    }
+
+    .text-phi-3xl {
+      font-size: var(--text-2xl);
+      line-height: var(--leading-2xl);
+    }
+
+    .text-phi-2xl {
+      font-size: var(--text-xl);
+      line-height: var(--leading-xl);
+    }
+
+    .text-phi-xl {
+      font-size: var(--text-lg);
+      line-height: var(--leading-lg);
+    }
+
+    .gap-phi-lg {
+      gap: var(--space-md);
+    }
+
+    .gap-phi-xl {
+      gap: var(--space-md);
+    }
+
+    .mb-phi-2xl {
+      margin-bottom: var(--space-xl);
+    }
+
+    .mb-phi-xl {
+      margin-bottom: var(--space-lg);
+    }
+  }
+
+  /* Smooth scrolling with reduced motion support */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
+  /* Better mobile touch targets */
+  @media (max-width: 640px) {
+    button,
+    a,
+    input,
+    select,
+    textarea {
+      min-height: 44px;
+      min-width: 44px;
+    }
+  }
+
+  /* Backdrop blur for modern effects */
+  .backdrop-blur-modern {
+    backdrop-filter: blur(20px) saturate(180%);
+    background-color: rgba(30, 41, 59, 0.8);
+  }
+
+  /* Shimmer loading effect */
+  @keyframes shimmer {
+    0% {
+      background-position: -1000px 0;
+    }
+    100% {
+      background-position: 1000px 0;
+    }
+  }
+
+  .shimmer {
+    background: linear-gradient(
+      90deg,
+      var(--color-bg-secondary) 0%,
+      var(--color-bg-tertiary) 50%,
+      var(--color-bg-secondary) 100%
+    );
+    background-size: 1000px 100%;
+    animation: shimmer 2s infinite;
   }
 }

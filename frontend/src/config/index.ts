@@ -11,12 +11,6 @@ export const config = {
     // Clerk Authentication
     clerk: {
         publishableKey: import.meta.env.VITE_CLERK_PUBLISHABLE_KEY,
-        // Billing configuration
-        billing: {
-            enabled: true,
-            // Clerk billing costs 0.7% per transaction + Stripe fees
-            transactionFee: 0.007,
-        },
     },
 
     // Application Settings

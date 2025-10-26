@@ -41,6 +41,24 @@ export const formatCurrency = (amount: number, currency: string = 'USD'): string
     return formatter.format(amount);
 };
 
+// Compact number formatting for large amounts
+export const formatCompactNumber = (num: number): string => {
+    if (num < 1000) {
+        return num.toString();
+    } else if (num < 1000000) {
+        return (num / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
+    } else if (num < 1000000000) {
+        return (num / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
+    } else {
+        return (num / 1000000000).toFixed(1).replace(/\.0$/, '') + 'B';
+    }
+};
+
+// Compact currency formatting for large amounts
+export const formatCompactCurrency = (amount: number): string => {
+    return '$' + formatCompactNumber(amount);
+};
+
 // String utilities
 export const truncateString = (str: string, maxLength: number): string => {
     if (str.length <= maxLength) return str;
@@ -145,7 +163,9 @@ export const getErrorMessage = (error: unknown): string => {
 };
 
 // URL utilities
+import { api } from '../config'
+
 export const buildApiUrl = (endpoint: string): string => {
-    const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1';
+    const baseUrl = api.baseUrl;
     return `${baseUrl}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
 };

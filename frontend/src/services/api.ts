@@ -1,5 +1,7 @@
 // API service for connecting to the backend
-const API_BASE_URL = import.meta.env.VITE_API_URL || (import.meta.env.MODE === 'production' ? 'https://api.retreat-app.tech' : 'http://localhost:8080')
+import { api as apiConfig } from '../config'
+
+const API_BASE_URL = apiConfig.baseUrl
 
 export interface ReceiptData {
     id: string

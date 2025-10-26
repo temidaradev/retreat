@@ -1,6 +1,3 @@
-// API Configuration
-export const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://api.temidara.rocks/api/v1';
-
 // Application Constants
 export const APP_NAME = 'Retreat';
 export const APP_VERSION = '1.0.0';

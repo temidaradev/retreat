@@ -1,11 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
+import type { DependencyList } from 'react';
 import { useAuth } from '@clerk/clerk-react';
 import { apiService } from '../services/api';
 
 // Generic hook for API calls with Clerk authentication
 export const useApi = <T>(
     apiCall: () => Promise<T>,
-    dependencies: any[] = []
+    dependencies: DependencyList = []
 ) => {
     const [data, setData] = useState<T | null>(null);
     const [loading, setLoading] = useState(true);
@@ -43,8 +44,8 @@ export const useReceipts = () => {
 };
 
 // Hook for form submission with Clerk authentication
-export const useFormSubmission = <T>(
-    submitFn: (data: T) => Promise<any>
+export const useFormSubmission = <T, R = void>(
+    submitFn: (data: T) => Promise<R>
 ) => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
