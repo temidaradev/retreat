@@ -33,7 +33,6 @@ export default function Dashboard() {
 
   // Premium features access control (managed manually via Clerk dashboard)
   const hasRetreatPlan = has?.({ plan: "retreat" }) ?? false;
-  const hasExportData = hasRetreatPlan; // Sponsors can export data
 
   // Free plan limits
   const FREE_PLAN_LIMIT = 10;
