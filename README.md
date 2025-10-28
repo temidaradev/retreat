@@ -32,15 +32,7 @@ Built with Go on the backend and React on the frontend. I chose these because th
 
 ## How it works
 
-Pretty standard setup:
-
-```
-Your Browser → Nginx (SSL) → Go API → PostgreSQL
-                                  ↓
-                               Redis (cache)
-```
-
-The frontend is a React app that talks to a Go API. The API stores everything in PostgreSQL and uses Redis for caching and rate limiting. Nginx sits in front to handle SSL and routing. Nothing groundbreaking, but it works well for this use case.
+The frontend is a React app that talks to a Go API. The API stores everything in PostgreSQL and uses Redis for caching and rate limiting. Nothing groundbreaking, but it works well for this use case.
 
 Authentication is handled by Clerk (JWT tokens) so I didn't have to build all that auth stuff myself.
 
