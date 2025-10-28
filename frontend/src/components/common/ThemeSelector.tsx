@@ -40,7 +40,7 @@ export default function ThemeSelector() {
     <div className="relative" ref={dropdownRef} style={{ zIndex: 9999 }}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="p-2 rounded-lg transition-all duration-200 hover:scale-105"
+        className="p-2 rounded-lg transition-all duration-200 hover:scale-105 flex items-center justify-center"
         style={{
           background: "var(--color-bg-secondary)",
           border: "1px solid var(--color-border)",
@@ -97,23 +97,23 @@ export default function ThemeSelector() {
                 }}
               >
                 <span className="text-sm">{theme.name}</span>
-                <div className="flex gap-1">
+                <div className="flex gap-1 items-center">
                   <div
-                    className="w-4 h-4 rounded-full border"
+                    className="w-4 h-4 rounded-full border flex-shrink-0"
                     style={{
                       background: theme.colors.bgPrimary,
                       borderColor: theme.colors.border,
                     }}
                   />
                   <div
-                    className="w-4 h-4 rounded-full border"
+                    className="w-4 h-4 rounded-full border flex-shrink-0"
                     style={{
                       background: theme.colors.accent500,
                       borderColor: theme.colors.border,
                     }}
                   />
                   <div
-                    className="w-4 h-4 rounded-full border"
+                    className="w-4 h-4 rounded-full border flex-shrink-0"
                     style={{
                       background: theme.colors.textPrimary,
                       borderColor: theme.colors.border,
