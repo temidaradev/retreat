@@ -1,222 +1,189 @@
-# Retreat - Receipt & Warranty Management
+# Retreat
 
-A production-ready micro-SaaS that helps users never lose receipts and warranty information. Forward purchase emails to automatically extract warranty info, track expiry dates, and get smart reminders.
+### !! Mail forwarding is still work in progress !!
 
-## 🎯 Features
+Never lose your receipts again. 
 
-- **Email Forwarding**: Auto-parse receipt data from forwarded emails
-- **Warranty Tracking**: Automatic expiry detection and notifications
-- **PDF Parsing**: Upload and parse PDF receipts
-- **Modern Dashboard**: React 18 + TypeScript + Tailwind CSS interface
-- **Secure Auth**: Clerk.dev authentication with JWT
-- **Sponsorship System**: Free tier (10 receipts) + Premium via Buy Me a Coffee
-- **Production Ready**: Graceful shutdown, health checks, structured logging, rate limiting
-- **Secure by Default**: SSL/TLS, security headers, no-new-privileges containers
+Retreat is a simple app that tracks your receipts and warranty information. Just forward your purchase emails and we'll automatically extract the important stuff - warranty dates, purchase amounts, store names - and send you reminders before things expire.
 
-## 🏗️ Tech Stack
+I built this because I kept losing receipts and missing warranty claims. Maybe you've been there too.
 
-- **Frontend**: React 18, TypeScript, Vite, Tailwind CSS
-- **Backend**: Go 1.25, Fiber v2 framework, PostgreSQL 15
-- **Cache**: Redis 7
-- **Auth**: Clerk.dev
-- **Deployment**: Docker Compose, Nginx, Let's Encrypt
-- **Monitoring**: Built-in health checks, structured JSON logging
+## What it does
 
-## 🚀 Quick Start
+The main thing: forward your purchase emails to `save@receiptlocker.com` and we'll handle the rest.
 
-### Development
+- **Email forwarding** - Just forward emails, we'll parse out the receipt info
+- **Warranty tracking** - We'll tell you when warranties are about to expire
+- **PDF uploads** - Got a PDF receipt? Upload it manually if you want
+- **Simple dashboard** - See all your receipts in one place
+- **Free to use** - 5 receipts included, no credit card needed
+- **Sponsor for more** - $5 gets you 50 receipts + premium features (I'm using Buy Me a Coffee since I can't use Stripe yet)
 
-1. **Prerequisites**: Docker Desktop, Clerk account
-2. **Clone & Setup**:
-   ```bash
-   git clone <repository-url>
-   cd receipt-store
-   cp env.example .env
-   # Edit .env with your Clerk keys and database credentials
-   ```
-3. **Run**:
-   ```bash
-   docker-compose up -d
-   ```
-4. **Access**: 
-   - Frontend: http://localhost:3000
-   - Backend API: http://localhost:8080
-   - Health Check: http://localhost:8080/api/v1/health
+## What's under the hood
 
-📖 **Full guide**: See [QUICK_START.md](./QUICK_START.md)
+Built with Go on the backend and React on the frontend. I chose these because they're fast and I like working with them. The stack is pretty straightforward:
 
-### Production Deployment
+- React + TypeScript for the frontend (with Tailwind for styling)
+- Go + Fiber for the API (super fast)
+- PostgreSQL for the database (it's just receipts, doesn't need anything fancy)
+- Redis for caching and rate limiting
+- Clerk for authentication (saves me from building login stuff)
+- Docker Compose to run everything locally
 
-Deploy to Hetzner with production-grade security and monitoring:
+Nothing too exotic here - just solid tools that work well together.
+
+## Getting started
+
+### Running it locally
+
+You'll need Docker Desktop and a Clerk account (it's free). Then:
 
 ```bash
-# Quick deploy
+git clone <repository-url>
+cd receipt-store
+cp env.example .env
+# Fill in your Clerk keys and database password in .env
+docker-compose up -d
+```
+
+That's it. The frontend will be at `http://localhost:3000` and the API at `http://localhost:8080`.
+
+If you run into issues, check the [quick start guide](./QUICK_START.md) - it has more details and troubleshooting tips.
+
+### Deploying to production
+
+I've got a deployment script for Hetzner that sets everything up with SSL and proper security. Check out [PRODUCTION_DEPLOYMENT.md](./PRODUCTION_DEPLOYMENT.md) for the full walkthrough, or if you're feeling brave:
+
+```bash
 ./deploy-production.sh
 ```
 
-📖 **Detailed guide**: See [PRODUCTION_DEPLOYMENT.md](./PRODUCTION_DEPLOYMENT.md)
+## Configuration
 
-## 📋 Environment Variables
+You'll need to set up a few environment variables. At minimum, you need:
 
-### Required
 ```env
-CLERK_SECRET_KEY=sk_live_your_key_here          # From clerk.dev
-VITE_CLERK_PUBLISHABLE_KEY=pk_live_your_key    # From clerk.dev
-POSTGRES_PASSWORD=secure_password               # Database password
-REDIS_PASSWORD=secure_redis_password            # Redis password
-VITE_API_URL=https://api.retreat-app.tech      # Production API URL
+CLERK_SECRET_KEY=sk_live_your_key_here          # Get this from clerk.dev
+VITE_CLERK_PUBLISHABLE_KEY=pk_live_your_key    # Also from clerk.dev
+POSTGRES_PASSWORD=your_secure_password         # Make it a good one
+REDIS_PASSWORD=another_secure_password         # Don't reuse the DB password
+VITE_API_URL=https://api.retreat-app.tech      # Your API URL in production
 ```
 
-### Optional
-```env
-BUYMEACOFFEE_USERNAME=your_username    # Sponsorship integration
-SMTP_HOST=smtp.gmail.com              # Email notifications
-SMTP_PORT=587
-SMTP_USERNAME=your_email
-SMTP_PASSWORD=your_app_password
-LOG_LEVEL=info                        # debug, info, warn, error
-RATE_LIMIT_REQUESTS=100               # Requests per window
-```
+There's also optional stuff like email notifications (SMTP settings) and Buy Me a Coffee integration if you want the sponsorship system working. Check [env.example](./env.example) for the complete list with descriptions.
 
-📖 **Complete list**: See [env.example](./env.example)
+## API Reference
 
-## 🔌 API Endpoints
+**Base URL**: `http://localhost:8080/api/v1` (dev) or `https://api.retreat-app.tech/api/v1` (prod)
 
-**Base URL**: 
-- Development: `http://localhost:8080/api/v1`
-- Production: `https://api.retreat-app.tech/api/v1`
+### Public (no auth needed)
+- `GET /health` - Is the API alive?
+- `GET /ready` - Is it ready for traffic?
+- `GET /live` - Health check for orchestration
 
-### Public Endpoints
-- `GET /health` - Health check
-- `GET /ready` - Readiness probe
-- `GET /live` - Liveness probe
+### Protected (need authentication)
+- `GET /receipts` - Get all your receipts
+- `POST /receipts` - Add a new receipt
+- `GET /receipts/:id` - Get one receipt
+- `PUT /receipts/:id` - Update a receipt
+- `DELETE /receipts/:id` - Delete a receipt
+- `POST /parse-email` - Parse email text (returns structured data)
+- `POST /parse-pdf` - Parse PDF receipt (returns structured data)
+- `GET /sponsorship/status` - Check if user is a sponsor
 
-### Protected Endpoints (Require Authentication)
-- `GET /receipts` - List all receipts
-- `POST /receipts` - Create receipt
-- `GET /receipts/:id` - Get specific receipt
-- `PUT /receipts/:id` - Update receipt
-- `DELETE /receipts/:id` - Delete receipt
-- `POST /parse-email` - Parse email content
-- `POST /parse-pdf` - Parse PDF receipts
-- `GET /sponsorship/status` - Check sponsorship status
+## How it works
 
-## 🏗️ Architecture
+Pretty standard setup:
 
 ```
-┌─────────────┐      HTTPS      ┌─────────────┐
-│   Frontend  │ ◄──────────────► │   Nginx     │
-│  (React)    │                  │  Reverse    │
-└─────────────┘                  │   Proxy     │
-                                 └──────┬──────┘
-                                        │
-                                 ┌──────▼──────┐
-                                 │   Backend   │
-                                 │   (Go/Fiber)│
-                                 └──────┬──────┘
-                                        │
-                          ┌─────────────┴──────────────┐
-                          │                            │
-                   ┌──────▼──────┐            ┌────────▼─────┐
-                   │  PostgreSQL │            │    Redis     │
-                   │  (Primary)  │            │   (Cache)    │
-                   └─────────────┘            └──────────────┘
+Your Browser → Nginx (SSL) → Go API → PostgreSQL
+                                  ↓
+                               Redis (cache)
 ```
 
-### Key Components
+The frontend is a React app that talks to a Go API. The API stores everything in PostgreSQL and uses Redis for caching and rate limiting. Nginx sits in front to handle SSL and routing. Nothing groundbreaking, but it works well for this use case.
 
-- **Frontend**: React SPA with Clerk authentication
-- **Backend**: Go API server with Fiber framework
-- **Database**: PostgreSQL 15 with connection pooling
-- **Cache**: Redis for sessions and rate limiting
-- **Reverse Proxy**: Nginx with SSL/TLS termination
-- **Authentication**: Clerk JWT validation
+Authentication is handled by Clerk (JWT tokens) so I didn't have to build all that auth stuff myself.
 
-## 📚 Documentation
+## Security
 
-- **[Quick Start Guide](./QUICK_START.md)** - Get started in 5 minutes
-- **[Production Deployment](./PRODUCTION_DEPLOYMENT.md)** - Deploy to Hetzner
-- **[Development Guide](./DEVELOPMENT.md)** - Development workflow
-- **[Environment Variables](./env.example)** - Configuration reference
+I tried to be sensible about security without going overboard:
 
-## 🔒 Security Features
+- Authentication via Clerk (JWT tokens)
+- Rate limiting to prevent abuse (100 requests per minute default)
+- CORS protection (only allows requests from your frontend domain)
+- Security headers (XSS protection, etc.)
+- SQL injection protection (using prepared statements)
+- Input validation on all endpoints
+- Docker containers run with read-only filesystems where possible
+- Graceful shutdown so in-flight requests finish
 
-- ✅ JWT-based authentication with Clerk
-- ✅ Rate limiting (100 req/min by default)
-- ✅ CORS protection with origin whitelist
-- ✅ Security headers (XSS, CSRF, Clickjacking)
-- ✅ SQL injection protection (prepared statements)
-- ✅ Input validation
-- ✅ Docker container security (read-only, no-new-privileges)
-- ✅ Graceful shutdown handling
-- ✅ Health checks and monitoring
+It's not Fort Knox, but it's better than most hobby projects. The Docker setup uses security best practices (read-only containers, no-new-privileges, resource limits).
 
-## 🤝 Contributing
+## Documentation
 
-1. **Fork** the repository
-2. **Create** a feature branch: `git checkout -b feature/amazing-feature`
-3. **Commit** your changes: `git commit -m 'Add amazing feature'`
-4. **Push** to the branch: `git push origin feature/amazing-feature`
-5. **Open** a Pull Request
+There are a few more detailed guides if you need them:
 
-### Development Guidelines
+- [Quick Start Guide](./QUICK_START.md) - Detailed setup instructions
+- [Production Deployment](./PRODUCTION_DEPLOYMENT.md) - How I deploy to Hetzner
+- [Development Guide](./DEVELOPMENT.md) - Development workflow
+- [env.example](./env.example) - All the environment variables explained
 
-- Follow existing code style and patterns
-- Add tests for new functionality
-- Update documentation for API changes
-- Ensure all tests pass before submitting PR
-- Use conventional commit messages
+## Contributing
 
-### Testing
+Pull requests are welcome! I'm a solo developer, so any help is appreciated. If you want to contribute:
 
+1. Fork the repo
+2. Make your changes (try to match the existing code style)
+3. Test your changes
+4. Open a pull request
+
+I'm not super strict about it, but it helps if:
+- You follow the existing patterns (I use standard Go formatting and ESLint for the frontend)
+- You add tests if you're adding new functionality
+- You update docs if you changed the API
+- Tests pass before you submit
+
+If you're testing changes:
 ```bash
 # Backend tests
 cd backend && go test ./... -v
 
-# Frontend tests  
-cd frontend && npm test
-
-# Check linting
-cd backend && golangci-lint run
+# Frontend linting
 cd frontend && npm run lint
-
-# Full integration test
-docker-compose up -d && npm run test:e2e
 ```
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
-Common issues and solutions:
+If something's not working:
 
-1. **Backend won't start**: Check logs with `docker-compose logs backend`
-2. **Database connection failed**: Verify `DATABASE_URL` and PostgreSQL is running
-3. **Authentication failed**: Verify `CLERK_SECRET_KEY` is correct
-4. **CORS errors**: Check allowed origins in `main.go`
+- **Backend won't start?** Check the logs: `docker-compose logs backend`
+- **Database connection issues?** Make sure PostgreSQL is running and `DATABASE_URL` is correct
+- **Auth failing?** Double-check your `CLERK_SECRET_KEY` is right
+- **CORS errors?** Your frontend URL needs to be in the allowed origins list
 
-See [QUICK_START.md](./QUICK_START.md#troubleshooting) for detailed troubleshooting.
+The [quick start guide](./QUICK_START.md#troubleshooting) has more detailed troubleshooting steps.
 
-## 📈 Performance
+## Performance
 
-- **Response Time**: < 100ms (p95)
-- **Throughput**: 1000+ req/s on single instance
-- **Database**: Connection pooling (25 max connections)
-- **Caching**: Redis for frequently accessed data
-- **Rate Limiting**: Prevents abuse and ensures fair usage
+It's pretty fast. The API responds in under 100ms most of the time, and it can handle a decent amount of traffic. I've got connection pooling set up for the database and Redis for caching. Rate limiting keeps things fair for everyone.
 
-## 📄 License
+Honestly, for a receipt tracking app, performance hasn't been an issue. PostgreSQL and Go are both plenty fast for this.
 
-MIT License - see LICENSE file for details.
+## License
 
-## 💬 Support
+MIT License - do whatever you want with it.
 
-- **Issues**: [GitHub Issues](https://github.com/yourusername/receipt-store/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/yourusername/receipt-store/discussions)
-- **Email**: support@retreat-app.tech
+## Questions or Issues?
 
-## ⭐ Show Your Support
+If you find bugs or have suggestions, open an issue on GitHub. I'm pretty responsive (or try to be).
 
-If you find this project helpful, please give it a ⭐️ on GitHub!
+You can also email me at support@retreat-app.tech if GitHub issues aren't your thing.
+
+## Thanks for checking it out
+
+If you find this useful, a ⭐ on GitHub would make my day. Or if you're feeling generous, you can sponsor the project via Buy Me a Coffee (link in the app).
 
 ---
 
-Built with ❤️ using Go and React
+Built with Go and React (and probably too much coffee)
