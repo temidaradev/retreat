@@ -8,7 +8,6 @@ import {
   Settings,
   ArrowLeft,
   Plus,
-  X,
   RefreshCw,
   Link as LinkIcon,
   CheckCircle,
