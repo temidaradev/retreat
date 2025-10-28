@@ -21,6 +21,12 @@ type Config struct {
 	// Email configuration
 	Email EmailConfig
 
+	// Buy Me a Coffee configuration
+	BuyMeACoffee BuyMeACoffeeConfig
+
+	// Admin configuration
+	Admin AdminConfig
+
 	// Security configuration
 	Security SecurityConfig
 
@@ -66,6 +72,18 @@ type EmailConfig struct {
 	SMTPUsername string
 	SMTPPassword string
 	FromEmail    string
+}
+
+// BuyMeACoffeeConfig holds Buy Me a Coffee webhook configuration
+type BuyMeACoffeeConfig struct {
+	WebhookSecret string
+}
+
+// AdminConfig holds admin access configuration
+type AdminConfig struct {
+	Emails    []string
+	UserIDs   []string
+	Usernames []string
 }
 
 // SecurityConfig holds security-related configuration
@@ -118,6 +136,16 @@ func Load() *Config {
 			SMTPUsername: getEnv("SMTP_USERNAME", ""),
 			SMTPPassword: getEnv("SMTP_PASSWORD", ""),
 			FromEmail:    getEnv("FROM_EMAIL", "noreply@retreat-app.tech"),
+		},
+		BuyMeACoffee: BuyMeACoffeeConfig{
+			WebhookSecret: getEnv("BUYMEACOFFEE_WEBHOOK_SECRET", ""),
+		},
+
+		// Admin configuration
+		Admin: AdminConfig{
+			Emails:    getEnvSlice("ADMIN_EMAILS", []string{}),
+			UserIDs:   getEnvSlice("ADMIN_USER_IDS", []string{}),
+			Usernames: getEnvSlice("ADMIN_USERNAMES", []string{}),
 		},
 		Security: SecurityConfig{
 			JWTSecret:         getEnv("JWT_SECRET", ""),

@@ -142,13 +142,13 @@ func (l *Logger) log(level, message string, fields ...map[string]interface{}) {
 		if entry.File != "" {
 			fileInfo = fmt.Sprintf(" [%s:%d]", entry.File, entry.Line)
 		}
-		
+
 		fieldsStr := ""
 		if len(entry.Fields) > 0 {
 			fieldsData, _ := json.Marshal(entry.Fields)
 			fieldsStr = fmt.Sprintf(" %s", string(fieldsData))
 		}
-		
+
 		l.logger.Printf("[%s] %s: %s%s%s", entry.Timestamp, level, message, fileInfo, fieldsStr)
 	}
 }

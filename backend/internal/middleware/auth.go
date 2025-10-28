@@ -17,8 +17,9 @@ import (
 
 // ClerkClaims represents the JWT claims from Clerk
 type ClerkClaims struct {
-	Sub   string `json:"sub"`   // User ID
-	Email string `json:"email"` // User email
+	Sub      string `json:"sub"`      // User ID
+	Email    string `json:"email"`    // User email
+	Username string `json:"username"` // User username (e.g., "temidara")
 	jwt.RegisteredClaims
 }
 
@@ -51,6 +52,7 @@ func ClerkAuthMiddleware() fiber.Handler {
 			}
 			c.Locals("userID", userID)
 			c.Locals("userEmail", "demo@example.com")
+			c.Locals("username", "demo") // Default username for development
 			return c.Next()
 		}
 
@@ -84,6 +86,12 @@ func ClerkAuthMiddleware() fiber.Handler {
 		// Store user information in context
 		c.Locals("userID", claims.Sub)
 		c.Locals("userEmail", claims.Email)
+		c.Locals("username", claims.Username)
+
+		// Debug: Log what we extracted (you can remove this later)
+		if claims.Email == "" && claims.Username == "" {
+			log.Printf("[DEBUG] Clerk token for user %s - email and username not present in token (this is normal for Clerk v2 unless JWT template is customized)", claims.Sub)
+		}
 
 		return c.Next()
 	}
@@ -126,42 +134,39 @@ func validateClerkToken(tokenString string) (*ClerkClaims, error) {
 
 // getClerkPublicKey fetches and parses the public key from Clerk
 func getClerkPublicKey(kid string) (*rsa.PublicKey, error) {
-	// Get Clerk JWKS URL from environment (e.g., https://your-instance.clerk.accounts.dev/.well-known/jwks.json)
-	jwksURL := os.Getenv("CLERK_JWKS_URL")
-	if jwksURL == "" {
-		// Default to extracting from secret key environment variable
-		clerkSecretKey := os.Getenv("CLERK_SECRET_KEY")
-		if clerkSecretKey == "" {
-			return nil, fmt.Errorf("CLERK_SECRET_KEY or CLERK_JWKS_URL environment variable not set")
-		}
+	// Determine JWKS URL - check environment variables in order of precedence
+	var jwksURL string
 
-		// For Clerk, we can derive the JWKS URL from the frontend domain
-		// This is a fallback - it's better to set CLERK_JWKS_URL explicitly
-		// The JWKS is at: https://<clerk-frontend-api>/.well-known/jwks.json
-		clerkFrontendAPI := os.Getenv("CLERK_FRONTEND_API")
-		if clerkFrontendAPI == "" {
-			return nil, fmt.Errorf("CLERK_FRONTEND_API environment variable not set (e.g., heroic-dragon-8.clerk.accounts.dev)")
-		}
-		jwksURL = fmt.Sprintf("https://%s/.well-known/jwks.json", clerkFrontendAPI)
+	// 1. Check for explicit JWKS URL (highest priority)
+	if explicitURL := os.Getenv("CLERK_JWKS_URL"); explicitURL != "" {
+		jwksURL = explicitURL
+		log.Printf("Using explicit JWKS URL from CLERK_JWKS_URL: %s", jwksURL)
+	} else if frontendAPI := os.Getenv("CLERK_FRONTEND_API"); frontendAPI != "" {
+		// 2. Construct URL from Clerk Frontend API (e.g., heroic-dragon-8.clerk.accounts.dev)
+		jwksURL = fmt.Sprintf("https://%s/.well-known/jwks.json", frontendAPI)
+		log.Printf("Constructing JWKS URL from CLERK_FRONTEND_API: %s", jwksURL)
+	} else {
+		return nil, fmt.Errorf("CLERK_FRONTEND_API or CLERK_JWKS_URL environment variable must be set")
 	}
 
-	log.Printf("Fetching JWKS from: %s", jwksURL)
-
 	// Fetch JWKS from Clerk
+	log.Printf("Fetching JWKS from: %s (for kid: %s)", jwksURL, kid)
 	resp, err := http.Get(jwksURL)
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch JWKS: %v", err)
+		return nil, fmt.Errorf("failed to fetch JWKS from %s: %v", jwksURL, err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("failed to fetch JWKS: status %d", resp.StatusCode)
+		return nil, fmt.Errorf("failed to fetch JWKS from %s: status %d", jwksURL, resp.StatusCode)
 	}
 
 	var jwks ClerkJWKS
 	if err := json.NewDecoder(resp.Body).Decode(&jwks); err != nil {
-		return nil, fmt.Errorf("failed to decode JWKS: %v", err)
+		return nil, fmt.Errorf("failed to decode JWKS from %s: %v", jwksURL, err)
 	}
+
+	log.Printf("Successfully fetched JWKS with %d keys", len(jwks.Keys))
 
 	// Find the key with matching kid
 	var jwk ClerkJWK
@@ -170,12 +175,17 @@ func getClerkPublicKey(kid string) (*rsa.PublicKey, error) {
 		if key.Kid == kid {
 			jwk = key
 			found = true
+			log.Printf("Found matching key for kid: %s", kid)
 			break
 		}
 	}
 
 	if !found {
-		return nil, fmt.Errorf("key with kid %s not found in JWKS", kid)
+		availableKids := make([]string, len(jwks.Keys))
+		for i, key := range jwks.Keys {
+			availableKids[i] = key.Kid
+		}
+		return nil, fmt.Errorf("key with kid %s not found (available kids: %v)", kid, availableKids)
 	}
 
 	// Parse the RSA public key

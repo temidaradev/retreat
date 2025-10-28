@@ -117,6 +117,7 @@ func runMigrations(db *sql.DB) error {
 		status VARCHAR(20) DEFAULT 'active',
 		original_email TEXT,
 		parsed_data TEXT,
+		deleted_at TIMESTAMP,
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 		updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 	);
@@ -145,6 +146,85 @@ func runMigrations(db *sql.DB) error {
 	_, err := db.ExecContext(ctx, createTableSQL)
 	if err != nil {
 		return fmt.Errorf("failed to create tables: %w", err)
+	}
+
+	// Run additional migrations for existing databases
+	alterTableSQL := `
+	-- Add deleted_at column if it doesn't exist (for existing databases)
+	DO $$ 
+	BEGIN 
+		IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+					   WHERE table_name = 'receipts' AND column_name = 'deleted_at') THEN
+			ALTER TABLE receipts ADD COLUMN deleted_at TIMESTAMP;
+		END IF;
+	END $$;
+	
+	-- Create index on deleted_at (will succeed whether column existed before or was just added)
+	CREATE INDEX IF NOT EXISTS idx_receipts_deleted_at ON receipts(deleted_at);
+	
+	-- Add bmc_username column to users table for Buy Me a Coffee integration
+	DO $$
+	BEGIN
+		IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+					   WHERE table_name = 'users' AND column_name = 'bmc_username') THEN
+			ALTER TABLE users ADD COLUMN bmc_username VARCHAR(255);
+		END IF;
+	END $$;
+	
+	-- Create index on bmc_username
+	CREATE INDEX IF NOT EXISTS idx_users_bmc_username ON users(bmc_username);
+	
+	-- Update subscriptions table to support Clerk user IDs (VARCHAR) in addition to UUID
+	-- This allows subscriptions to work with the same user_id format as receipts
+	DO $$
+	BEGIN
+		-- Check if user_id column already supports VARCHAR (for Clerk IDs)
+		-- If subscriptions.user_id is UUID and we need to support Clerk IDs,
+		-- we'll create a separate column or modify the approach
+		-- For now, we'll create subscriptions that work directly with Clerk user IDs
+		-- by ensuring the user_id field can handle VARCHAR(255)
+		IF EXISTS (
+			SELECT 1 FROM information_schema.columns 
+			WHERE table_name = 'subscriptions' 
+			AND column_name = 'user_id' 
+			AND data_type = 'uuid'
+		) THEN
+			-- Note: Cannot directly change UUID to VARCHAR, so we'll handle this
+			-- by matching receipts.user_id (which stores Clerk IDs) directly
+			-- In the sync function, we'll update/create subscriptions using Clerk IDs
+		END IF;
+	END $$;
+	
+	-- Create a linking table to map Clerk user IDs to subscriptions
+	-- This allows us to handle both UUID-based users and Clerk ID-based receipts
+	CREATE TABLE IF NOT EXISTS user_clerk_mapping (
+		clerk_user_id VARCHAR(255) PRIMARY KEY,
+		user_uuid UUID REFERENCES users(id) ON DELETE SET NULL,
+		bmc_username VARCHAR(255),
+		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+		updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+	);
+	
+	CREATE INDEX IF NOT EXISTS idx_user_clerk_mapping_bmc_username ON user_clerk_mapping(bmc_username);
+	
+	-- Add clerk_user_id column to subscriptions to support Clerk authentication
+	DO $$
+	BEGIN
+		IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+					   WHERE table_name = 'subscriptions' AND column_name = 'clerk_user_id') THEN
+			ALTER TABLE subscriptions ADD COLUMN clerk_user_id VARCHAR(255);
+		END IF;
+	END $$;
+	
+	CREATE INDEX IF NOT EXISTS idx_subscriptions_clerk_user_id ON subscriptions(clerk_user_id);
+	`
+
+	_, err = db.ExecContext(ctx, alterTableSQL)
+	if err != nil {
+		// Log but don't fail - this might be a permission issue
+		logging.Warn("Failed to run alter table migrations", map[string]interface{}{
+			"error": err.Error(),
+		})
 	}
 
 	logging.Info("Database migrations completed successfully")

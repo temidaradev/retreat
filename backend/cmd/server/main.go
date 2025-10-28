@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
@@ -106,11 +107,20 @@ func main() {
 	// Setup production middleware AFTER CORS
 	middleware.SetupProductionMiddleware(app)
 
+	// Store config in app locals for admin middleware access
+	app.Use(func(c *fiber.Ctx) error {
+		c.Locals("config", cfg)
+		return c.Next()
+	})
+
 	// Initialize handlers
 	receiptHandler := handlers.NewReceiptHandler(db)
+	bmcHandler := handlers.NewBMCHandler(db, cfg)
+	bmcService := services.NewBuyMeACoffeeService(db, cfg)
+	adminHandler := handlers.NewAdminHandler(db, cfg, bmcService)
 
 	// Initialize services
-	cronService := services.NewCronService(db)
+	cronService := services.NewCronService(db, cfg)
 	cronService.Start()
 	defer cronService.Stop()
 
@@ -180,6 +190,49 @@ func main() {
 			// PDF parsing route
 			protected.Post("/parse-pdf", receiptHandler.ParsePDF)
 
+			// Buy Me a Coffee integration routes
+			protected.Post("/bmc/link-username", bmcHandler.LinkBMCUsername)
+		}
+
+		// Public webhook endpoint (no auth required, uses signature verification)
+		api.Post("/bmc/webhook", bmcHandler.HandleWebhook)
+
+		// Helper endpoint to get current user info (for finding your Clerk user ID)
+		protected.Get("/me", func(c *fiber.Ctx) error {
+			cfg, _ := c.Locals("config").(*config.Config)
+
+			userID := c.Locals("userID")
+			email := c.Locals("userEmail")
+			username := c.Locals("username")
+
+			return c.JSON(fiber.Map{
+				"user_id":         userID,
+				"email":           email,
+				"username":        username,
+				"admin_emails":    cfg.Admin.Emails,
+				"admin_user_ids":  cfg.Admin.UserIDs,
+				"admin_usernames": cfg.Admin.Usernames,
+				"recommendation":  "If email/username are empty, use ADMIN_USER_IDS with your user_id above",
+				"note":            fmt.Sprintf("Add to .env: ADMIN_USER_IDS=%s", userID),
+			})
+		})
+
+		// Admin routes (require authentication + admin privileges)
+		admin := api.Group("/admin", middleware.ClerkAuthMiddleware(), middleware.AdminAuthMiddleware())
+		{
+			// Dashboard and system info
+			admin.Get("/dashboard", adminHandler.GetDashboard)
+			admin.Get("/system-info", adminHandler.GetSystemInfo)
+
+			// BMC management
+			admin.Get("/bmc/users", adminHandler.GetBMCUsers)
+			admin.Post("/bmc/sync", adminHandler.SyncBMCMemberships)
+			admin.Post("/bmc/link-username", adminHandler.LinkBMCUsername)
+
+			// Subscription management (crisis controls)
+			admin.Get("/subscriptions", adminHandler.GetSubscriptions)
+			admin.Post("/subscriptions/grant", adminHandler.GrantSubscription)
+			admin.Post("/subscriptions/revoke", adminHandler.RevokeSubscription)
 		}
 
 	}

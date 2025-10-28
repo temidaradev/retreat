@@ -134,3 +134,10 @@ func FormatCurrency(amount float64, currency string) string {
 		return fmt.Sprintf("%.2f %s", amount, currency)
 	}
 }
+
+// ValidateUUID validates if a string is a valid UUID format
+func ValidateUUID(uuid string) bool {
+	pattern := `^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$`
+	matched, _ := regexp.MatchString(pattern, uuid)
+	return matched
+}

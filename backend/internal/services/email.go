@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/smtp"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -92,7 +93,7 @@ func (e *EmailService) SendWarrantyReminder(userEmail string, receipt ReceiptInf
 
 // CheckAndSendReminders checks for expiring warranties and sends reminders
 func (e *EmailService) CheckAndSendReminders() error {
-	// Get receipts expiring in the next 30 days
+	// Get receipts expiring in the next 30 days (excluding deleted receipts)
 	query := `
 		SELECT r.id, r.user_id, r.store, r.item, r.purchase_date, 
 		       r.warranty_expiry, r.amount, u.email
@@ -100,6 +101,7 @@ func (e *EmailService) CheckAndSendReminders() error {
 		JOIN users u ON r.user_id = u.id
 		WHERE r.warranty_expiry BETWEEN NOW() AND NOW() + INTERVAL '30 days'
 		AND r.status = 'active'
+		AND r.deleted_at IS NULL
 		AND u.email IS NOT NULL
 	`
 
@@ -248,8 +250,115 @@ func (e *EmailService) SendSponsorshipVerificationNotification(verification Spon
 	}
 
 	// Send email to admin
-	adminEmail := "temidaradev@proton.me"
+	adminEmail := e.getAdminEmail()
+	if adminEmail == "" {
+		return fmt.Errorf("ADMIN_EMAIL not configured, cannot send notification")
+	}
 	return e.sendEmail(adminEmail, "New Sponsorship Verification Request", body.String())
+}
+
+// SendBMCMembershipNotification sends a notification email to admin when BMC membership event occurs
+func (e *EmailService) SendBMCMembershipNotification(eventType, userNickname, membershipName, userEmail string) error {
+	adminEmail := e.getAdminEmail()
+	if adminEmail == "" {
+		return fmt.Errorf("ADMIN_EMAIL not configured, cannot send notification")
+	}
+
+	var subject string
+	var statusText string
+	var statusColor string
+
+	switch eventType {
+	case "membership.started":
+		subject = "🎉 New Buy Me a Coffee Member - Retreat"
+		statusText = "New Membership Started"
+		statusColor = "#10b981"
+	case "membership.cancelled":
+		subject = "⚠️ Buy Me a Coffee Member Cancelled - Retreat"
+		statusText = "Membership Cancelled"
+		statusColor = "#ef4444"
+	case "membership.updated":
+		subject = "📝 Buy Me a Coffee Member Updated - Retreat"
+		statusText = "Membership Updated"
+		statusColor = "#3b82f6"
+	default:
+		subject = "📋 Buy Me a Coffee Membership Event - Retreat"
+		statusText = "Membership Event"
+		statusColor = "#6b7280"
+	}
+
+	tmpl := `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>{{.Subject}}</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: {{.StatusColor}}; color: white; padding: 20px; text-align: center; }
+        .content { padding: 20px; background: #f8fafc; }
+        .info-box { background: white; padding: 15px; border-radius: 8px; margin: 15px 0; }
+        .footer { text-align: center; padding: 20px; color: #6b7280; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>{{.StatusText}}</h1>
+        </div>
+        <div class="content">
+            <p>Hello,</p>
+            <p>A Buy Me a Coffee membership event has occurred:</p>
+            
+            <div class="info-box">
+                <h3>Event Details</h3>
+                <p><strong>Event Type:</strong> {{.EventType}}</p>
+                <p><strong>Membership:</strong> {{.MembershipName}}</p>
+                <p><strong>User Nickname:</strong> {{.UserNickname}}</p>
+                {{if .UserEmail}}
+                <p><strong>User Email:</strong> {{.UserEmail}}</p>
+                {{end}}
+            </div>
+            
+            {{if eq .EventType "membership.started"}}
+            <p>✅ A new member has subscribed to your "Retreat" membership!</p>
+            <p>Their premium access should be automatically granted if they've linked their BMC username in the app.</p>
+            {{else if eq .EventType "membership.cancelled"}}
+            <p>⚠️ A member has cancelled their "Retreat" membership.</p>
+            <p>Their premium access will be automatically revoked.</p>
+            {{end}}
+            
+            <p>Best regards,<br>Retreat Receipt Store System</p>
+        </div>
+        <div class="footer">
+            <p>This email was sent by Retreat - Buy Me a Coffee Integration</p>
+        </div>
+    </div>
+</body>
+</html>
+`
+
+	t, err := template.New("bmc_notification").Parse(tmpl)
+	if err != nil {
+		return fmt.Errorf("failed to parse template: %v", err)
+	}
+
+	var body bytes.Buffer
+	err = t.Execute(&body, map[string]interface{}{
+		"Subject":        subject,
+		"StatusText":     statusText,
+		"StatusColor":    statusColor,
+		"EventType":      eventType,
+		"MembershipName": membershipName,
+		"UserNickname":   userNickname,
+		"UserEmail":      userEmail,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to execute template: %v", err)
+	}
+
+	return e.sendEmail(adminEmail, subject, body.String())
 }
 
 // SendVerificationStatusUpdate sends an email to user about verification status
@@ -306,7 +415,7 @@ func (e *EmailService) SendVerificationStatusUpdate(userEmail string, status str
             {{if eq .Status "approved"}}
             <p>🎉 Congratulations! You now have access to premium features:</p>
             <ul>
-                <li>Unlimited receipt storage</li>
+                <li>Up to 50 receipts (10x more than free tier)</li>
                 <li>PDF receipt parsing</li>
                 <li>Early access to new features</li>
                 <li>Advanced email parsing</li>
@@ -346,6 +455,25 @@ func (e *EmailService) SendVerificationStatusUpdate(userEmail string, status str
 	}
 
 	return e.sendEmail(userEmail, subject, body.String())
+}
+
+// getAdminEmail gets the admin email from environment variable
+func (e *EmailService) getAdminEmail() string {
+	adminEmail := os.Getenv("ADMIN_EMAIL")
+	if adminEmail != "" {
+		return strings.TrimSpace(adminEmail)
+	}
+
+	// Fallback: get first email from ADMIN_EMAILS if ADMIN_EMAIL not set
+	adminEmails := os.Getenv("ADMIN_EMAILS")
+	if adminEmails != "" {
+		emails := strings.Split(adminEmails, ",")
+		if len(emails) > 0 {
+			return strings.TrimSpace(emails[0])
+		}
+	}
+
+	return ""
 }
 
 // ReceiptInfo represents receipt information for email templates

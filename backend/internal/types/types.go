@@ -6,19 +6,20 @@ import (
 
 // Receipt represents a receipt/warranty record
 type Receipt struct {
-	ID             string    `json:"id" db:"id"`
-	UserID         string    `json:"user_id" db:"user_id"`
-	Store          string    `json:"store" db:"store"`
-	Item           string    `json:"item" db:"item"`
-	PurchaseDate   time.Time `json:"purchase_date" db:"purchase_date"`
-	WarrantyExpiry time.Time `json:"warranty_expiry" db:"warranty_expiry"`
-	Amount         float64   `json:"amount" db:"amount"`
-	Currency       string    `json:"currency" db:"currency"`
-	Status         string    `json:"status" db:"status"` // active, expiring, expired
-	OriginalEmail  string    `json:"original_email" db:"original_email"`
-	ParsedData     string    `json:"parsed_data" db:"parsed_data"` // JSON string of extracted data
-	CreatedAt      time.Time `json:"created_at" db:"created_at"`
-	UpdatedAt      time.Time `json:"updated_at" db:"updated_at"`
+	ID             string     `json:"id" db:"id"`
+	UserID         string     `json:"user_id" db:"user_id"`
+	Store          string     `json:"store" db:"store"`
+	Item           string     `json:"item" db:"item"`
+	PurchaseDate   time.Time  `json:"purchase_date" db:"purchase_date"`
+	WarrantyExpiry time.Time  `json:"warranty_expiry" db:"warranty_expiry"`
+	Amount         float64    `json:"amount" db:"amount"`
+	Currency       string     `json:"currency" db:"currency"`
+	Status         string     `json:"status" db:"status"` // active, expiring, expired
+	OriginalEmail  string     `json:"original_email" db:"original_email"`
+	ParsedData     string     `json:"parsed_data" db:"parsed_data"` // JSON string of extracted data
+	DeletedAt      *time.Time `json:"deleted_at,omitempty" db:"deleted_at"`
+	CreatedAt      time.Time  `json:"created_at" db:"created_at"`
+	UpdatedAt      time.Time  `json:"updated_at" db:"updated_at"`
 }
 
 // User represents a user account
