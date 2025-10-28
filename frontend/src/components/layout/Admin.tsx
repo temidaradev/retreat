@@ -99,11 +99,12 @@ export default function Admin() {
       }
     } catch (err: any) {
       console.error("Failed to load admin data:", err);
-      if (err.status === 403 || err.status === 401) {
-        setError("Access denied. You need admin privileges to access this page.");
-        navigate("/");
+      const errorMessage = err.message || "Failed to load data";
+      
+      if (err.status === 403 || err.status === 401 || errorMessage.includes("Admin access required") || errorMessage.includes("admin") || errorMessage.includes("Admin")) {
+        setError("Access denied. You need admin privileges to access this page. Please ensure your email is configured as an admin in the backend.");
       } else {
-        setError(err.message || "Failed to load data");
+        setError(errorMessage);
       }
     } finally {
       setLoading(false);

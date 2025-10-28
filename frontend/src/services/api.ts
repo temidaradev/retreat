@@ -104,7 +104,15 @@ class ApiService {
                     const errorData: ApiError = await response.json()
                     errorMessage = errorData.error || errorMessage
                 } catch {
-                    // If parsing fails, use status text
+                    // If parsing fails, try to get text
+                    try {
+                        const text = await response.text()
+                        if (text) {
+                            errorMessage = text
+                        }
+                    } catch {
+                        // If all parsing fails, use status text
+                    }
                 }
 
                 const error = new Error(errorMessage) as Error & { status?: number }
