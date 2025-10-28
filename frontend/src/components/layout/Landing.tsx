@@ -703,7 +703,7 @@ export default function Landing() {
                 Ready to Get Started?
               </h2>
               <p className="text-xs sm:text-base md:text-lg mb-6 sm:mb-8 text-white opacity-90 max-w-2xl mx-auto px-2">
-                Free forever with 5 receipts. Need more? Sponsor us for 3
+                Free forever with 5 receipts. Need more? Sponsor us for $5 to get 3
                 premium perks!
               </p>
 
