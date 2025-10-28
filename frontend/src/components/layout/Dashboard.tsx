@@ -36,7 +36,8 @@ export default function Dashboard() {
   const hasRetreatPlan = has?.({ plan: "retreat" }) ?? false;
 
   // Free plan limits
-  const FREE_PLAN_LIMIT = 10;
+  const FREE_PLAN_LIMIT = 5;
+  const SPONSOR_PLAN_LIMIT = 50;
   const isAtFreeLimit = !hasRetreatPlan && receipts.length >= FREE_PLAN_LIMIT;
 
   useEffect(() => {
@@ -301,6 +302,104 @@ export default function Dashboard() {
 
       <main className="px-4 md:px-phi-lg py-6 md:py-phi-xl">
         <div className="max-w-7xl mx-auto w-full">
+          {/* Sponsor Benefits Section - Compact at Top */}
+          {hasRetreatPlan && (
+            <div
+              className="rounded-lg border mb-4 md:mb-6 overflow-hidden"
+              style={{
+                background: "var(--color-bg-secondary)",
+                borderColor: "var(--color-border)",
+              }}
+            >
+              <div className="p-3 md:p-4">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 md:gap-4">
+                  <div className="flex items-center gap-2">
+                    <Crown
+                      className="w-4 h-4 md:w-5 md:h-5 flex-shrink-0"
+                      style={{ color: "var(--color-accent-500)" }}
+                    />
+                    <h2
+                      className="text-sm md:text-base font-semibold"
+                      style={{ color: "var(--color-text-primary)" }}
+                    >
+                      Your Sponsor Benefits
+                    </h2>
+                  </div>
+                  <div className="flex-1 flex flex-wrap items-center gap-3 md:gap-4 sm:gap-6">
+                    <div className="flex items-center gap-2">
+                      <div
+                        className="w-8 h-8 md:w-10 md:h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+                        style={{ background: "var(--color-accent-500)" }}
+                      >
+                        <Receipt className="w-4 h-4 md:w-5 md:h-5 text-white" />
+                      </div>
+                      <div>
+                        <p
+                          className="text-xs md:text-sm font-medium"
+                          style={{ color: "var(--color-text-primary)" }}
+                        >
+                          {SPONSOR_PLAN_LIMIT} Receipts
+                        </p>
+                        <p
+                          className="text-xs"
+                          style={{ color: "var(--color-text-tertiary)" }}
+                        >
+                          {SPONSOR_PLAN_LIMIT - FREE_PLAN_LIMIT} more than free
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <div
+                        className="w-8 h-8 md:w-10 md:h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+                        style={{ background: "var(--color-success)" }}
+                      >
+                        <Download className="w-4 h-4 md:w-5 md:h-5 text-white" />
+                      </div>
+                      <div>
+                        <p
+                          className="text-xs md:text-sm font-medium"
+                          style={{ color: "var(--color-text-primary)" }}
+                        >
+                          Export Data
+                        </p>
+                        <p
+                          className="text-xs"
+                          style={{ color: "var(--color-text-tertiary)" }}
+                        >
+                          Multiple formats
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <div
+                        className="w-8 h-8 md:w-10 md:h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+                        style={{ background: "var(--color-warning)" }}
+                      >
+                        <Crown className="w-4 h-4 md:w-5 md:h-5 text-white" />
+                      </div>
+                      <div>
+                        <p
+                          className="text-xs md:text-sm font-medium"
+                          style={{ color: "var(--color-text-primary)" }}
+                        >
+                          Priority Support
+                        </p>
+                        <p
+                          className="text-xs"
+                          style={{ color: "var(--color-text-tertiary)" }}
+                        >
+                          Direct help
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Free Plan Limit Warning or Progress */}
           {!hasRetreatPlan && (
             <div
@@ -344,12 +443,12 @@ export default function Dashboard() {
                       style={{ color: "var(--color-text-secondary)" }}
                     >
                       {isAtFreeLimit
-                        ? `You've reached the ${FREE_PLAN_LIMIT} receipt limit. Become a sponsor for unlimited receipts.`
+                        ? `You've reached the ${FREE_PLAN_LIMIT} receipt limit. Become a sponsor for up to ${SPONSOR_PLAN_LIMIT} receipts.`
                         : `You have ${
                             FREE_PLAN_LIMIT - receipts.length
                           } receipt${
                             FREE_PLAN_LIMIT - receipts.length !== 1 ? "s" : ""
-                          } remaining. Become a sponsor for unlimited receipts and premium features.`}
+                          } remaining. Become a sponsor for up to ${SPONSOR_PLAN_LIMIT} receipts and premium features.`}
                     </p>
 
                     {/* Progress bar */}
@@ -515,110 +614,6 @@ export default function Dashboard() {
               </div>
             </div>
           </div>
-
-          {/* Sponsor Benefits Section */}
-          {hasRetreatPlan && (
-            <div
-              className="rounded-phi-lg border mb-phi-xl overflow-hidden"
-              style={{
-                background: "var(--color-bg-secondary)",
-                borderColor: "var(--color-border)",
-              }}
-            >
-              <div
-                className="p-phi-lg border-b"
-                style={{ borderColor: "var(--color-border)" }}
-              >
-                <div className="flex items-center gap-phi">
-                  <Crown
-                    className="w-5 h-5"
-                    style={{ color: "var(--color-accent-500)" }}
-                  />
-                  <h2
-                    className="text-phi-lg font-semibold"
-                    style={{ color: "var(--color-text-primary)" }}
-                  >
-                    Your Sponsor Benefits
-                  </h2>
-                </div>
-              </div>
-
-              <div className="p-phi-lg">
-                <p
-                  className="text-phi-sm mb-phi-lg"
-                  style={{ color: "var(--color-text-secondary)" }}
-                >
-                  Thank you for supporting Retreat! Here's what you get as a
-                  sponsor:
-                </p>
-                <div className="grid md:grid-cols-3 gap-phi-lg">
-                  <div className="text-center">
-                    <div
-                      className="icon-phi-xl rounded-phi-lg flex items-center justify-center mx-auto mb-phi"
-                      style={{ background: "var(--color-accent-500)" }}
-                    >
-                      <Receipt className="w-8 h-8 text-white" />
-                    </div>
-                    <h3
-                      className="text-phi-base font-semibold mb-phi"
-                      style={{ color: "var(--color-text-primary)" }}
-                    >
-                      Unlimited Receipts
-                    </h3>
-                    <p
-                      className="text-phi-sm"
-                      style={{ color: "var(--color-text-secondary)" }}
-                    >
-                      Store as many receipts as you need without the 10 receipt
-                      limit
-                    </p>
-                  </div>
-
-                  <div className="text-center">
-                    <div
-                      className="icon-phi-xl rounded-phi-lg flex items-center justify-center mx-auto mb-phi"
-                      style={{ background: "var(--color-success)" }}
-                    >
-                      <Download className="w-8 h-8 text-white" />
-                    </div>
-                    <h3
-                      className="text-phi-base font-semibold mb-phi"
-                      style={{ color: "var(--color-text-primary)" }}
-                    >
-                      Export Data
-                    </h3>
-                    <p
-                      className="text-phi-sm"
-                      style={{ color: "var(--color-text-secondary)" }}
-                    >
-                      Export your receipts and data in multiple formats
-                    </p>
-                  </div>
-
-                  <div className="text-center">
-                    <div
-                      className="icon-phi-xl rounded-phi-lg flex items-center justify-center mx-auto mb-phi"
-                      style={{ background: "var(--color-warning)" }}
-                    >
-                      <Crown className="w-8 h-8 text-white" />
-                    </div>
-                    <h3
-                      className="text-phi-base font-semibold mb-phi"
-                      style={{ color: "var(--color-text-primary)" }}
-                    >
-                      Priority Support
-                    </h3>
-                    <p
-                      className="text-phi-sm"
-                      style={{ color: "var(--color-text-secondary)" }}
-                    >
-                      Get superior help directly from the developer
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
 
           {/* Search and Add Button */}
           <div className="flex flex-col sm:flex-row gap-3 md:gap-phi mb-phi-lg items-stretch sm:items-center">

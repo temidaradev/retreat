@@ -152,7 +152,7 @@ export default function Landing() {
                     className="text-xs sm:text-sm whitespace-nowrap"
                     style={{ color: "var(--color-text-secondary)" }}
                   >
-                    10 Receipts Included
+                    5 Receipts Included
                   </span>
                 </div>
               </div>
@@ -577,7 +577,7 @@ export default function Landing() {
                   className="text-base sm:text-lg font-bold mb-2 flex items-center gap-1.5 sm:gap-2"
                   style={{ color: "var(--color-text-primary)" }}
                 >
-                  Unlimited Receipts
+                  50 Receipts
                   <Crown
                     className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0"
                     style={{ color: "var(--color-accent-400)" }}
@@ -587,7 +587,7 @@ export default function Landing() {
                   className="text-xs sm:text-sm"
                   style={{ color: "var(--color-text-secondary)" }}
                 >
-                  Store unlimited receipts. Free plan limited to 10 receipts.
+                  Store up to 50 receipts. Free plan limited to 5 receipts.
                 </p>
                 <span
                   className="inline-block mt-3 px-2.5 sm:px-3 py-1 rounded-full text-xs font-medium shadow-accent-glow"
@@ -703,7 +703,7 @@ export default function Landing() {
                 Ready to Get Started?
               </h2>
               <p className="text-xs sm:text-base md:text-lg mb-6 sm:mb-8 text-white opacity-90 max-w-2xl mx-auto px-2">
-                Free forever with 10 receipts. Need more? Sponsor us for 3
+                Free forever with 5 receipts. Need more? Sponsor us for 3
                 premium perks!
               </p>
 
@@ -712,7 +712,7 @@ export default function Landing() {
                 <div className="flex items-center gap-1.5 sm:gap-2 text-white">
                   <Crown className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
                   <span className="text-xs sm:text-sm font-medium whitespace-nowrap">
-                    Unlimited Receipts
+                    50 Receipts
                   </span>
                 </div>
                 <div className="flex items-center gap-1.5 sm:gap-2 text-white">
@@ -794,7 +794,7 @@ export default function Landing() {
                   className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0"
                   style={{ color: "var(--color-success)" }}
                 />
-                <span className="whitespace-nowrap">10 Receipts Included</span>
+                <span className="whitespace-nowrap">5 Receipts Included</span>
               </div>
               <div className="flex items-center gap-1.5 sm:gap-2">
                 <Crown

@@ -177,14 +177,14 @@ export default function Pricing() {
                       className="text-sm md:text-phi-base font-semibold mb-2 md:mb-phi"
                       style={{ color: "var(--color-text-primary)" }}
                     >
-                      Get unlimited access
+                      Get up to 50 receipts
                     </h4>
                     <p
                       className="text-xs md:text-phi-sm"
                       style={{ color: "var(--color-text-secondary)" }}
                     >
                       We'll verify your sponsorship and upgrade your account to
-                      unlimited receipts and premium features within 24 hours!
+                      50 receipts and premium features within 24 hours!
                     </p>
                   </div>
                 </div>
@@ -223,7 +223,7 @@ export default function Pricing() {
                   </h4>
                   <div className="space-y-2 md:space-y-phi-sm">
                     {[
-                      "Unlimited receipt storage",
+                      "Up to 50 receipt storage",
                       "Export data in multiple formats",
                       "Priority support from the developer",
                     ].map((benefit, index) => (

@@ -133,8 +133,8 @@ export default function SubscriptionStatus() {
                   {[
                     {
                       feature: "Receipt Storage",
-                      free: "10 receipts",
-                      sponsor: "Unlimited",
+                      free: "5 receipts",
+                      sponsor: "50 receipts",
                       highlight: true,
                     },
                     {
@@ -351,14 +351,14 @@ export default function SubscriptionStatus() {
                         className="text-sm md:text-phi-base font-semibold mb-2 md:mb-phi"
                         style={{ color: "var(--color-text-primary)" }}
                       >
-                        Get unlimited access
+                        Get up to 50 receipts
                       </h4>
                       <p
                         className="text-xs md:text-phi-sm"
                         style={{ color: "var(--color-text-secondary)" }}
                       >
                         We'll verify your sponsorship and upgrade your account
-                        to unlimited receipts and premium features within 24
+                        to 50 receipts and premium features within 24
                         hours!
                       </p>
                     </div>
