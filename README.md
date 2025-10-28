@@ -61,11 +61,7 @@ It's not Fort Knox, but it's better than most hobby projects. The Docker setup u
 
 ## Contributing
 
-Pull requests are welcome! I'm a solo developer, so any help is appreciated. If you want to contribute:
-
-1. Fork the repo
-2. Make your changes
-3. Open a pull request
+Pull requests are welcome! I'm a solo developer, so any help is appreciated.
 
 ---
 
