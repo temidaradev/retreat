@@ -1,4 +1,4 @@
-import { useAuth } from "@clerk/clerk-react";
+import { useAuth, useUser } from "@clerk/clerk-react";
 import {
   Receipt,
   Users,
@@ -47,6 +47,7 @@ interface BMCUser {
 
 export default function Admin() {
   const { getToken } = useAuth();
+  const { user } = useUser();
   const [activeTab, setActiveTab] = useState<"dashboard" | "subscriptions" | "bmc" | "system">("dashboard");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -186,15 +187,36 @@ export default function Admin() {
     return new Date(dateString).toLocaleString();
   };
 
-  if (error && error.includes("Access denied")) {
+  if (error && (error.includes("Access denied") || error.includes("Admin access required") || error.includes("admin"))) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--color-bg-primary)" }}>
-        <div className="text-center p-8">
+        <div className="text-center p-8 max-w-2xl">
           <AlertCircle className="w-16 h-16 mx-auto mb-4" style={{ color: "var(--color-danger)" }} />
           <h1 className="text-2xl font-bold mb-2" style={{ color: "var(--color-text-primary)" }}>
             Access Denied
           </h1>
           <p className="mb-4" style={{ color: "var(--color-text-secondary)" }}>{error}</p>
+          
+          {/* Show user info for debugging */}
+          {user && (
+            <div className="card-modern p-4 mb-4 text-left">
+              <h3 className="text-sm font-semibold mb-2" style={{ color: "var(--color-text-primary)" }}>
+                Your Account Information (for backend configuration):
+              </h3>
+              <div className="space-y-1 text-xs" style={{ color: "var(--color-text-secondary)" }}>
+                <p>
+                  <span className="font-medium">Email:</span> {user.primaryEmailAddress?.emailAddress || "N/A"}
+                </p>
+                <p>
+                  <span className="font-medium">User ID:</span> {user.id || "N/A"}
+                </p>
+                <p className="mt-3 text-xs" style={{ color: "var(--color-text-tertiary)" }}>
+                  Add this email to <code className="px-1 py-0.5 rounded" style={{ background: "var(--color-bg-tertiary)" }}>ADMIN_EMAILS</code> or this User ID to <code className="px-1 py-0.5 rounded" style={{ background: "var(--color-bg-tertiary)" }}>ADMIN_USER_IDS</code> in your backend .env file.
+                </p>
+              </div>
+            </div>
+          )}
+          
           <Link
             to="/"
             className="inline-flex items-center gap-2 px-4 py-2 rounded-lg"
