@@ -1,9 +1,41 @@
-import { ArrowLeft, Coffee, Mail, Crown } from "lucide-react";
+import { ArrowLeft, Coffee, Crown, Link as LinkIcon, CheckCircle } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useState } from "react";
+import { useAuth } from "@clerk/clerk-react";
 import { external } from "../../config";
+import { apiService } from "../../services/api";
 import ThemeSelector from "../common/ThemeSelector";
 
 export default function Pricing() {
+  const { getToken } = useAuth();
+  const [bmcUsername, setBmcUsername] = useState("");
+  const [linking, setLinking] = useState(false);
+  const [linkSuccess, setLinkSuccess] = useState(false);
+  const [linkError, setLinkError] = useState<string | null>(null);
+
+  const handleLinkUsername = async () => {
+    if (!bmcUsername.trim()) {
+      setLinkError("Please enter your Buy Me a Coffee username");
+      return;
+    }
+
+    setLinking(true);
+    setLinkError(null);
+    setLinkSuccess(false);
+
+    try {
+      const token = await getToken();
+      apiService.setAuthToken(token);
+      
+      const response = await apiService.linkBMCUsernameUser(bmcUsername.trim());
+      setLinkSuccess(true);
+      setBmcUsername("");
+    } catch (err: any) {
+      setLinkError(err.message || "Failed to link username. Please try again.");
+    } finally {
+      setLinking(false);
+    }
+  };
   return (
     <div
       className="min-h-screen"
@@ -36,18 +68,16 @@ export default function Pricing() {
         <div className="max-w-4xl mx-auto w-full">
           {/* Hero Section */}
           <div className="text-center mb-8 md:mb-phi-2xl">
-            <div className="flex items-center justify-center gap-2 md:gap-phi mb-4 md:mb-phi-lg">
+            <h1
+              className="text-xl md:text-4xl font-bold mb-4 md:mb-phi-lg flex items-center justify-center gap-2 md:gap-phi"
+              style={{ color: "var(--color-text-primary)" }}
+            >
               <Coffee
-                className="w-5 h-5 md:w-8 md:h-8"
+                className="w-5 h-5 md:w-8 md:h-8 hidden sm:inline-block flex-shrink-0"
                 style={{ color: "var(--color-accent-500)" }}
               />
-              <h1
-                className="text-xl md:text-4xl font-bold"
-                style={{ color: "var(--color-text-primary)" }}
-              >
-                Support Retreat
-              </h1>
-            </div>
+              <span>Support Retreat</span>
+            </h1>
             <p
               className="text-xs md:text-phi-lg max-w-2xl mx-auto px-2 md:px-4"
               style={{ color: "var(--color-text-secondary)" }}
@@ -139,26 +169,69 @@ export default function Pricing() {
                       className="text-sm md:text-phi-base font-semibold mb-2 md:mb-phi"
                       style={{ color: "var(--color-text-primary)" }}
                     >
-                      Email us your details
+                      Link your Buy Me a Coffee username
                     </h4>
                     <p
-                      className="text-xs md:text-phi-sm mb-3 md:mb-phi"
+                      className="text-xs md:text-phi-sm mb-3 md:mb-phi font-semibold"
                       style={{ color: "var(--color-text-secondary)" }}
                     >
-                      After purchasing, send an email with your Buy Me a Coffee
-                      username and the email you use for Retreat.
+                      Enter your Buy Me a Coffee username exactly as it appears on your BMC profile (this is your username, not your email).
                     </p>
-                    <a
-                      href="mailto:support@retreat-app.tech?subject=Retreat Sponsor Activation&body=Buy Me a Coffee Username: %0D%0ARetreat Email: "
-                      className="inline-flex items-center justify-center gap-2 md:gap-phi px-3 md:px-phi py-2 md:py-phi-sm rounded-phi-md text-xs md:text-phi-sm font-medium transition-all duration-200 hover-lift"
-                      style={{
-                        background: "var(--color-accent-500)",
-                        color: "white",
-                      }}
+                    <p
+                      className="text-xs md:text-phi-sm mb-3 md:mb-phi font-semibold"
+                      style={{ color: "var(--color-error, #ef4444)" }}
                     >
-                      <Mail className="w-4 h-4" />
-                      Send Email
-                    </a>
+                      ⚠️ Important: Your username in retreat-app and Buy Me a Coffee MUST match exactly. The system will only grant premium access if the usernames match when your membership webhook is received.
+                    </p>
+                    <div className="space-y-2">
+                      <div className="flex flex-col sm:flex-row gap-2">
+                        <input
+                          type="text"
+                          placeholder="Your BMC username"
+                          value={bmcUsername}
+                          onChange={(e) => {
+                            setBmcUsername(e.target.value);
+                            setLinkError(null);
+                            setLinkSuccess(false);
+                          }}
+                          className="flex-1 px-3 py-2 rounded-phi-md text-xs md:text-phi-sm border"
+                          style={{
+                            background: "var(--color-bg-primary)",
+                            borderColor: "var(--color-border)",
+                            color: "var(--color-text-primary)",
+                          }}
+                        />
+                        <button
+                          onClick={handleLinkUsername}
+                          disabled={linking || !bmcUsername.trim()}
+                          className="inline-flex items-center justify-center gap-2 px-3 md:px-phi py-2 md:py-phi-sm rounded-phi-md text-xs md:text-phi-sm font-medium transition-all duration-200 hover-lift disabled:opacity-50 disabled:cursor-not-allowed"
+                          style={{
+                            background: "var(--color-accent-500)",
+                            color: "white",
+                          }}
+                        >
+                          {linking ? (
+                            "Linking..."
+                          ) : (
+                            <>
+                              <LinkIcon className="w-4 h-4" />
+                              Link Username
+                            </>
+                          )}
+                        </button>
+                      </div>
+                      {linkSuccess && (
+                        <div className="flex items-center gap-2 text-xs text-green-400">
+                          <CheckCircle className="w-4 h-4" />
+                          <span>Username linked! Your membership will be synced automatically.</span>
+                        </div>
+                      )}
+                      {linkError && (
+                        <div className="text-xs text-red-400">
+                          {linkError}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
 
@@ -177,14 +250,13 @@ export default function Pricing() {
                       className="text-sm md:text-phi-base font-semibold mb-2 md:mb-phi"
                       style={{ color: "var(--color-text-primary)" }}
                     >
-                      Get up to 50 receipts
+                      Automatic activation
                     </h4>
                     <p
                       className="text-xs md:text-phi-sm"
                       style={{ color: "var(--color-text-secondary)" }}
                     >
-                      We'll verify your sponsorship and upgrade your account to
-                      50 receipts and premium features within 24 hours!
+                      Once you've linked your username, our system will automatically detect your Buy Me a Coffee membership and grant you access to 50 receipts and premium features immediately!
                     </p>
                   </div>
                 </div>

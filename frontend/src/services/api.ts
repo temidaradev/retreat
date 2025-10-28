@@ -267,6 +267,19 @@ class ApiService {
         return this.request('/admin/bmc/users')
     }
 
+    async linkBMCUsernameUser(bmcUsername: string): Promise<{
+        message: string
+        bmc_username: string
+        note: string
+    }> {
+        return this.request('/bmc/link-username', {
+            method: 'POST',
+            body: JSON.stringify({
+                bmc_username: bmcUsername,
+            }),
+        })
+    }
+
     async linkBMCUsername(clerkUserId: string, bmcUsername: string): Promise<{
         status: string
         message: string
