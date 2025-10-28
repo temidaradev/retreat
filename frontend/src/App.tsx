@@ -5,6 +5,7 @@ import Dashboard from './components/layout/Dashboard'
 import Landing from './components/layout/Landing'
 import Pricing from './components/layout/Pricing'
 import SubscriptionStatus from './components/common/SubscriptionStatus'
+import Admin from './components/layout/Admin'
 import { clerk, validateConfig } from './config'
 import './App.css'
 
@@ -32,6 +33,7 @@ function App() {
               <Route path="/" element={<Dashboard />} />
               <Route path="/pricing" element={<Pricing />} />
               <Route path="/subscription" element={<SubscriptionStatus />} />
+              <Route path="/admin" element={<Admin />} />
               <Route path="*" element={<Dashboard />} />
             </Routes>
           </SignedIn>

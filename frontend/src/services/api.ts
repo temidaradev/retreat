@@ -177,6 +177,128 @@ class ApiService {
     async healthCheck(): Promise<{ status: string }> {
         return this.request<{ status: string }>('/health')
     }
+
+    // Admin operations
+    async getAdminDashboard(): Promise<{
+        status: string
+        data: {
+            total_receipts: number
+            active_subscriptions: number
+            bmc_linked_users: number
+            receipts_by_status: Record<string, number>
+            timestamp: string
+        }
+    }> {
+        return this.request('/admin/dashboard')
+    }
+
+    async getAdminSubscriptions(status?: string): Promise<{
+        status: string
+        count: number
+        data: Array<{
+            id: string
+            user_id?: string
+            clerk_user_id?: string
+            plan: string
+            status: string
+            current_period_start?: string
+            current_period_end?: string
+            created_at: string
+            updated_at: string
+        }>
+    }> {
+        const endpoint = status ? `/admin/subscriptions?status=${status}` : '/admin/subscriptions'
+        return this.request(endpoint)
+    }
+
+    async grantSubscription(clerkUserId: string, durationMonths: number = 1): Promise<{
+        status: string
+        message: string
+        data: {
+            subscription_id: string
+            clerk_user_id: string
+            duration_months: number
+            expires_at: string
+        }
+    }> {
+        return this.request('/admin/subscriptions/grant', {
+            method: 'POST',
+            body: JSON.stringify({
+                clerk_user_id: clerkUserId,
+                duration_months: durationMonths,
+            }),
+        })
+    }
+
+    async revokeSubscription(clerkUserId: string): Promise<{
+        status: string
+        message: string
+        data: {
+            subscription_id: string
+            clerk_user_id: string
+        }
+    }> {
+        return this.request('/admin/subscriptions/revoke', {
+            method: 'POST',
+            body: JSON.stringify({
+                clerk_user_id: clerkUserId,
+            }),
+        })
+    }
+
+    async getBMCUsers(): Promise<{
+        status: string
+        count: number
+        data: Array<{
+            clerk_user_id: string
+            bmc_username: string
+            created_at: string
+            updated_at: string
+        }>
+    }> {
+        return this.request('/admin/bmc/users')
+    }
+
+    async linkBMCUsername(clerkUserId: string, bmcUsername: string): Promise<{
+        status: string
+        message: string
+        data: {
+            clerk_user_id: string
+            bmc_username: string
+        }
+    }> {
+        return this.request('/admin/bmc/link-username', {
+            method: 'POST',
+            body: JSON.stringify({
+                clerk_user_id: clerkUserId,
+                bmc_username: bmcUsername,
+            }),
+        })
+    }
+
+    async getSystemInfo(): Promise<{
+        status: string
+        data: {
+            database: {
+                status: string
+                version?: string
+                error?: string
+            }
+            config: {
+                bmc_webhook_configured: boolean
+                smtp_configured: boolean
+                env: string
+            }
+            server: {
+                port: string
+                env: string
+                dev_mode: boolean
+            }
+            timestamp: string
+        }
+    }> {
+        return this.request('/admin/system-info')
+    }
 }
 
 export const apiService = new ApiService()
