@@ -17,19 +17,19 @@ export default function ErrorMessage({ message, title = 'Error', onRetry, onDism
 
   return (
     <div
-      className="rounded-phi-lg p-phi-lg border flex items-start gap-phi"
+      className="rounded-phi-lg p-4 md:p-phi-lg border flex items-start gap-2 md:gap-phi"
       style={containerStyle}
     >
-      <AlertTriangle className="w-5 h-5 flex-shrink-0" style={{ color: 'var(--color-danger)' }} />
-      <div className="flex-1">
-        <h4 className="text-phi-base font-semibold mb-phi-sm" style={{ color: 'var(--color-danger)' }}>
+      <AlertTriangle className="w-4 h-4 md:w-5 md:h-5 flex-shrink-0 mt-0.5 md:mt-0" style={{ color: 'var(--color-danger)' }} />
+      <div className="flex-1 min-w-0">
+        <h4 className="text-sm md:text-phi-base font-semibold mb-2 md:mb-phi-sm" style={{ color: 'var(--color-danger)' }}>
           {title}
         </h4>
-        <p className="text-phi-sm" style={{ color: 'var(--color-text-secondary)' }}>
+        <p className="text-xs md:text-phi-sm" style={{ color: 'var(--color-text-secondary)' }}>
           {message}
         </p>
         {(onRetry || onDismiss) && (
-          <div className="flex gap-phi mt-phi">
+          <div className="flex flex-col sm:flex-row gap-2 md:gap-phi mt-3 md:mt-phi">
             {onRetry && (
               <button
                 onClick={onRetry}

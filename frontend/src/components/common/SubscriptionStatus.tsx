@@ -58,24 +58,24 @@ export default function SubscriptionStatus() {
             <div className="flex items-center justify-center gap-2 md:gap-phi mb-4 md:mb-phi-lg animate-fade-in">
               {hasRetreatPlan ? (
                 <Crown
-                  className="w-6 h-6 md:w-8 md:h-8"
+                  className="w-5 h-5 md:w-8 md:h-8"
                   style={{ color: "var(--color-accent-500)" }}
                 />
               ) : (
                 <Coffee
-                  className="w-6 h-6 md:w-8 md:h-8"
+                  className="w-5 h-5 md:w-8 md:h-8"
                   style={{ color: "var(--color-accent-500)" }}
                 />
               )}
               <h1
-                className="text-2xl md:text-phi-3xl font-bold"
+                className="text-xl md:text-phi-3xl font-bold"
                 style={{ color: "var(--color-text-primary)" }}
               >
                 {hasRetreatPlan ? "Sponsor Status" : "Support Retreat"}
               </h1>
             </div>
             <p
-              className="text-sm md:text-phi-lg max-w-2xl mx-auto px-4"
+              className="text-xs md:text-phi-lg max-w-2xl mx-auto px-2 md:px-4"
               style={{ color: "var(--color-text-secondary)" }}
             >
               {hasRetreatPlan
@@ -90,21 +90,21 @@ export default function SubscriptionStatus() {
               className="p-4 md:p-phi-lg border-b"
               style={{ borderColor: "var(--color-border)" }}
             >
-              <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center justify-between gap-2 flex-wrap">
                 <div className="flex items-center gap-2 md:gap-phi">
                   <Crown
-                    className="w-4 h-4 md:w-5 md:h-5"
+                    className="w-3 h-3 md:w-5 md:h-5"
                     style={{ color: planColor }}
                   />
                   <h3
-                    className="text-base md:text-phi-lg font-semibold"
+                    className="text-sm md:text-phi-lg font-semibold"
                     style={{ color: "var(--color-text-primary)" }}
                   >
                     Current Plan
                   </h3>
                 </div>
                 <span
-                  className="px-3 md:px-phi py-1 md:py-phi-sm rounded-full text-xs md:text-phi-sm font-medium"
+                  className="px-2 md:px-phi py-1 md:py-phi-sm rounded-full text-xs md:text-phi-sm font-medium"
                   style={{
                     background: hasRetreatPlan
                       ? "var(--color-success-bg)"
@@ -239,16 +239,16 @@ export default function SubscriptionStatus() {
               }}
             >
               <div
-                className="p-phi-lg border-b"
+                className="p-4 md:p-phi-lg border-b"
                 style={{ borderColor: "var(--color-border)" }}
               >
-                <div className="flex items-center gap-phi">
+                <div className="flex items-center gap-2 md:gap-phi">
                   <Crown
-                    className="w-5 h-5"
+                    className="w-4 h-4 md:w-5 md:h-5"
                     style={{ color: "var(--color-accent-500)" }}
                   />
                   <h3
-                    className="text-phi-lg font-semibold"
+                    className="text-sm md:text-phi-lg font-semibold"
                     style={{ color: "var(--color-text-primary)" }}
                   >
                     Become a Sponsor
@@ -256,27 +256,27 @@ export default function SubscriptionStatus() {
                 </div>
               </div>
 
-              <div className="p-phi-xl">
-                <div className="space-y-phi-xl">
+              <div className="p-4 md:p-phi-xl">
+                <div className="space-y-4 md:space-y-phi-xl">
                   {/* Step 1 */}
-                  <div className="flex gap-phi">
+                  <div className="flex flex-col sm:flex-row gap-3 md:gap-phi">
                     <div
-                      className="icon-phi-md rounded-phi-md flex items-center justify-center flex-shrink-0"
+                      className="icon-phi-md rounded-phi-md flex items-center justify-center flex-shrink-0 mx-auto sm:mx-0"
                       style={{ background: "var(--color-accent-500)" }}
                     >
-                      <span className="text-phi-lg font-bold text-white">
+                      <span className="text-base md:text-phi-lg font-bold text-white">
                         1
                       </span>
                     </div>
-                    <div className="flex-1">
+                    <div className="flex-1 text-center sm:text-left">
                       <h4
-                        className="text-phi-base font-semibold mb-phi"
+                        className="text-sm md:text-phi-base font-semibold mb-2 md:mb-phi"
                         style={{ color: "var(--color-text-primary)" }}
                       >
                         Buy the Retreat Sponsor on Buy Me a Coffee
                       </h4>
                       <p
-                        className="text-phi-sm mb-phi"
+                        className="text-xs md:text-phi-sm mb-3 md:mb-phi"
                         style={{ color: "var(--color-text-secondary)" }}
                       >
                         Visit our Buy Me a Coffee page and purchase the "Retreat
@@ -286,7 +286,7 @@ export default function SubscriptionStatus() {
                         href={external.buyMeACoffee}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-phi px-phi py-phi-sm rounded-phi-md text-phi-sm font-medium transition-all duration-200 hover-lift"
+                        className="inline-flex items-center justify-center gap-2 md:gap-phi px-3 md:px-phi py-2 md:py-phi-sm rounded-phi-md text-xs md:text-phi-sm font-medium transition-all duration-200 hover-lift"
                         style={{
                           background: "#FFDD00",
                           color: "#000000",
@@ -299,24 +299,24 @@ export default function SubscriptionStatus() {
                   </div>
 
                   {/* Step 2 */}
-                  <div className="flex gap-phi">
+                  <div className="flex flex-col sm:flex-row gap-3 md:gap-phi">
                     <div
-                      className="icon-phi-md rounded-phi-md flex items-center justify-center flex-shrink-0"
+                      className="icon-phi-md rounded-phi-md flex items-center justify-center flex-shrink-0 mx-auto sm:mx-0"
                       style={{ background: "var(--color-accent-500)" }}
                     >
-                      <span className="text-phi-lg font-bold text-white">
+                      <span className="text-base md:text-phi-lg font-bold text-white">
                         2
                       </span>
                     </div>
-                    <div className="flex-1">
+                    <div className="flex-1 text-center sm:text-left">
                       <h4
-                        className="text-phi-base font-semibold mb-phi"
+                        className="text-sm md:text-phi-base font-semibold mb-2 md:mb-phi"
                         style={{ color: "var(--color-text-primary)" }}
                       >
                         Email us your details
                       </h4>
                       <p
-                        className="text-phi-sm mb-phi"
+                        className="text-xs md:text-phi-sm mb-3 md:mb-phi"
                         style={{ color: "var(--color-text-secondary)" }}
                       >
                         After purchasing, send an email with your Buy Me a
@@ -324,7 +324,7 @@ export default function SubscriptionStatus() {
                       </p>
                       <a
                         href="mailto:support@retreat-app.tech?subject=Retreat Sponsor Activation&body=Buy Me a Coffee Username: %0D%0ARetreat Email: "
-                        className="inline-flex items-center gap-phi px-phi py-phi-sm rounded-phi-md text-phi-sm font-medium transition-all duration-200 hover-lift"
+                        className="inline-flex items-center justify-center gap-2 md:gap-phi px-3 md:px-phi py-2 md:py-phi-sm rounded-phi-md text-xs md:text-phi-sm font-medium transition-all duration-200 hover-lift"
                         style={{
                           background: "var(--color-accent-500)",
                           color: "white",
@@ -337,24 +337,24 @@ export default function SubscriptionStatus() {
                   </div>
 
                   {/* Step 3 */}
-                  <div className="flex gap-phi">
+                  <div className="flex flex-col sm:flex-row gap-3 md:gap-phi">
                     <div
-                      className="icon-phi-md rounded-phi-md flex items-center justify-center flex-shrink-0"
+                      className="icon-phi-md rounded-phi-md flex items-center justify-center flex-shrink-0 mx-auto sm:mx-0"
                       style={{ background: "var(--color-accent-500)" }}
                     >
-                      <span className="text-phi-lg font-bold text-white">
+                      <span className="text-base md:text-phi-lg font-bold text-white">
                         3
                       </span>
                     </div>
-                    <div className="flex-1">
+                    <div className="flex-1 text-center sm:text-left">
                       <h4
-                        className="text-phi-base font-semibold mb-phi"
+                        className="text-sm md:text-phi-base font-semibold mb-2 md:mb-phi"
                         style={{ color: "var(--color-text-primary)" }}
                       >
                         Get unlimited access
                       </h4>
                       <p
-                        className="text-phi-sm"
+                        className="text-xs md:text-phi-sm"
                         style={{ color: "var(--color-text-secondary)" }}
                       >
                         We'll verify your sponsorship and upgrade your account

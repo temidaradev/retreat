@@ -304,7 +304,7 @@ export default function Dashboard() {
           {/* Free Plan Limit Warning or Progress */}
           {!hasRetreatPlan && (
             <div
-              className="rounded-phi-lg p-phi-lg border mb-phi-lg"
+              className="rounded-phi-lg p-4 md:p-phi-lg border mb-phi-lg"
               style={{
                 background: isAtFreeLimit
                   ? "var(--color-warning-bg)"
@@ -315,22 +315,22 @@ export default function Dashboard() {
                 borderWidth: "2px",
               }}
             >
-              <div className="flex items-center justify-between flex-wrap gap-phi">
-                <div className="flex items-center gap-phi flex-1">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between flex-wrap gap-3 md:gap-phi">
+                <div className="flex items-start sm:items-center gap-3 md:gap-phi flex-1 min-w-0">
                   {isAtFreeLimit ? (
                     <Lock
-                      className="w-5 h-5"
+                      className="w-5 h-5 flex-shrink-0 mt-0.5 sm:mt-0"
                       style={{ color: "var(--color-warning)" }}
                     />
                   ) : (
                     <Receipt
-                      className="w-5 h-5"
+                      className="w-5 h-5 flex-shrink-0 mt-0.5 sm:mt-0"
                       style={{ color: "var(--color-accent-500)" }}
                     />
                   )}
-                  <div className="flex-1">
+                  <div className="flex-1 min-w-0">
                     <h3
-                      className="text-phi-base font-semibold"
+                      className="text-sm md:text-phi-base font-semibold"
                       style={{
                         color: isAtFreeLimit
                           ? "var(--color-warning)"
@@ -340,7 +340,7 @@ export default function Dashboard() {
                       {isAtFreeLimit ? "Free Plan Limit Reached" : "Free Plan"}
                     </h3>
                     <p
-                      className="text-phi-sm"
+                      className="text-xs md:text-phi-sm mt-1"
                       style={{ color: "var(--color-text-secondary)" }}
                     >
                       {isAtFreeLimit
@@ -384,7 +384,7 @@ export default function Dashboard() {
                 </div>
                 <Link
                   to="/pricing"
-                  className="flex items-center gap-phi px-phi py-phi-sm rounded-phi-md text-phi-sm font-medium transition-all duration-200 hover-lift whitespace-nowrap"
+                  className="flex items-center justify-center gap-2 md:gap-phi px-4 md:px-phi py-2 md:py-phi-sm rounded-phi-md text-xs md:text-phi-sm font-medium transition-all duration-200 hover-lift whitespace-nowrap w-full sm:w-auto"
                   style={{
                     background: isAtFreeLimit
                       ? "var(--color-warning)"
@@ -400,7 +400,7 @@ export default function Dashboard() {
           )}
 
           {/* Stats Cards - Modern with animations */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-phi-lg mb-phi-xl">
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-phi-lg mb-phi-xl">
             <div className="card-modern p-4 md:p-phi-lg animate-fade-in stagger-1">
               <div className="flex items-center justify-between">
                 <div className="flex-1 min-w-0">
@@ -621,10 +621,10 @@ export default function Dashboard() {
           )}
 
           {/* Search and Add Button */}
-          <div className="flex flex-col sm:flex-row gap-phi mb-phi-lg items-stretch sm:items-center">
+          <div className="flex flex-col sm:flex-row gap-3 md:gap-phi mb-phi-lg items-stretch sm:items-center">
             <div className="relative flex-1">
               <Search
-                className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 z-10"
+                className="absolute left-3 md:left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 md:w-5 md:h-5 z-10"
                 style={{ color: "var(--color-text-tertiary)" }}
               />
               <input
@@ -632,7 +632,7 @@ export default function Dashboard() {
                 placeholder="Search receipts..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full border focus-ring transition-all duration-200 pl-12 pr-4"
+                className="w-full border focus-ring transition-all duration-200 pl-10 md:pl-12 pr-3 md:pr-4 text-sm md:text-base"
                 style={{
                   height: "var(--input-height-sm)",
                   fontSize: "var(--text-sm)",
@@ -645,11 +645,11 @@ export default function Dashboard() {
             </div>
 
             {/* Show appropriate button based on plan and receipt count */}
-            <div className="flex items-center gap-phi">
+            <div className="flex items-center gap-2 md:gap-phi flex-wrap sm:flex-nowrap">
               {/* Receipt count indicator for free users */}
               {!hasRetreatPlan && (
                 <div
-                  className="text-phi-sm"
+                  className="text-xs md:text-phi-sm whitespace-nowrap"
                   style={{ color: "var(--color-text-secondary)" }}
                 >
                   <span
@@ -671,11 +671,11 @@ export default function Dashboard() {
               {isAtFreeLimit ? (
                 <Link
                   to="/pricing"
-                  className="font-medium transition-all duration-200 hover-lift flex items-center justify-center gap-phi whitespace-nowrap border-0"
+                  className="font-medium transition-all duration-200 hover-lift flex items-center justify-center gap-2 md:gap-phi whitespace-nowrap border-0 flex-1 sm:flex-none"
                   style={{
                     height: "var(--input-height-sm)",
                     minWidth: "auto",
-                    padding: "0 var(--space-lg)",
+                    padding: "0 var(--space-md)",
                     fontSize: "var(--text-sm)",
                     borderRadius: "var(--radius-full)",
                     background:
@@ -684,17 +684,17 @@ export default function Dashboard() {
                     boxShadow: "0 4px 16px rgba(59, 130, 246, 0.3)",
                   }}
                 >
-                  <Lock className="w-5 h-5" />
-                  <span>Become a Sponsor</span>
+                  <Lock className="w-4 h-4 md:w-5 md:h-5" />
+                  <span className="text-sm md:text-base">Become a Sponsor</span>
                 </Link>
               ) : (
                 <button
                   onClick={() => setShowUploadModal(true)}
-                  className="font-medium transition-all duration-200 hover-lift flex items-center justify-center gap-phi whitespace-nowrap border-0"
+                  className="font-medium transition-all duration-200 hover-lift flex items-center justify-center gap-2 md:gap-phi whitespace-nowrap border-0 flex-1 sm:flex-none"
                   style={{
                     height: "var(--input-height-sm)",
                     minWidth: "auto",
-                    padding: "0 var(--space-lg)",
+                    padding: "0 var(--space-md)",
                     fontSize: "var(--text-sm)",
                     borderRadius: "var(--radius-full)",
                     background:
@@ -703,8 +703,8 @@ export default function Dashboard() {
                     boxShadow: "0 4px 16px rgba(59, 130, 246, 0.3)",
                   }}
                 >
-                  <Plus className="w-5 h-5" />
-                  <span>Add Receipt</span>
+                  <Plus className="w-4 h-4 md:w-5 md:h-5" />
+                  <span className="text-sm md:text-base">Add Receipt</span>
                 </button>
               )}
             </div>
@@ -719,11 +719,11 @@ export default function Dashboard() {
             }}
           >
             <div
-              className="p-phi-lg border-b"
+              className="p-4 md:p-phi-lg border-b"
               style={{ borderColor: "var(--color-border)" }}
             >
               <h2
-                className="text-phi-lg font-semibold"
+                className="text-base md:text-phi-lg font-semibold"
                 style={{ color: "var(--color-text-primary)" }}
               >
                 Your Receipts
@@ -802,16 +802,16 @@ export default function Dashboard() {
                       }}
                     >
                       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-phi">
-                        <div className="flex items-start gap-3 md:gap-phi flex-1">
+                        <div className="flex items-start gap-3 md:gap-phi flex-1 min-w-0">
                           <div
-                            className="w-12 h-12 md:w-16 md:h-16 rounded-lg flex items-center justify-center border flex-shrink-0"
+                            className="w-10 h-10 md:w-16 md:h-16 rounded-lg flex items-center justify-center border flex-shrink-0"
                             style={{
                               background: "var(--color-bg-primary)",
                               borderColor: "var(--color-border)",
                             }}
                           >
                             <Receipt
-                              className="w-6 h-6 md:w-8 md:h-8"
+                              className="w-5 h-5 md:w-8 md:h-8"
                               style={{ color: "var(--color-text-tertiary)" }}
                             />
                           </div>
@@ -823,7 +823,7 @@ export default function Dashboard() {
                               {receipt.item}
                             </h3>
                             <p
-                              className="text-xs md:text-phi-base mt-1"
+                              className="text-xs md:text-phi-base mt-1 truncate"
                               style={{ color: "var(--color-text-secondary)" }}
                             >
                               {receipt.store}
@@ -837,11 +837,20 @@ export default function Dashboard() {
                                 receipt.purchase_date
                               ).toLocaleDateString()}
                             </p>
+                            <p
+                              className="text-xs mt-1 md:hidden"
+                              style={{ color: "var(--color-text-secondary)" }}
+                            >
+                              Expires:{" "}
+                              {new Date(
+                                receipt.warranty_expiry
+                              ).toLocaleDateString()}
+                            </p>
                           </div>
                         </div>
 
                         <div className="flex items-center justify-between md:flex-col md:items-end gap-2 md:gap-phi">
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 flex-wrap">
                             {(() => {
                               const style = getStatusStyle(receipt.status);
                               return (
@@ -854,7 +863,7 @@ export default function Dashboard() {
                                   }}
                                 >
                                   {getStatusIcon(receipt.status)}
-                                  <span className="capitalize">
+                                  <span className="capitalize hidden sm:inline">
                                     {receipt.status}
                                   </span>
                                 </span>
@@ -881,7 +890,7 @@ export default function Dashboard() {
                             </div>
                             <button
                               onClick={() => setDeleteConfirm(receipt.id)}
-                              className="w-8 h-8 md:w-10 md:h-10 rounded-lg flex items-center justify-center transition-all duration-200 hover-lift border"
+                              className="w-8 h-8 md:w-10 md:h-10 rounded-lg flex items-center justify-center transition-all duration-200 hover-lift border flex-shrink-0"
                               style={{
                                 background: "var(--color-bg-primary)",
                                 borderColor: "var(--color-border)",
@@ -915,19 +924,19 @@ export default function Dashboard() {
 
           {/* Upload Instructions */}
           <div
-            className="mt-phi-xl rounded-phi-lg p-phi-xl border"
+            className="mt-phi-xl rounded-phi-lg p-4 md:p-phi-xl border"
             style={{
               background: "var(--color-bg-secondary)",
               borderColor: "var(--color-border)",
             }}
           >
             <h3
-              className="text-phi-md font-semibold mb-phi-lg"
+              className="text-base md:text-phi-md font-semibold mb-4 md:mb-phi-lg"
               style={{ color: "var(--color-text-primary)" }}
             >
               How to Add Receipts
             </h3>
-            <div className="grid md:grid-cols-2 gap-phi-lg">
+            <div className="grid md:grid-cols-2 gap-4 md:gap-phi-lg">
               <div>
                 <h4
                   className="font-medium text-phi-base mb-phi"
@@ -990,27 +999,27 @@ export default function Dashboard() {
             onClick={(e) => e.stopPropagation()}
           >
             <div
-              className="p-phi-lg border-b"
+              className="p-4 md:p-phi-lg border-b"
               style={{ borderColor: "var(--color-border)" }}
             >
               <h3
-                className="text-phi-md font-semibold text-center"
+                className="text-base md:text-phi-md font-semibold text-center"
                 style={{ color: "var(--color-text-primary)" }}
               >
                 Add New Receipt
               </h3>
             </div>
-            <div className="p-phi-xl">
+            <div className="p-4 md:p-phi-xl">
               <div className="space-y-phi-lg">
                 <div>
                   <label
-                    className="block text-phi-base font-medium mb-phi text-center"
+                    className="block text-sm md:text-phi-base font-medium mb-3 md:mb-phi text-center"
                     style={{ color: "var(--color-text-primary)" }}
                   >
                     Upload PDF Receipt
                   </label>
                   <div
-                    className="border-2 border-dashed rounded-phi-lg p-phi-xl text-center transition-all duration-200 cursor-pointer group mx-auto"
+                    className="border-2 border-dashed rounded-phi-lg p-4 md:p-phi-xl text-center transition-all duration-200 cursor-pointer group mx-auto"
                     style={{
                       borderColor: selectedFile
                         ? "var(--color-success)"
@@ -1075,7 +1084,7 @@ export default function Dashboard() {
 
                 <div>
                   <label
-                    className="block text-phi-base font-medium mb-phi text-center"
+                    className="block text-sm md:text-phi-base font-medium mb-3 md:mb-phi text-center"
                     style={{ color: "var(--color-text-primary)" }}
                   >
                     Or paste email text
@@ -1092,7 +1101,7 @@ export default function Dashboard() {
                         }
                       }
                     }}
-                    className="w-full px-phi py-phi border rounded-phi-md focus-ring text-phi-base mx-auto"
+                    className="w-full px-3 md:px-phi py-3 md:py-phi border rounded-phi-md focus-ring text-sm md:text-phi-base mx-auto"
                     style={{
                       height: "calc(var(--space-2xl) * 2)",
                       background: "var(--color-bg-primary)",
@@ -1105,13 +1114,13 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              <div className="flex gap-phi mt-phi-lg justify-center">
+              <div className="flex flex-col sm:flex-row gap-3 md:gap-phi mt-4 md:mt-phi-lg justify-center">
                 <button
                   onClick={() => {
                     setShowUploadModal(false);
                     resetUploadForm();
                   }}
-                  className="btn-phi-md border font-medium hover-lift transition-all duration-200"
+                  className="btn-phi-md border font-medium hover-lift transition-all duration-200 w-full sm:w-auto"
                   style={{
                     borderColor: "var(--color-border)",
                     background: "transparent",
@@ -1124,7 +1133,7 @@ export default function Dashboard() {
                 <button
                   onClick={handleProcessReceipt}
                   disabled={processing}
-                  className="btn-phi-md font-medium hover-lift transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="btn-phi-md font-medium hover-lift transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto"
                   style={{
                     background:
                       "linear-gradient(135deg, var(--color-accent-500), var(--color-accent-600))",
@@ -1152,36 +1161,36 @@ export default function Dashboard() {
           onClick={() => setDeleteConfirm(null)}
         >
           <div
-            className="card-modern max-w-md w-full p-phi-xl animate-scale-in"
+            className="card-modern max-w-md w-full p-4 md:p-phi-xl animate-scale-in mx-4"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="text-center">
               <div
-                className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-phi-lg"
+                className="w-12 h-12 md:w-16 md:h-16 rounded-full flex items-center justify-center mx-auto mb-4 md:mb-phi-lg"
                 style={{
                   background: "var(--color-danger-bg)",
                   border: "2px solid var(--color-danger)",
                 }}
               >
                 <Trash2
-                  className="w-8 h-8"
+                  className="w-6 h-6 md:w-8 md:h-8"
                   style={{ color: "var(--color-danger)" }}
                 />
               </div>
               <h3
-                className="text-phi-lg font-semibold mb-phi"
+                className="text-base md:text-phi-lg font-semibold mb-3 md:mb-phi"
                 style={{ color: "var(--color-text-primary)" }}
               >
                 Delete Receipt?
               </h3>
               <p
-                className="text-phi-base mb-phi-lg"
+                className="text-sm md:text-phi-base mb-4 md:mb-phi-lg px-2"
                 style={{ color: "var(--color-text-secondary)" }}
               >
                 Are you sure you want to delete this receipt? This action cannot
                 be undone.
               </p>
-              <div className="flex gap-phi justify-center">
+              <div className="flex flex-col sm:flex-row gap-3 md:gap-phi justify-center">
                 <button
                   onClick={() => setDeleteConfirm(null)}
                   disabled={deleting}
