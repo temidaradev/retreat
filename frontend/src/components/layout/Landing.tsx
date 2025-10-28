@@ -693,16 +693,16 @@ export default function Landing() {
           {/* Final CTA */}
           <div className="mt-12 sm:mt-16 md:mt-24 lg:mt-32 text-center px-4 sm:px-0">
             <div
-              className="card-modern p-8 sm:p-10 md:p-12 lg:p-16"
+              className="card-modern p-6 sm:p-10 md:p-12 lg:p-16"
               style={{
                 background:
                   "linear-gradient(135deg, var(--color-accent-500), var(--color-accent-600))",
               }}
             >
-              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 sm:mb-4 text-white px-2">
+              <h2 className="text-xl sm:text-3xl md:text-4xl font-bold mb-3 sm:mb-4 text-white px-2">
                 Ready to Get Started?
               </h2>
-              <p className="text-sm sm:text-base md:text-lg mb-6 sm:mb-8 text-white opacity-90 max-w-2xl mx-auto px-2">
+              <p className="text-xs sm:text-base md:text-lg mb-6 sm:mb-8 text-white opacity-90 max-w-2xl mx-auto px-2">
                 Free forever with 10 receipts. Need more? Sponsor us for 3
                 premium perks!
               </p>
