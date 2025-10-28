@@ -363,7 +363,7 @@ export default function Landing() {
                         fontWeight: 600,
                       }}
                     >
-                      save@receiptlocker.com
+                      save@retreat-app.tech
                     </span>
                   </p>
                 </div>

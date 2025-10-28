@@ -953,7 +953,7 @@ export default function Dashboard() {
                     border: "1px solid rgba(96, 165, 250, 0.3)",
                   }}
                 >
-                  save@receiptlocker.com
+                  save@retreat-app.tech
                 </code>
               </div>
               <div>
