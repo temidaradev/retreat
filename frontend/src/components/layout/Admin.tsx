@@ -361,7 +361,7 @@ export default function Admin() {
                             Receipts by Status
                           </p>
                           <div className="mt-2 space-y-1">
-                            {Object.entries(stats.receipts_by_status).map(([status, count]) => (
+                            {stats.receipts_by_status && Object.entries(stats.receipts_by_status).map(([status, count]) => (
                               <div key={status} className="flex items-center justify-between text-xs">
                                 <span className="capitalize" style={{ color: "var(--color-text-secondary)" }}>
                                   {status}:
@@ -451,7 +451,7 @@ export default function Admin() {
                           </tr>
                         </thead>
                         <tbody>
-                          {subscriptions.length === 0 ? (
+                          {!subscriptions || subscriptions.length === 0 ? (
                             <tr>
                               <td colSpan={5} className="px-4 py-8 text-center" style={{ color: "var(--color-text-secondary)" }}>
                                 No subscriptions found
@@ -548,7 +548,7 @@ export default function Admin() {
                           </tr>
                         </thead>
                         <tbody>
-                          {bmcUsers.length === 0 ? (
+                          {!bmcUsers || bmcUsers.length === 0 ? (
                             <tr>
                               <td colSpan={4} className="px-4 py-8 text-center" style={{ color: "var(--color-text-secondary)" }}>
                                 No BMC linked users found
