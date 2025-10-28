@@ -1,4 +1,4 @@
-import { useAuth, useUser } from "@clerk/clerk-react";
+import { useAuth } from "@clerk/clerk-react";
 import {
   Receipt,
   Users,
@@ -47,7 +47,6 @@ interface BMCUser {
 
 export default function Admin() {
   const { getToken } = useAuth();
-  const { user } = useUser();
   const [activeTab, setActiveTab] = useState<"dashboard" | "subscriptions" | "bmc" | "system">("dashboard");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
