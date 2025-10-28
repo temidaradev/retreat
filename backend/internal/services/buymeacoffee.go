@@ -124,28 +124,65 @@ func (b *BuyMeACoffeeService) ProcessMembershipEvent(event BMCWebhookEvent) erro
 	query := `
 		SELECT clerk_user_id 
 		FROM user_clerk_mapping 
-		WHERE LOWER(bmc_username) = $1
+		WHERE LOWER(bmc_username) = $1 AND bmc_username IS NOT NULL
 	`
 	err = tx.QueryRow(query, nicknameNormalized).Scan(&clerkUserID)
 
 	if err == sql.ErrNoRows {
 		logging.Info("BMC member not linked to app user yet", map[string]interface{}{
-			"bmc_username":          event.Data.User.Nickname,
-			"bmc_username_original": nickname,
-			"bmc_id":                event.Data.User.ID,
-			"note":                  "User should link their BMC username via /api/v1/bmc/link-username endpoint",
+			"bmc_username":            event.Data.User.Nickname,
+			"bmc_username_normalized": nicknameNormalized,
+			"bmc_id":                  event.Data.User.ID,
+			"membership_name":         membershipName,
+			"note":                    "User should link their BMC username via /api/v1/bmc/link-username endpoint",
 		})
 
 		tx.Commit()
 		return nil
 	} else if err != nil {
 		logging.Error("Failed to find user for BMC username", map[string]interface{}{
-			"bmc_username":        event.Data.User.Nickname,
-			"nickname_normalized": nicknameNormalized,
-			"error":               err.Error(),
+			"bmc_username":            event.Data.User.Nickname,
+			"bmc_username_normalized": nicknameNormalized,
+			"error":                   err.Error(),
+			"membership_name":         membershipName,
 		})
 		return fmt.Errorf("failed to find user: %w", err)
 	}
+
+	var storedUsername string
+	verifyQuery := `SELECT bmc_username FROM user_clerk_mapping WHERE clerk_user_id = $1`
+	err = tx.QueryRow(verifyQuery, clerkUserID).Scan(&storedUsername)
+	if err != nil {
+		logging.Error("Failed to verify stored BMC username", map[string]interface{}{
+			"clerk_user_id":      clerkUserID,
+			"webhook_username":   event.Data.User.Nickname,
+			"webhook_normalized": nicknameNormalized,
+			"error":              err.Error(),
+		})
+		return fmt.Errorf("failed to verify stored username: %w", err)
+	}
+
+	// Compare normalized versions to ensure exact match
+	if strings.ToLower(storedUsername) != nicknameNormalized {
+		logging.Warn("Webhook username mismatch with stored username", map[string]interface{}{
+			"clerk_user_id":      clerkUserID,
+			"stored_username":    storedUsername,
+			"webhook_username":   event.Data.User.Nickname,
+			"stored_normalized":  strings.ToLower(storedUsername),
+			"webhook_normalized": nicknameNormalized,
+			"membership_name":    membershipName,
+		})
+		tx.Commit()
+		return fmt.Errorf("username mismatch: webhook username '%s' does not match stored username '%s'", event.Data.User.Nickname, storedUsername)
+	}
+
+	logging.Info("Username match verified for webhook", map[string]interface{}{
+		"clerk_user_id":    clerkUserID,
+		"stored_username":  storedUsername,
+		"webhook_username": event.Data.User.Nickname,
+		"membership_name":  membershipName,
+		"event_type":       event.Type,
+	})
 
 	now := time.Now()
 	nextMonth := now.AddDate(0, 1, 0)

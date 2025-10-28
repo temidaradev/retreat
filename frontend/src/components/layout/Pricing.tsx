@@ -27,7 +27,7 @@ export default function Pricing() {
       const token = await getToken();
       apiService.setAuthToken(token);
       
-      const response = await apiService.linkBMCUsernameUser(bmcUsername.trim());
+      await apiService.linkBMCUsernameUser(bmcUsername.trim());
       setLinkSuccess(true);
       setBmcUsername("");
     } catch (err: any) {

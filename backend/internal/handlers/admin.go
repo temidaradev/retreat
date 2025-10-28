@@ -239,7 +239,6 @@ func (h *AdminHandler) GrantSubscription(c *fiber.Ctx) error {
 	err = tx.QueryRow(checkQuery, req.ClerkUserID).Scan(&existingID, &existingStatus)
 
 	if err == sql.ErrNoRows {
-
 		var userUUID sql.NullString
 		uuidQuery := `SELECT user_uuid FROM user_clerk_mapping WHERE clerk_user_id = $1`
 		_ = tx.QueryRow(uuidQuery, req.ClerkUserID).Scan(&userUUID)
@@ -391,6 +390,34 @@ func (h *AdminHandler) LinkBMCUsername(c *fiber.Ctx) error {
 	}
 	defer tx.Rollback()
 
+	var existingClerkUserID string
+	checkQuery := `
+		SELECT clerk_user_id 
+		FROM user_clerk_mapping 
+		WHERE LOWER(bmc_username) = $1 AND clerk_user_id != $2
+		LIMIT 1
+	`
+	err = tx.QueryRow(checkQuery, bmcUsername, req.ClerkUserID).Scan(&existingClerkUserID)
+
+	if err == nil {
+		logging.Warn("Admin attempted to link BMC username already linked to another account", map[string]interface{}{
+			"admin_user":       c.Locals("userID"),
+			"target_user_id":   req.ClerkUserID,
+			"bmc_username":     bmcUsername,
+			"existing_user_id": existingClerkUserID,
+		})
+		return c.Status(fiber.StatusConflict).JSON(fiber.Map{
+			"error": "This Buy Me a Coffee username is already linked to another account. Please ensure you're using the correct username.",
+		})
+	} else if err != sql.ErrNoRows {
+		logging.Error("Failed to check for existing BMC username (admin action)", map[string]interface{}{
+			"error":          err.Error(),
+			"target_user_id": req.ClerkUserID,
+			"bmc_username":   bmcUsername,
+		})
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to verify username availability"})
+	}
+
 	query := `
 		INSERT INTO user_clerk_mapping (clerk_user_id, bmc_username, updated_at)
 		VALUES ($1, $2, CURRENT_TIMESTAMP)
@@ -398,10 +425,27 @@ func (h *AdminHandler) LinkBMCUsername(c *fiber.Ctx) error {
 		DO UPDATE SET 
 			bmc_username = EXCLUDED.bmc_username,
 			updated_at = CURRENT_TIMESTAMP
+		WHERE user_clerk_mapping.clerk_user_id = $1
 	`
 	_, err = tx.Exec(query, req.ClerkUserID, bmcUsername)
 	if err != nil {
-		logging.Error("Failed to link BMC username", map[string]interface{}{"error": err.Error()})
+		if strings.Contains(err.Error(), "unique constraint") || strings.Contains(err.Error(), "duplicate key") {
+			logging.Warn("Unique constraint violation on BMC username link (admin action)", map[string]interface{}{
+				"error":          err.Error(),
+				"target_user_id": req.ClerkUserID,
+				"bmc_username":   bmcUsername,
+				"admin_user":     c.Locals("userID"),
+			})
+			return c.Status(fiber.StatusConflict).JSON(fiber.Map{
+				"error": "This Buy Me a Coffee username is already linked to another account. Please ensure you're using the correct username.",
+			})
+		}
+
+		logging.Error("Failed to link BMC username (admin action)", map[string]interface{}{
+			"error":          err.Error(),
+			"target_user_id": req.ClerkUserID,
+			"bmc_username":   bmcUsername,
+		})
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to link username"})
 	}
 
