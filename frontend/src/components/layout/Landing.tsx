@@ -87,16 +87,14 @@ export default function Landing() {
 
               {/* Headline */}
               <h1
-                className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-extrabold mb-4 sm:mb-6 animate-fade-in stagger-1 leading-tight px-2 sm:px-0"
+                className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-extrabold mb-4 sm:mb-6 animate-fade-in stagger-1 leading-tight px-2 sm:px-0"
                 style={{ color: "var(--color-text-primary)" }}
               >
-                Never Lose
-                <br />
-                <span style={{ color: "var(--color-accent-400)" }}>
+                <span className="block">Never Lose</span>
+                <span className="block" style={{ color: "var(--color-accent-400)" }}>
                   Your Receipts
                 </span>
-                <br />
-                Again
+                <span className="block">Again</span>
               </h1>
 
               {/* Subtitle */}
