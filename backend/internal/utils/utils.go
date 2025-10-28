@@ -9,14 +9,12 @@ import (
 	"time"
 )
 
-// GenerateID generates a random ID string
 func GenerateID() string {
 	bytes := make([]byte, 16)
 	rand.Read(bytes)
 	return hex.EncodeToString(bytes)
 }
 
-// ParseDate parses a date string in various formats
 func ParseDate(dateStr string) (time.Time, error) {
 	formats := []string{
 		"2006-01-02",
@@ -38,12 +36,10 @@ func ParseDate(dateStr string) (time.Time, error) {
 	return time.Time{}, fmt.Errorf("unable to parse date: %s", dateStr)
 }
 
-// FormatDate formats a time.Time to a readable string
 func FormatDate(t time.Time) string {
 	return t.Format("January 2, 2006")
 }
 
-// CalculateWarrantyStatus calculates the warranty status based on expiry date
 func CalculateWarrantyStatus(expiryDate time.Time) string {
 	now := time.Now()
 
@@ -51,7 +47,6 @@ func CalculateWarrantyStatus(expiryDate time.Time) string {
 		return "expired"
 	}
 
-	// Check if expiring within 30 days
 	thirtyDaysFromNow := now.AddDate(0, 0, 30)
 	if expiryDate.Before(thirtyDaysFromNow) {
 		return "expiring"
@@ -60,28 +55,24 @@ func CalculateWarrantyStatus(expiryDate time.Time) string {
 	return "active"
 }
 
-// ValidateEmail validates an email address format
 func ValidateEmail(email string) bool {
 	pattern := `^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`
 	matched, _ := regexp.MatchString(pattern, email)
 	return matched
 }
 
-// SanitizeString removes potentially harmful characters from a string
 func SanitizeString(input string) string {
-	// Remove null bytes and control characters
+
 	input = strings.ReplaceAll(input, "\x00", "")
 	input = strings.ReplaceAll(input, "\r", "")
 	input = strings.ReplaceAll(input, "\n", " ")
 	input = strings.ReplaceAll(input, "\t", " ")
 
-	// Trim whitespace
 	input = strings.TrimSpace(input)
 
 	return input
 }
 
-// TruncateString truncates a string to a maximum length
 func TruncateString(str string, maxLen int) string {
 	if len(str) <= maxLen {
 		return str
@@ -89,7 +80,6 @@ func TruncateString(str string, maxLen int) string {
 	return str[:maxLen-3] + "..."
 }
 
-// Contains checks if a slice contains a specific string
 func Contains(slice []string, item string) bool {
 	for _, s := range slice {
 		if s == item {
@@ -99,7 +89,6 @@ func Contains(slice []string, item string) bool {
 	return false
 }
 
-// RemoveDuplicates removes duplicate strings from a slice
 func RemoveDuplicates(slice []string) []string {
 	keys := make(map[string]bool)
 	result := []string{}
@@ -114,14 +103,12 @@ func RemoveDuplicates(slice []string) []string {
 	return result
 }
 
-// GetDaysUntilExpiry calculates days until warranty expiry
 func GetDaysUntilExpiry(expiryDate time.Time) int {
 	now := time.Now()
 	duration := expiryDate.Sub(now)
 	return int(duration.Hours() / 24)
 }
 
-// FormatCurrency formats a float64 as currency
 func FormatCurrency(amount float64, currency string) string {
 	switch strings.ToUpper(currency) {
 	case "USD":
@@ -135,7 +122,6 @@ func FormatCurrency(amount float64, currency string) string {
 	}
 }
 
-// ValidateUUID validates if a string is a valid UUID format
 func ValidateUUID(uuid string) bool {
 	pattern := `^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$`
 	matched, _ := regexp.MatchString(pattern, uuid)

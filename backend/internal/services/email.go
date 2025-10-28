@@ -20,9 +20,8 @@ func NewEmailService(db *sql.DB) *EmailService {
 	return &EmailService{db: db}
 }
 
-// SendWarrantyReminder sends a warranty expiry reminder email
 func (e *EmailService) SendWarrantyReminder(userEmail string, receipt ReceiptInfo) error {
-	// Email template
+
 	tmpl := `
 <!DOCTYPE html>
 <html>
@@ -47,7 +46,7 @@ func (e *EmailService) SendWarrantyReminder(userEmail string, receipt ReceiptInf
         <div class="content">
             <p>Hello!</p>
             <p>This is a friendly reminder that your warranty for the following item will expire soon:</p>
-            
+
             <div class="receipt-info">
                 <h3>{{.Item}}</h3>
                 <p><strong>Store:</strong> {{.Store}}</p>
@@ -55,14 +54,14 @@ func (e *EmailService) SendWarrantyReminder(userEmail string, receipt ReceiptInf
                 <p><strong>Warranty Expires:</strong> <span class="warning">{{.WarrantyExpiry}}</span></p>
                 <p><strong>Amount:</strong> ${{.Amount}}</p>
             </div>
-            
+
             <p>Don't forget to:</p>
             <ul>
                 <li>Check if you need any repairs or replacements</li>
                 <li>Contact the store for warranty claims</li>
                 <li>Keep your receipt safe for warranty purposes</li>
             </ul>
-            
+
             <p>Best regards,<br>The Retreat Team</p>
         </div>
         <div class="footer">
@@ -74,26 +73,22 @@ func (e *EmailService) SendWarrantyReminder(userEmail string, receipt ReceiptInf
 </html>
 `
 
-	// Parse template
 	t, err := template.New("reminder").Parse(tmpl)
 	if err != nil {
 		return fmt.Errorf("failed to parse template: %v", err)
 	}
 
-	// Execute template
 	var body bytes.Buffer
 	err = t.Execute(&body, receipt)
 	if err != nil {
 		return fmt.Errorf("failed to execute template: %v", err)
 	}
 
-	// Send email
 	return e.sendEmail(userEmail, "Warranty Expiry Reminder", body.String())
 }
 
-// CheckAndSendReminders checks for expiring warranties and sends reminders
 func (e *EmailService) CheckAndSendReminders() error {
-	// Get receipts expiring in the next 30 days (excluding deleted receipts)
+
 	query := `
 		SELECT r.id, r.user_id, r.store, r.item, r.purchase_date, 
 		       r.warranty_expiry, r.amount, u.email
@@ -128,7 +123,6 @@ func (e *EmailService) CheckAndSendReminders() error {
 		receipt.PurchaseDate = purchaseDate.Format("January 2, 2006")
 		receipt.WarrantyExpiry = warrantyExpiry.Format("January 2, 2006")
 
-		// Send reminder email
 		if err := e.SendWarrantyReminder(userEmail, receipt); err != nil {
 			log.Printf("Failed to send reminder to %s: %v", userEmail, err)
 			continue
@@ -140,9 +134,8 @@ func (e *EmailService) CheckAndSendReminders() error {
 	return nil
 }
 
-// sendEmail sends an email using SMTP
 func (e *EmailService) sendEmail(to, subject, body string) error {
-	// Get SMTP configuration from environment
+
 	smtpHost := os.Getenv("SMTP_HOST")
 	smtpPort := os.Getenv("SMTP_PORT")
 	smtpUser := os.Getenv("SMTP_USER")
@@ -153,11 +146,9 @@ func (e *EmailService) sendEmail(to, subject, body string) error {
 		return fmt.Errorf("SMTP configuration missing")
 	}
 
-	// Create message
 	msg := fmt.Sprintf("From: %s\r\nTo: %s\r\nSubject: %s\r\nMIME-Version: 1.0\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n%s",
 		fromEmail, to, subject, body)
 
-	// Send email
 	addr := fmt.Sprintf("%s:%s", smtpHost, smtpPort)
 	auth := smtp.PlainAuth("", smtpUser, smtpPass, smtpHost)
 	err := smtp.SendMail(addr, auth, fromEmail, []string{to}, []byte(msg))
@@ -168,9 +159,8 @@ func (e *EmailService) sendEmail(to, subject, body string) error {
 	return nil
 }
 
-// SendSponsorshipVerificationNotification sends a notification to admin about new sponsorship verification request
 func (e *EmailService) SendSponsorshipVerificationNotification(verification SponsorshipVerificationRequest) error {
-	// Email template for admin notification
+
 	tmpl := `
 <!DOCTYPE html>
 <html>
@@ -199,7 +189,7 @@ func (e *EmailService) SendSponsorshipVerificationNotification(verification Spon
         <div class="content">
             <p>Hello Admin,</p>
             <p>A new sponsorship verification request has been submitted:</p>
-            
+
             <div class="verification-info">
                 <h3>Verification Details</h3>
                 <p><strong>Platform:</strong> {{.Platform}}</p>
@@ -208,14 +198,14 @@ func (e *EmailService) SendSponsorshipVerificationNotification(verification Spon
                 <p><strong>User ID:</strong> {{.UserID}}</p>
                 <p><strong>Request Date:</strong> {{.RequestDate}}</p>
             </div>
-            
+
             {{if .Proof}}
             <div class="proof-section">
                 <h3>Additional Proof</h3>
                 <p>{{.Proof}}</p>
             </div>
             {{end}}
-            
+
             {{if .ScreenshotPath}}
             <div class="proof-section">
                 <h3>Screenshot Uploaded</h3>
@@ -223,9 +213,9 @@ func (e *EmailService) SendSponsorshipVerificationNotification(verification Spon
                 <p><strong>Note:</strong> Please check the server uploads directory to view the screenshot.</p>
             </div>
             {{end}}
-            
+
             <p>Please review the verification request manually.</p>
-            
+
             <p>Best regards,<br>Receipt Store System</p>
         </div>
         <div class="footer">
@@ -236,20 +226,17 @@ func (e *EmailService) SendSponsorshipVerificationNotification(verification Spon
 </html>
 `
 
-	// Parse template
 	t, err := template.New("sponsorship_notification").Parse(tmpl)
 	if err != nil {
 		return fmt.Errorf("failed to parse template: %v", err)
 	}
 
-	// Execute template
 	var body bytes.Buffer
 	err = t.Execute(&body, verification)
 	if err != nil {
 		return fmt.Errorf("failed to execute template: %v", err)
 	}
 
-	// Send email to admin
 	adminEmail := e.getAdminEmail()
 	if adminEmail == "" {
 		return fmt.Errorf("ADMIN_EMAIL not configured, cannot send notification")
@@ -257,7 +244,6 @@ func (e *EmailService) SendSponsorshipVerificationNotification(verification Spon
 	return e.sendEmail(adminEmail, "New Sponsorship Verification Request", body.String())
 }
 
-// SendBMCMembershipNotification sends a notification email to admin when BMC membership event occurs
 func (e *EmailService) SendBMCMembershipNotification(eventType, userNickname, membershipName, userEmail string) error {
 	adminEmail := e.getAdminEmail()
 	if adminEmail == "" {
@@ -310,7 +296,7 @@ func (e *EmailService) SendBMCMembershipNotification(eventType, userNickname, me
         <div class="content">
             <p>Hello,</p>
             <p>A Buy Me a Coffee membership event has occurred:</p>
-            
+
             <div class="info-box">
                 <h3>Event Details</h3>
                 <p><strong>Event Type:</strong> {{.EventType}}</p>
@@ -320,7 +306,7 @@ func (e *EmailService) SendBMCMembershipNotification(eventType, userNickname, me
                 <p><strong>User Email:</strong> {{.UserEmail}}</p>
                 {{end}}
             </div>
-            
+
             {{if eq .EventType "membership.started"}}
             <p>✅ A new member has subscribed to your "Retreat" membership!</p>
             <p>Their premium access should be automatically granted if they've linked their BMC username in the app.</p>
@@ -328,7 +314,7 @@ func (e *EmailService) SendBMCMembershipNotification(eventType, userNickname, me
             <p>⚠️ A member has cancelled their "Retreat" membership.</p>
             <p>Their premium access will be automatically revoked.</p>
             {{end}}
-            
+
             <p>Best regards,<br>Retreat Receipt Store System</p>
         </div>
         <div class="footer">
@@ -361,7 +347,6 @@ func (e *EmailService) SendBMCMembershipNotification(eventType, userNickname, me
 	return e.sendEmail(adminEmail, subject, body.String())
 }
 
-// SendVerificationStatusUpdate sends an email to user about verification status
 func (e *EmailService) SendVerificationStatusUpdate(userEmail string, status string, reason string) error {
 	var subject string
 	var statusText string
@@ -404,14 +389,14 @@ func (e *EmailService) SendVerificationStatusUpdate(userEmail string, status str
         </div>
         <div class="content">
             <p>Hello,</p>
-            
+
             <div class="status-info">
                 <h3>Verification Status: {{.Status}}</h3>
                 {{if .Reason}}
                 <p><strong>Reason:</strong> {{.Reason}}</p>
                 {{end}}
             </div>
-            
+
             {{if eq .Status "approved"}}
             <p>🎉 Congratulations! You now have access to premium features:</p>
             <ul>
@@ -424,7 +409,7 @@ func (e *EmailService) SendVerificationStatusUpdate(userEmail string, status str
             {{else if eq .Status "rejected"}}
             <p>If you believe this is an error, please contact support with additional proof of your sponsorship.</p>
             {{end}}
-            
+
             <p>Best regards,<br>The Receipt Store Team</p>
         </div>
         <div class="footer">
@@ -435,13 +420,11 @@ func (e *EmailService) SendVerificationStatusUpdate(userEmail string, status str
 </html>
 `
 
-	// Parse template
 	t, err := template.New("status_update").Parse(tmpl)
 	if err != nil {
 		return fmt.Errorf("failed to parse template: %v", err)
 	}
 
-	// Execute template
 	var body bytes.Buffer
 	err = t.Execute(&body, map[string]interface{}{
 		"Subject":     subject,
@@ -457,14 +440,12 @@ func (e *EmailService) SendVerificationStatusUpdate(userEmail string, status str
 	return e.sendEmail(userEmail, subject, body.String())
 }
 
-// getAdminEmail gets the admin email from environment variable
 func (e *EmailService) getAdminEmail() string {
 	adminEmail := os.Getenv("ADMIN_EMAIL")
 	if adminEmail != "" {
 		return strings.TrimSpace(adminEmail)
 	}
 
-	// Fallback: get first email from ADMIN_EMAILS if ADMIN_EMAIL not set
 	adminEmails := os.Getenv("ADMIN_EMAILS")
 	if adminEmails != "" {
 		emails := strings.Split(adminEmails, ",")
@@ -476,7 +457,6 @@ func (e *EmailService) getAdminEmail() string {
 	return ""
 }
 
-// ReceiptInfo represents receipt information for email templates
 type ReceiptInfo struct {
 	ID             string
 	UserID         string
@@ -487,7 +467,6 @@ type ReceiptInfo struct {
 	Amount         float64
 }
 
-// SponsorshipVerificationRequest represents verification request data for email templates
 type SponsorshipVerificationRequest struct {
 	Platform       string
 	Username       string

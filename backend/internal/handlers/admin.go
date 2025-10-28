@@ -28,11 +28,9 @@ func NewAdminHandler(db *sql.DB, cfg *config.Config, bmcService *services.BuyMeA
 	}
 }
 
-// GetDashboard returns admin dashboard statistics
 func (h *AdminHandler) GetDashboard(c *fiber.Ctx) error {
 	stats := make(map[string]interface{})
 
-	// Get total receipts count
 	var totalReceipts int
 	if err := h.db.QueryRow("SELECT COUNT(*) FROM receipts WHERE deleted_at IS NULL").Scan(&totalReceipts); err != nil {
 		logging.Error("Failed to get total receipts", map[string]interface{}{"error": err.Error()})
@@ -40,7 +38,6 @@ func (h *AdminHandler) GetDashboard(c *fiber.Ctx) error {
 		stats["total_receipts"] = totalReceipts
 	}
 
-	// Get active subscriptions count
 	var activeSubscriptions int
 	if err := h.db.QueryRow("SELECT COUNT(*) FROM subscriptions WHERE status = 'active'").Scan(&activeSubscriptions); err != nil {
 		logging.Error("Failed to get active subscriptions", map[string]interface{}{"error": err.Error()})
@@ -48,7 +45,6 @@ func (h *AdminHandler) GetDashboard(c *fiber.Ctx) error {
 		stats["active_subscriptions"] = activeSubscriptions
 	}
 
-	// Get total users with BMC mapping
 	var totalBMCLinkedUsers int
 	if err := h.db.QueryRow("SELECT COUNT(*) FROM user_clerk_mapping WHERE bmc_username IS NOT NULL").Scan(&totalBMCLinkedUsers); err != nil {
 		logging.Error("Failed to get BMC linked users", map[string]interface{}{"error": err.Error()})
@@ -56,7 +52,6 @@ func (h *AdminHandler) GetDashboard(c *fiber.Ctx) error {
 		stats["bmc_linked_users"] = totalBMCLinkedUsers
 	}
 
-	// Get receipts by status
 	statusCounts := make(map[string]int)
 	rows, err := h.db.Query("SELECT status, COUNT(*) FROM receipts WHERE deleted_at IS NULL GROUP BY status")
 	if err == nil {
@@ -79,7 +74,6 @@ func (h *AdminHandler) GetDashboard(c *fiber.Ctx) error {
 	})
 }
 
-// GetBMCUsers returns all users with BMC username mappings
 func (h *AdminHandler) GetBMCUsers(c *fiber.Ctx) error {
 	query := `
 		SELECT clerk_user_id, bmc_username, created_at, updated_at
@@ -120,9 +114,8 @@ func (h *AdminHandler) GetBMCUsers(c *fiber.Ctx) error {
 	})
 }
 
-// GetSubscriptions returns all subscriptions
 func (h *AdminHandler) GetSubscriptions(c *fiber.Ctx) error {
-	statusFilter := c.Query("status", "") // Optional filter: active, cancelled, expired
+	statusFilter := c.Query("status", "")
 
 	query := `
 		SELECT id, user_id, clerk_user_id, plan, status, 
@@ -196,13 +189,11 @@ func (h *AdminHandler) GetSubscriptions(c *fiber.Ctx) error {
 	})
 }
 
-// SyncBMCMemberships manually triggers BMC membership sync
 func (h *AdminHandler) SyncBMCMemberships(c *fiber.Ctx) error {
 	logging.Info("Manual BMC sync triggered by admin", map[string]interface{}{
 		"admin_user": c.Locals("userID"),
 	})
 
-	// Trigger sync (note: this now uses webhooks, but we can still have this endpoint for manual operations)
 	webhookURL := fmt.Sprintf("https://retreat-app.tech/api/v1/bmc/webhook")
 	return c.JSON(fiber.Map{
 		"status":      "success",
@@ -212,11 +203,10 @@ func (h *AdminHandler) SyncBMCMemberships(c *fiber.Ctx) error {
 	})
 }
 
-// GrantSubscription manually grants a premium subscription to a user
 func (h *AdminHandler) GrantSubscription(c *fiber.Ctx) error {
 	var req struct {
 		ClerkUserID    string `json:"clerk_user_id" validate:"required"`
-		DurationMonths int    `json:"duration_months"` // Default 1 month
+		DurationMonths int    `json:"duration_months"`
 	}
 
 	if err := c.BodyParser(&req); err != nil {
@@ -231,7 +221,6 @@ func (h *AdminHandler) GrantSubscription(c *fiber.Ctx) error {
 		req.DurationMonths = 1
 	}
 
-	// Start transaction
 	tx, err := h.db.Begin()
 	if err != nil {
 		logging.Error("Failed to start transaction for manual subscription grant", map[string]interface{}{
@@ -244,14 +233,13 @@ func (h *AdminHandler) GrantSubscription(c *fiber.Ctx) error {
 	now := time.Now()
 	endDate := now.AddDate(0, req.DurationMonths, 0)
 
-	// Check if subscription exists
 	var existingID string
 	var existingStatus string
 	checkQuery := `SELECT id, status FROM subscriptions WHERE clerk_user_id = $1 AND plan = 'premium' ORDER BY created_at DESC LIMIT 1`
 	err = tx.QueryRow(checkQuery, req.ClerkUserID).Scan(&existingID, &existingStatus)
 
 	if err == sql.ErrNoRows {
-		// Create new subscription
+
 		var userUUID sql.NullString
 		uuidQuery := `SELECT user_uuid FROM user_clerk_mapping WHERE clerk_user_id = $1`
 		_ = tx.QueryRow(uuidQuery, req.ClerkUserID).Scan(&userUUID)
@@ -296,7 +284,6 @@ func (h *AdminHandler) GrantSubscription(c *fiber.Ctx) error {
 		})
 	}
 
-	// Update existing subscription
 	updateQuery := `
 		UPDATE subscriptions 
 		SET status = 'active', 
@@ -332,7 +319,6 @@ func (h *AdminHandler) GrantSubscription(c *fiber.Ctx) error {
 	})
 }
 
-// RevokeSubscription manually revokes a premium subscription
 func (h *AdminHandler) RevokeSubscription(c *fiber.Ctx) error {
 	var req struct {
 		ClerkUserID string `json:"clerk_user_id" validate:"required"`
@@ -383,7 +369,6 @@ func (h *AdminHandler) RevokeSubscription(c *fiber.Ctx) error {
 	})
 }
 
-// LinkBMCUsername manually links a BMC username to a user (admin override)
 func (h *AdminHandler) LinkBMCUsername(c *fiber.Ctx) error {
 	var req struct {
 		ClerkUserID string `json:"clerk_user_id" validate:"required"`
@@ -440,11 +425,9 @@ func (h *AdminHandler) LinkBMCUsername(c *fiber.Ctx) error {
 	})
 }
 
-// GetSystemInfo returns system information and configuration status
 func (h *AdminHandler) GetSystemInfo(c *fiber.Ctx) error {
 	info := make(map[string]interface{})
 
-	// Database connection status
 	ctx, cancel := context.WithTimeout(c.Context(), 5*time.Second)
 	defer cancel()
 	if err := h.db.PingContext(ctx); err != nil {
@@ -461,14 +444,12 @@ func (h *AdminHandler) GetSystemInfo(c *fiber.Ctx) error {
 		}
 	}
 
-	// Configuration status
 	info["config"] = map[string]interface{}{
 		"bmc_webhook_configured": h.cfg.BuyMeACoffee.WebhookSecret != "",
 		"smtp_configured":        h.cfg.Email.SMTPHost != "" && h.cfg.Email.SMTPPassword != "",
 		"env":                    h.cfg.Server.GinMode,
 	}
 
-	// Server info
 	info["server"] = map[string]interface{}{
 		"port":     h.cfg.Server.Port,
 		"env":      h.cfg.Server.GinMode,

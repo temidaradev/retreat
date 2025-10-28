@@ -13,17 +13,14 @@ import (
 	"receiptlocker/internal/logging"
 )
 
-// BuyMeACoffeeService handles integration with Buy Me a Coffee via webhooks
 type BuyMeACoffeeService struct {
 	db            *sql.DB
 	webhookSecret string
 	emailService  *EmailService
 }
 
-// BMCWebhookEvent represents a Buy Me a Coffee webhook event
-// Based on Buy Me a Coffee webhook documentation
 type BMCWebhookEvent struct {
-	Type string `json:"type"` // membership.started, membership.updated, membership.cancelled
+	Type string `json:"type"`
 	Data struct {
 		User struct {
 			ID       string `json:"id"`
@@ -34,14 +31,13 @@ type BMCWebhookEvent struct {
 		Membership struct {
 			ID     string `json:"id"`
 			Name   string `json:"name"`
-			Status string `json:"status"` // active, cancelled, expired
+			Status string `json:"status"`
 		} `json:"membership"`
 		CreatedAt string `json:"created_at,omitempty"`
 		UpdatedAt string `json:"updated_at,omitempty"`
 	} `json:"data"`
 }
 
-// NewBuyMeACoffeeService creates a new Buy Me a Coffee service
 func NewBuyMeACoffeeService(db *sql.DB, cfg *config.Config) *BuyMeACoffeeService {
 	return &BuyMeACoffeeService{
 		db:            db,
@@ -50,29 +46,24 @@ func NewBuyMeACoffeeService(db *sql.DB, cfg *config.Config) *BuyMeACoffeeService
 	}
 }
 
-// VerifyWebhookSignature verifies the webhook signature from Buy Me a Coffee
-// Buy Me a Coffee uses HMAC SHA256 for signature verification
 func (b *BuyMeACoffeeService) VerifyWebhookSignature(payload []byte, signature string) bool {
 	if b.webhookSecret == "" {
 		logging.Warn("Webhook secret not configured, skipping signature verification (dev mode)")
-		return true // In dev, allow without secret for testing
+		return true
 	}
 
 	if signature == "" {
 		return false
 	}
 
-	// Create HMAC SHA256 hash
 	h := hmac.New(sha256.New, []byte(b.webhookSecret))
 	h.Write(payload)
 	expectedSignature := hex.EncodeToString(h.Sum(nil))
 
-	// Remove common prefixes
 	sig := strings.TrimPrefix(signature, "sha256=")
 	sig = strings.TrimPrefix(sig, "SHA256=")
 	sig = strings.TrimSpace(sig)
 
-	// Use constant-time comparison to prevent timing attacks
 	isValid := hmac.Equal([]byte(expectedSignature), []byte(sig))
 
 	if !isValid {
@@ -86,26 +77,23 @@ func (b *BuyMeACoffeeService) VerifyWebhookSignature(payload []byte, signature s
 	return isValid
 }
 
-// ProcessMembershipEvent processes a membership webhook event
 func (b *BuyMeACoffeeService) ProcessMembershipEvent(event BMCWebhookEvent) error {
-	// Extract and normalize data
+
 	membershipName := strings.TrimSpace(event.Data.Membership.Name)
 	nickname := strings.TrimSpace(event.Data.User.Nickname)
 
-	// Use nickname or email as fallback for identification
 	if nickname == "" {
 		nickname = strings.TrimSpace(event.Data.User.Email)
 		if nickname == "" {
 			return fmt.Errorf("user nickname and email are both empty")
 		}
-		// Extract username from email if using email
+
 		if strings.Contains(nickname, "@") {
 			parts := strings.Split(nickname, "@")
 			nickname = parts[0]
 		}
 	}
 
-	// Normalize nickname for lookup (lowercase)
 	nicknameNormalized := strings.ToLower(nickname)
 
 	logging.Info("Processing BMC membership event", map[string]interface{}{
@@ -117,7 +105,6 @@ func (b *BuyMeACoffeeService) ProcessMembershipEvent(event BMCWebhookEvent) erro
 		"membership_status":   event.Data.Membership.Status,
 	})
 
-	// Only process "Retreat" membership
 	if !strings.EqualFold(membershipName, "Retreat") {
 		logging.Info("Ignoring non-Retreat membership event", map[string]interface{}{
 			"membership_name": membershipName,
@@ -127,14 +114,12 @@ func (b *BuyMeACoffeeService) ProcessMembershipEvent(event BMCWebhookEvent) erro
 		return nil
 	}
 
-	// Start transaction
 	tx, err := b.db.Begin()
 	if err != nil {
 		return fmt.Errorf("failed to start transaction: %w", err)
 	}
 	defer tx.Rollback()
 
-	// Find user by BMC username (case-insensitive match)
 	var clerkUserID string
 	query := `
 		SELECT clerk_user_id 
@@ -150,9 +135,9 @@ func (b *BuyMeACoffeeService) ProcessMembershipEvent(event BMCWebhookEvent) erro
 			"bmc_id":                event.Data.User.ID,
 			"note":                  "User should link their BMC username via /api/v1/bmc/link-username endpoint",
 		})
-		// Still commit transaction (nothing to rollback)
+
 		tx.Commit()
-		return nil // Not an error, just not linked yet
+		return nil
 	} else if err != nil {
 		logging.Error("Failed to find user for BMC username", map[string]interface{}{
 			"bmc_username":        event.Data.User.Nickname,
@@ -165,20 +150,18 @@ func (b *BuyMeACoffeeService) ProcessMembershipEvent(event BMCWebhookEvent) erro
 	now := time.Now()
 	nextMonth := now.AddDate(0, 1, 0)
 
-	// Handle different event types
-	// For membership.updated, check the actual status in the event data
 	if event.Type == "membership.updated" {
-		// Check membership status from event to determine action
+
 		if strings.EqualFold(event.Data.Membership.Status, "cancelled") {
-			event.Type = "membership.cancelled" // Treat as cancellation
+			event.Type = "membership.cancelled"
 		} else {
-			event.Type = "membership.started" // Treat as active/started
+			event.Type = "membership.started"
 		}
 	}
 
 	switch event.Type {
 	case "membership.started":
-		// Grant/activate premium subscription
+
 		var existingSubID string
 		var existingStatus string
 		subQuery := `
@@ -191,7 +174,7 @@ func (b *BuyMeACoffeeService) ProcessMembershipEvent(event BMCWebhookEvent) erro
 		err = tx.QueryRow(subQuery, clerkUserID).Scan(&existingSubID, &existingStatus)
 
 		if err == sql.ErrNoRows {
-			// Create new subscription
+
 			var userUUID sql.NullString
 			uuidQuery := `SELECT user_uuid FROM user_clerk_mapping WHERE clerk_user_id = $1`
 			_ = tx.QueryRow(uuidQuery, clerkUserID).Scan(&userUUID)
@@ -216,7 +199,6 @@ func (b *BuyMeACoffeeService) ProcessMembershipEvent(event BMCWebhookEvent) erro
 				"clerk_user_id": clerkUserID,
 			})
 
-			// Send notification email to admin
 			go func() {
 				if err := b.emailService.SendBMCMembershipNotification(
 					event.Type,
@@ -230,7 +212,7 @@ func (b *BuyMeACoffeeService) ProcessMembershipEvent(event BMCWebhookEvent) erro
 				}
 			}()
 		} else if err == nil {
-			// Update existing subscription
+
 			if existingStatus != "active" {
 				updateQuery := `
 					UPDATE subscriptions 
@@ -249,7 +231,7 @@ func (b *BuyMeACoffeeService) ProcessMembershipEvent(event BMCWebhookEvent) erro
 					"clerk_user_id": clerkUserID,
 				})
 			} else {
-				// Extend subscription period
+
 				updateQuery := `
 					UPDATE subscriptions 
 					SET current_period_end = $1,
@@ -268,7 +250,7 @@ func (b *BuyMeACoffeeService) ProcessMembershipEvent(event BMCWebhookEvent) erro
 		}
 
 	case "membership.cancelled":
-		// Deactivate subscription
+
 		updateQuery := `
 			UPDATE subscriptions 
 			SET status = 'cancelled', 
@@ -286,7 +268,6 @@ func (b *BuyMeACoffeeService) ProcessMembershipEvent(event BMCWebhookEvent) erro
 				"clerk_user_id": clerkUserID,
 			})
 
-			// Send notification email to admin
 			go func() {
 				if err := b.emailService.SendBMCMembershipNotification(
 					event.Type,
@@ -302,7 +283,6 @@ func (b *BuyMeACoffeeService) ProcessMembershipEvent(event BMCWebhookEvent) erro
 		}
 	}
 
-	// Commit transaction
 	if err := tx.Commit(); err != nil {
 		return fmt.Errorf("failed to commit transaction: %w", err)
 	}

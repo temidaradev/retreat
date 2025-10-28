@@ -7,34 +7,25 @@ import (
 	"time"
 )
 
-// Config holds all application configuration
 type Config struct {
-	// Server configuration
+
 	Server ServerConfig
 
-	// Database configuration
 	Database DatabaseConfig
 
-	// Authentication configuration
 	Auth AuthConfig
 
-	// Email configuration
 	Email EmailConfig
 
-	// Buy Me a Coffee configuration
 	BuyMeACoffee BuyMeACoffeeConfig
 
-	// Admin configuration
 	Admin AdminConfig
 
-	// Security configuration
 	Security SecurityConfig
 
-	// Logging configuration
 	Logging LoggingConfig
 }
 
-// ServerConfig holds server-related configuration
 type ServerConfig struct {
 	Port            string
 	GinMode         string
@@ -45,7 +36,6 @@ type ServerConfig struct {
 	ShutdownTimeout time.Duration
 }
 
-// DatabaseConfig holds database-related configuration
 type DatabaseConfig struct {
 	URL             string
 	Host            string
@@ -60,12 +50,10 @@ type DatabaseConfig struct {
 	ConnMaxIdleTime time.Duration
 }
 
-// AuthConfig holds authentication-related configuration
 type AuthConfig struct {
 	ClerkSecretKey string
 }
 
-// EmailConfig holds email-related configuration
 type EmailConfig struct {
 	SMTPHost     string
 	SMTPPort     int
@@ -74,19 +62,16 @@ type EmailConfig struct {
 	FromEmail    string
 }
 
-// BuyMeACoffeeConfig holds Buy Me a Coffee webhook configuration
 type BuyMeACoffeeConfig struct {
 	WebhookSecret string
 }
 
-// AdminConfig holds admin access configuration
 type AdminConfig struct {
 	Emails    []string
 	UserIDs   []string
 	Usernames []string
 }
 
-// SecurityConfig holds security-related configuration
 type SecurityConfig struct {
 	JWTSecret         string
 	RateLimitRequests int
@@ -96,13 +81,11 @@ type SecurityConfig struct {
 	TrustedProxies    []string
 }
 
-// LoggingConfig holds logging-related configuration
 type LoggingConfig struct {
 	Level  string
 	Format string
 }
 
-// Load loads configuration from environment variables
 func Load() *Config {
 	cfg := &Config{
 		Server: ServerConfig{
@@ -141,7 +124,6 @@ func Load() *Config {
 			WebhookSecret: getEnv("BUYMEACOFFEE_WEBHOOK_SECRET", ""),
 		},
 
-		// Admin configuration
 		Admin: AdminConfig{
 			Emails:    getEnvSlice("ADMIN_EMAILS", []string{}),
 			UserIDs:   getEnvSlice("ADMIN_USER_IDS", []string{}),
@@ -151,7 +133,7 @@ func Load() *Config {
 			JWTSecret:         getEnv("JWT_SECRET", ""),
 			RateLimitRequests: getEnvInt("RATE_LIMIT_REQUESTS", 100),
 			RateLimitWindow:   getEnvInt("RATE_LIMIT_WINDOW", 60),
-			MaxFileSize:       getEnvInt64("MAX_FILE_SIZE", 10485760), // 10MB
+			MaxFileSize:       getEnvInt64("MAX_FILE_SIZE", 10485760),
 			UploadPath:        getEnv("UPLOAD_PATH", "/tmp/uploads"),
 			TrustedProxies:    getEnvSlice("TRUSTED_PROXIES", []string{}),
 		},
@@ -164,9 +146,8 @@ func Load() *Config {
 	return cfg
 }
 
-// Validate validates the configuration
 func (c *Config) Validate() error {
-	// Validate required fields in production mode
+
 	if !c.Server.DevMode {
 		if c.Database.URL == "" && c.Database.Password == "" {
 			return fmt.Errorf("database password is required in production mode")
@@ -176,7 +157,6 @@ func (c *Config) Validate() error {
 		}
 	}
 
-	// Validate numeric ranges
 	if c.Database.MaxOpenConns < 1 {
 		return fmt.Errorf("DB_MAX_OPEN_CONNS must be at least 1")
 	}
@@ -187,7 +167,6 @@ func (c *Config) Validate() error {
 		return fmt.Errorf("DB_MAX_IDLE_CONNS cannot exceed DB_MAX_OPEN_CONNS")
 	}
 
-	// Validate timeouts
 	if c.Server.ReadTimeout < 1*time.Second {
 		return fmt.Errorf("READ_TIMEOUT must be at least 1 second")
 	}
@@ -198,7 +177,6 @@ func (c *Config) Validate() error {
 	return nil
 }
 
-// Helper functions for environment variable parsing
 func getEnv(key, defaultValue string) string {
 	if value := os.Getenv(key); value != "" {
 		return value
@@ -244,7 +222,7 @@ func getEnvDuration(key string, defaultValue time.Duration) time.Duration {
 
 func getEnvSlice(key string, defaultValue []string) []string {
 	if value := os.Getenv(key); value != "" {
-		// Split by comma
+
 		result := []string{}
 		for _, item := range splitByComma(value) {
 			if trimmed := trim(item); trimmed != "" {
@@ -276,7 +254,7 @@ func splitByComma(s string) []string {
 }
 
 func trim(s string) string {
-	// Simple trim function to remove spaces
+
 	start := 0
 	end := len(s)
 	for start < end && (s[start] == ' ' || s[start] == '\t' || s[start] == '\n') {

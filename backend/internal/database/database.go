@@ -14,14 +14,12 @@ import (
 
 var DB *sql.DB
 
-// InitDB initializes the database connection with connection pooling
 func InitDB() (*sql.DB, error) {
 	cfg := config.Load()
 
-	// Get database URL from config
 	dbURL := cfg.Database.URL
 	if dbURL == "" {
-		// Fallback to individual components
+
 		dbURL = fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
 			cfg.Database.Host,
 			cfg.Database.Port,
@@ -31,19 +29,16 @@ func InitDB() (*sql.DB, error) {
 			cfg.Database.SSLMode)
 	}
 
-	// Connect to database
 	db, err := sql.Open("postgres", dbURL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open database: %w", err)
 	}
 
-	// Configure connection pool
 	db.SetMaxOpenConns(cfg.Database.MaxOpenConns)
 	db.SetMaxIdleConns(cfg.Database.MaxIdleConns)
 	db.SetConnMaxLifetime(cfg.Database.ConnMaxLifetime)
 	db.SetConnMaxIdleTime(cfg.Database.ConnMaxIdleTime)
 
-	// Test connection with retry logic
 	maxRetries := 5
 	retryDelay := 2 * time.Second
 
@@ -67,7 +62,6 @@ func InitDB() (*sql.DB, error) {
 		break
 	}
 
-	// Run migrations
 	if err := runMigrations(db); err != nil {
 		return nil, fmt.Errorf("failed to run migrations: %w", err)
 	}
@@ -80,7 +74,6 @@ func InitDB() (*sql.DB, error) {
 	return db, nil
 }
 
-// runMigrations creates the necessary tables
 func runMigrations(db *sql.DB) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -148,7 +141,6 @@ func runMigrations(db *sql.DB) error {
 		return fmt.Errorf("failed to create tables: %w", err)
 	}
 
-	// Run additional migrations for existing databases
 	alterTableSQL := `
 	-- Add deleted_at column if it doesn't exist (for existing databases)
 	DO $$ 
@@ -158,10 +150,10 @@ func runMigrations(db *sql.DB) error {
 			ALTER TABLE receipts ADD COLUMN deleted_at TIMESTAMP;
 		END IF;
 	END $$;
-	
+
 	-- Create index on deleted_at (will succeed whether column existed before or was just added)
 	CREATE INDEX IF NOT EXISTS idx_receipts_deleted_at ON receipts(deleted_at);
-	
+
 	-- Add bmc_username column to users table for Buy Me a Coffee integration
 	DO $$
 	BEGIN
@@ -170,10 +162,10 @@ func runMigrations(db *sql.DB) error {
 			ALTER TABLE users ADD COLUMN bmc_username VARCHAR(255);
 		END IF;
 	END $$;
-	
+
 	-- Create index on bmc_username
 	CREATE INDEX IF NOT EXISTS idx_users_bmc_username ON users(bmc_username);
-	
+
 	-- Update subscriptions table to support Clerk user IDs (VARCHAR) in addition to UUID
 	-- This allows subscriptions to work with the same user_id format as receipts
 	DO $$
@@ -194,7 +186,7 @@ func runMigrations(db *sql.DB) error {
 			-- In the sync function, we'll update/create subscriptions using Clerk IDs
 		END IF;
 	END $$;
-	
+
 	-- Create a linking table to map Clerk user IDs to subscriptions
 	-- This allows us to handle both UUID-based users and Clerk ID-based receipts
 	CREATE TABLE IF NOT EXISTS user_clerk_mapping (
@@ -204,9 +196,9 @@ func runMigrations(db *sql.DB) error {
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 		updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 	);
-	
+
 	CREATE INDEX IF NOT EXISTS idx_user_clerk_mapping_bmc_username ON user_clerk_mapping(bmc_username);
-	
+
 	-- Add clerk_user_id column to subscriptions to support Clerk authentication
 	DO $$
 	BEGIN
@@ -215,13 +207,13 @@ func runMigrations(db *sql.DB) error {
 			ALTER TABLE subscriptions ADD COLUMN clerk_user_id VARCHAR(255);
 		END IF;
 	END $$;
-	
+
 	CREATE INDEX IF NOT EXISTS idx_subscriptions_clerk_user_id ON subscriptions(clerk_user_id);
 	`
 
 	_, err = db.ExecContext(ctx, alterTableSQL)
 	if err != nil {
-		// Log but don't fail - this might be a permission issue
+
 		logging.Warn("Failed to run alter table migrations", map[string]interface{}{
 			"error": err.Error(),
 		})

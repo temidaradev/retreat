@@ -25,7 +25,7 @@ func NewReceiptHandler(db *sql.DB) *ReceiptHandler {
 }
 
 func (h *ReceiptHandler) GetReceipts(c *fiber.Ctx) error {
-	// Get user ID from Clerk JWT token (set by middleware)
+
 	userID := c.Locals("userID").(string)
 	if userID == "" {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "User ID not found"})
@@ -65,7 +65,6 @@ func (h *ReceiptHandler) GetReceipts(c *fiber.Ctx) error {
 			receipt.ParsedData = parsedData.String
 		}
 
-		// Update status based on warranty expiry
 		receipt.Status = h.calculateStatus(receipt.WarrantyExpiry)
 
 		receipts = append(receipts, receipt)
@@ -74,7 +73,6 @@ func (h *ReceiptHandler) GetReceipts(c *fiber.Ctx) error {
 	return c.JSON(fiber.Map{"receipts": receipts})
 }
 
-// GetReceipt retrieves a specific receipt by ID
 func (h *ReceiptHandler) GetReceipt(c *fiber.Ctx) error {
 	id := c.Params("id")
 	userID := c.Locals("userID").(string)
@@ -116,7 +114,6 @@ func (h *ReceiptHandler) GetReceipt(c *fiber.Ctx) error {
 	return c.JSON(receipt)
 }
 
-// CreateReceipt creates a new receipt
 func (h *ReceiptHandler) CreateReceipt(c *fiber.Ctx) error {
 	var req models.CreateReceiptRequest
 	if err := c.BodyParser(&req); err != nil {
@@ -128,7 +125,6 @@ func (h *ReceiptHandler) CreateReceipt(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "User ID not found"})
 	}
 
-	// Check receipt limit based on sponsorship status
 	atLimit, err := h.checkReceiptLimit(userID)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to check receipt limit"})
@@ -140,7 +136,6 @@ func (h *ReceiptHandler) CreateReceipt(c *fiber.Ctx) error {
 		})
 	}
 
-	// Parse dates
 	purchaseDate, err := time.Parse("2006-01-02", req.PurchaseDate)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid purchase date format"})
@@ -151,7 +146,6 @@ func (h *ReceiptHandler) CreateReceipt(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid warranty expiry format"})
 	}
 
-	// Set default currency
 	if req.Currency == "" {
 		req.Currency = "USD"
 	}
@@ -191,7 +185,6 @@ func (h *ReceiptHandler) CreateReceipt(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusCreated).JSON(receipt)
 }
 
-// UpdateReceipt updates an existing receipt
 func (h *ReceiptHandler) UpdateReceipt(c *fiber.Ctx) error {
 	id := c.Params("id")
 	userID := c.Locals("userID").(string)
@@ -204,7 +197,6 @@ func (h *ReceiptHandler) UpdateReceipt(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
 
-	// Parse dates
 	purchaseDate, err := time.Parse("2006-01-02", req.PurchaseDate)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid purchase date format"})
@@ -255,7 +247,6 @@ func (h *ReceiptHandler) UpdateReceipt(c *fiber.Ctx) error {
 	return c.JSON(receipt)
 }
 
-// DeleteReceipt deletes a receipt
 func (h *ReceiptHandler) DeleteReceipt(c *fiber.Ctx) error {
 	id := c.Params("id")
 	userID := c.Locals("userID").(string)
@@ -281,53 +272,45 @@ func (h *ReceiptHandler) DeleteReceipt(c *fiber.Ctx) error {
 	return c.JSON(fiber.Map{"message": "Receipt deleted successfully"})
 }
 
-// ParseEmail parses email content to extract receipt information
 func (h *ReceiptHandler) ParseEmail(c *fiber.Ctx) error {
 	var req models.ParseEmailRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
 
-	// Simple email parsing logic (in production, use ML/NLP)
 	parsedData := h.parseEmailContent(req.EmailContent)
 
 	return c.JSON(fiber.Map{"parsed_data": parsedData})
 }
 
-// ParsePDF parses PDF content to extract receipt information
 func (h *ReceiptHandler) ParsePDF(c *fiber.Ctx) error {
 	var req models.ParsePDFRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
 
-	// Decode base64 PDF content
 	pdfBytes, err := base64.StdEncoding.DecodeString(req.PDFContent)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid PDF content"})
 	}
 
-	// Extract text from PDF
 	pdfText, err := h.extractTextFromPDF(bytes.NewReader(pdfBytes))
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to extract text from PDF"})
 	}
 
-	// Parse the extracted text
 	parsedData := h.parsePDFContent(pdfText)
 
 	return c.JSON(fiber.Map{"parsed_data": parsedData})
 }
 
-// extractTextFromPDF extracts text content from a PDF file
 func (h *ReceiptHandler) extractTextFromPDF(pdfReader io.Reader) (string, error) {
-	// Read PDF content
+
 	pdfBytes, err := io.ReadAll(pdfReader)
 	if err != nil {
 		return "", fmt.Errorf("failed to read PDF: %v", err)
 	}
 
-	// Create PDF reader
 	reader := bytes.NewReader(pdfBytes)
 	pdfReaderObj, err := pdf.NewReader(reader, int64(len(pdfBytes)))
 	if err != nil {
@@ -336,7 +319,6 @@ func (h *ReceiptHandler) extractTextFromPDF(pdfReader io.Reader) (string, error)
 
 	var text strings.Builder
 
-	// Extract text from all pages
 	for i := 1; i <= pdfReaderObj.NumPage(); i++ {
 		page := pdfReaderObj.Page(i)
 		if page.V.IsNull() {
@@ -351,20 +333,18 @@ func (h *ReceiptHandler) extractTextFromPDF(pdfReader io.Reader) (string, error)
 	return text.String(), nil
 }
 
-// parsePDFContent extracts receipt information from PDF text content
 func (h *ReceiptHandler) parsePDFContent(pdfText string) models.ParsedPDFData {
-	// This is a simplified parser - in production, you'd use ML/NLP
+
 	content := strings.ToLower(pdfText)
 
 	var parsed models.ParsedPDFData
 	parsed.Currency = "USD"
-	parsed.Confidence = 0.6 // Lower confidence for PDF parsing
+	parsed.Confidence = 0.6
 
-	// Extract store name (look for common patterns)
 	storePatterns := []string{"store:", "merchant:", "vendor:", "from", "purchased from", "receipt from"}
 	for _, pattern := range storePatterns {
 		if idx := strings.Index(content, pattern); idx != -1 {
-			// Extract text after the pattern
+
 			afterPattern := content[idx+len(pattern):]
 			lines := strings.Split(afterPattern, "\n")
 			if len(lines) > 0 {
@@ -377,16 +357,15 @@ func (h *ReceiptHandler) parsePDFContent(pdfText string) models.ParsedPDFData {
 		}
 	}
 
-	// Extract amount (look for $ patterns)
 	amountPatterns := []string{"total:", "amount:", "price:", "cost:", "$"}
 	for _, pattern := range amountPatterns {
 		if idx := strings.Index(content, pattern); idx != -1 {
 			afterPattern := content[idx:]
-			// Look for numbers after the pattern
+
 			words := strings.Fields(afterPattern)
 			for i, word := range words {
 				if strings.Contains(word, "$") || (i > 0 && strings.Contains(words[i-1], "$")) {
-					// Extract number
+
 					amountStr := strings.Trim(word, "$,")
 					if amount, err := strconv.ParseFloat(amountStr, 64); err == nil {
 						parsed.Amount = amount
@@ -400,7 +379,6 @@ func (h *ReceiptHandler) parsePDFContent(pdfText string) models.ParsedPDFData {
 		}
 	}
 
-	// Extract item name (look for common patterns)
 	itemPatterns := []string{"item:", "product:", "description:", "name:", "purchased:"}
 	for _, pattern := range itemPatterns {
 		if idx := strings.Index(content, pattern); idx != -1 {
@@ -416,7 +394,6 @@ func (h *ReceiptHandler) parsePDFContent(pdfText string) models.ParsedPDFData {
 		}
 	}
 
-	// Set default dates (current date for purchase, 1 year for warranty)
 	now := time.Now()
 	parsed.PurchaseDate = now.Format("2006-01-02")
 	parsed.WarrantyExpiry = now.AddDate(1, 0, 0).Format("2006-01-02")
@@ -424,20 +401,18 @@ func (h *ReceiptHandler) parsePDFContent(pdfText string) models.ParsedPDFData {
 	return parsed
 }
 
-// parseEmailContent extracts receipt information from email content
 func (h *ReceiptHandler) parseEmailContent(emailContent string) models.ParsedEmailData {
-	// This is a simplified parser - in production, you'd use ML/NLP
+
 	content := strings.ToLower(emailContent)
 
 	var parsed models.ParsedEmailData
 	parsed.Currency = "USD"
-	parsed.Confidence = 0.7 // Default confidence
+	parsed.Confidence = 0.7
 
-	// Extract store name (look for common patterns)
 	storePatterns := []string{"from", "purchased from", "store:", "merchant:"}
 	for _, pattern := range storePatterns {
 		if idx := strings.Index(content, pattern); idx != -1 {
-			// Extract text after the pattern
+
 			afterPattern := content[idx+len(pattern):]
 			lines := strings.Split(afterPattern, "\n")
 			if len(lines) > 0 {
@@ -450,16 +425,15 @@ func (h *ReceiptHandler) parseEmailContent(emailContent string) models.ParsedEma
 		}
 	}
 
-	// Extract amount (look for $ patterns)
 	amountPatterns := []string{"$", "total:", "amount:", "price:"}
 	for _, pattern := range amountPatterns {
 		if idx := strings.Index(content, pattern); idx != -1 {
 			afterPattern := content[idx:]
-			// Look for numbers after the pattern
+
 			words := strings.Fields(afterPattern)
 			for i, word := range words {
 				if strings.Contains(word, "$") || (i > 0 && strings.Contains(words[i-1], "$")) {
-					// Extract number
+
 					amountStr := strings.Trim(word, "$,")
 					if amount, err := strconv.ParseFloat(amountStr, 64); err == nil {
 						parsed.Amount = amount
@@ -473,7 +447,6 @@ func (h *ReceiptHandler) parseEmailContent(emailContent string) models.ParsedEma
 		}
 	}
 
-	// Extract item name (look for common patterns)
 	itemPatterns := []string{"item:", "product:", "description:", "name:"}
 	for _, pattern := range itemPatterns {
 		if idx := strings.Index(content, pattern); idx != -1 {
@@ -489,7 +462,6 @@ func (h *ReceiptHandler) parseEmailContent(emailContent string) models.ParsedEma
 		}
 	}
 
-	// Set default dates (current date for purchase, 1 year for warranty)
 	now := time.Now()
 	parsed.PurchaseDate = now.Format("2006-01-02")
 	parsed.WarrantyExpiry = now.AddDate(1, 0, 0).Format("2006-01-02")
@@ -497,7 +469,6 @@ func (h *ReceiptHandler) parseEmailContent(emailContent string) models.ParsedEma
 	return parsed
 }
 
-// calculateStatus determines the warranty status based on expiry date
 func (h *ReceiptHandler) calculateStatus(expiryDate time.Time) string {
 	now := time.Now()
 	daysUntilExpiry := int(expiryDate.Sub(now).Hours() / 24)
@@ -510,9 +481,8 @@ func (h *ReceiptHandler) calculateStatus(expiryDate time.Time) string {
 	return "active"
 }
 
-// checkReceiptLimit checks if user has reached their receipt limit based on sponsorship status
 func (h *ReceiptHandler) checkReceiptLimit(userID string) (bool, error) {
-	// Check if user has active sponsorship
+
 	var sponsorshipStatus string
 	query := `
 		SELECT status FROM subscriptions 
@@ -521,12 +491,10 @@ func (h *ReceiptHandler) checkReceiptLimit(userID string) (bool, error) {
 	`
 	err := h.db.QueryRow(query, userID).Scan(&sponsorshipStatus)
 
-	// If user has active sponsorship, no limit
 	if err == nil && sponsorshipStatus == "active" {
 		return false, nil
 	}
 
-	// If no sponsorship found or error, check receipt count for free tier
 	countQuery := `SELECT COUNT(*) FROM receipts WHERE user_id = $1`
 	var count int
 	err = h.db.QueryRow(countQuery, userID).Scan(&count)
@@ -534,6 +502,5 @@ func (h *ReceiptHandler) checkReceiptLimit(userID string) (bool, error) {
 		return false, err
 	}
 
-	// Free tier limit is 10 receipts
 	return count >= 10, nil
 }

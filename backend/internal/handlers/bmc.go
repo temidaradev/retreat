@@ -23,7 +23,6 @@ func NewBMCHandler(db *sql.DB, cfg *config.Config) *BMCHandler {
 	}
 }
 
-// LinkBMCUsername allows users to link their Buy Me a Coffee username
 func (h *BMCHandler) LinkBMCUsername(c *fiber.Ctx) error {
 	userID := c.Locals("userID").(string)
 	if userID == "" {
@@ -42,10 +41,8 @@ func (h *BMCHandler) LinkBMCUsername(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "BMC username is required"})
 	}
 
-	// Normalize username
 	bmcUsername := strings.TrimSpace(strings.ToLower(req.BMCUsername))
 
-	// Start transaction
 	tx, err := h.db.Begin()
 	if err != nil {
 		logging.Error("Failed to start transaction for BMC username link", map[string]interface{}{
@@ -56,7 +53,6 @@ func (h *BMCHandler) LinkBMCUsername(c *fiber.Ctx) error {
 	}
 	defer tx.Rollback()
 
-	// Insert or update the mapping
 	query := `
 		INSERT INTO user_clerk_mapping (clerk_user_id, bmc_username, updated_at)
 		VALUES ($1, $2, CURRENT_TIMESTAMP)
@@ -75,7 +71,6 @@ func (h *BMCHandler) LinkBMCUsername(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to link username"})
 	}
 
-	// Commit transaction
 	if err := tx.Commit(); err != nil {
 		logging.Error("Failed to commit BMC username link", map[string]interface{}{
 			"error":   err.Error(),
@@ -96,9 +91,8 @@ func (h *BMCHandler) LinkBMCUsername(c *fiber.Ctx) error {
 	})
 }
 
-// HandleWebhook receives webhook events from Buy Me a Coffee
 func (h *BMCHandler) HandleWebhook(c *fiber.Ctx) error {
-	// Get raw body first (Fiber reads body once, so we need to capture it)
+
 	rawBody := c.Body()
 	if len(rawBody) == 0 {
 		logging.Warn("Webhook request with empty body", map[string]interface{}{
@@ -109,16 +103,14 @@ func (h *BMCHandler) HandleWebhook(c *fiber.Ctx) error {
 		})
 	}
 
-	// Get the signature from header (try multiple possible header names)
 	signature := c.Get("x-signature-sha256")
 	if signature == "" {
-		signature = c.Get("X-BMC-Signature") // Alternative header name
+		signature = c.Get("X-BMC-Signature")
 	}
 	if signature == "" {
-		signature = c.Get("X-Signature-SHA256") // Another possible variant
+		signature = c.Get("X-Signature-SHA256")
 	}
 
-	// Log the incoming request for debugging
 	logging.Info("Received BMC webhook request", map[string]interface{}{
 		"ip":               c.IP(),
 		"method":           c.Method(),
@@ -135,10 +127,9 @@ func (h *BMCHandler) HandleWebhook(c *fiber.Ctx) error {
 			"ip":      c.IP(),
 			"headers": c.GetReqHeaders(),
 		})
-		// In development, allow without signature if secret is not set
-		// But log warning
+
 		if h.bmcService != nil {
-			// Will check inside VerifyWebhookSignature
+
 		} else {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 				"error": "Missing signature header",
@@ -146,12 +137,11 @@ func (h *BMCHandler) HandleWebhook(c *fiber.Ctx) error {
 		}
 	}
 
-	// Verify signature if provided
 	if signature != "" {
 		if !h.bmcService.VerifyWebhookSignature(rawBody, signature) {
 			logging.Warn("Invalid webhook signature", map[string]interface{}{
 				"ip":        c.IP(),
-				"signature": signature[:min(20, len(signature))] + "...", // Only log first 20 chars
+				"signature": signature[:min(20, len(signature))] + "...",
 			})
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error": "Invalid signature",
@@ -159,10 +149,9 @@ func (h *BMCHandler) HandleWebhook(c *fiber.Ctx) error {
 		}
 	}
 
-	// Parse webhook event - create new context with body for parsing
 	var event services.BMCWebhookEvent
 	if err := c.BodyParser(&event); err != nil {
-		// Log the raw body for debugging
+
 		bodyPreview := string(rawBody)
 		if len(bodyPreview) > 500 {
 			bodyPreview = bodyPreview[:500] + "..."
@@ -177,7 +166,6 @@ func (h *BMCHandler) HandleWebhook(c *fiber.Ctx) error {
 		})
 	}
 
-	// Log full event details for debugging
 	logging.Info("Parsed BMC webhook event", map[string]interface{}{
 		"type":              event.Type,
 		"user_id":           event.Data.User.ID,
@@ -189,7 +177,6 @@ func (h *BMCHandler) HandleWebhook(c *fiber.Ctx) error {
 		"created_at":        event.Data.CreatedAt,
 	})
 
-	// Validate required fields
 	if event.Type == "" {
 		logging.Error("Webhook event missing type", map[string]interface{}{
 			"event": event,
@@ -208,7 +195,6 @@ func (h *BMCHandler) HandleWebhook(c *fiber.Ctx) error {
 		})
 	}
 
-	// Process the event
 	if err := h.bmcService.ProcessMembershipEvent(event); err != nil {
 		logging.Error("Failed to process webhook event", map[string]interface{}{
 			"error":           err.Error(),
@@ -216,8 +202,7 @@ func (h *BMCHandler) HandleWebhook(c *fiber.Ctx) error {
 			"user_nickname":   event.Data.User.Nickname,
 			"membership_name": event.Data.Membership.Name,
 		})
-		// Return 200 to acknowledge receipt, but log error
-		// This prevents BMC from retrying and spamming
+
 		return c.Status(fiber.StatusOK).JSON(fiber.Map{
 			"status":  "received",
 			"message": "Event received but processing failed",
