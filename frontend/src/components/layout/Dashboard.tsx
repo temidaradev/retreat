@@ -11,6 +11,7 @@ import {
   Lock,
   Download,
   Trash2,
+  Mail,
 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
@@ -278,6 +279,17 @@ export default function Dashboard() {
             )}
           </div>
           <div className="flex items-center gap-2 md:gap-phi">
+            <Link
+              to="/emails"
+              className="p-2 rounded-lg hover-lift transition-all duration-200"
+              style={{
+                background: 'var(--color-bg-tertiary)',
+                color: 'var(--color-text-primary)',
+              }}
+              title="Email Settings"
+            >
+              <Mail className="w-4 h-4 md:w-5 md:h-5" />
+            </Link>
             {!hasRetreatPlan && (
               <Link
                 to="/pricing"

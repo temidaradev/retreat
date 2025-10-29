@@ -6,6 +6,8 @@ import Landing from './components/layout/Landing'
 import Pricing from './components/layout/Pricing'
 import SubscriptionStatus from './components/common/SubscriptionStatus'
 import Admin from './components/layout/Admin'
+import EmailSettings from './pages/EmailSettings'
+import VerifyEmail from './pages/VerifyEmail'
 import { clerk, validateConfig } from './config'
 import './App.css'
 
@@ -34,9 +36,14 @@ function App() {
               <Route path="/pricing" element={<Pricing />} />
               <Route path="/subscription" element={<SubscriptionStatus />} />
               <Route path="/admin" element={<Admin />} />
+              <Route path="/emails" element={<EmailSettings />} />
               <Route path="*" element={<Dashboard />} />
             </Routes>
           </SignedIn>
+          {/* Public routes (no auth required) */}
+          <Routes>
+            <Route path="/verify-email/:token" element={<VerifyEmail />} />
+          </Routes>
         </div>
       </Router>
     </ClerkProvider>

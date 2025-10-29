@@ -56,6 +56,16 @@ export interface ApiError {
     timestamp?: string
 }
 
+export interface UserEmail {
+    id: string
+    user_id: string
+    email: string
+    verified: boolean
+    is_primary: boolean
+    created_at: string
+    updated_at: string
+}
+
 class ApiService {
     private authToken: string | null = null
 
@@ -179,7 +189,35 @@ class ApiService {
         })
     }
 
+    // Email management
+    async getEmails(): Promise<{ emails: UserEmail[] }> {
+        return this.request<{ emails: UserEmail[] }>('/emails')
+    }
 
+    async addEmail(email: string): Promise<{ message: string; email: UserEmail }> {
+        return this.request<{ message: string; email: UserEmail }>('/emails', {
+            method: 'POST',
+            body: JSON.stringify({ email }),
+        })
+    }
+
+    async deleteEmail(emailId: string): Promise<{ message: string }> {
+        return this.request<{ message: string }>(`/emails/${emailId}`, {
+            method: 'DELETE',
+        })
+    }
+
+    async setPrimaryEmail(emailId: string): Promise<{ message: string }> {
+        return this.request<{ message: string }>(`/emails/${emailId}/set-primary`, {
+            method: 'POST',
+        })
+    }
+
+    async resendVerification(emailId: string): Promise<{ message: string }> {
+        return this.request<{ message: string }>(`/emails/${emailId}/resend-verification`, {
+            method: 'POST',
+        })
+    }
 
     // Health check
     async healthCheck(): Promise<{ status: string }> {
