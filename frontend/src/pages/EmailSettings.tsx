@@ -40,7 +40,7 @@ export default function EmailSettings() {
     try {
       const token = await getToken();
       apiService.setAuthToken(token);
-      const response = await apiService.addEmail(email);
+      await apiService.addEmail(email);
       
       // Show success message
       alert(`Verification email sent to ${email}! Check your inbox.`);
