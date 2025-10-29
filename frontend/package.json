@@ -12,6 +12,7 @@
   "dependencies": {
     "@clerk/clerk-react": "^5.53.3",
     "@clerk/themes": "^2.4.29",
+    "@vercel/analytics": "^1.5.0",
     "lucide-react": "^0.546.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
