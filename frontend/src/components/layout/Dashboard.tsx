@@ -1,4 +1,4 @@
-import { UserButton, useAuth } from "@clerk/clerk-react";
+import { UserButton, useAuth, useUser } from "@clerk/clerk-react";
 import {
   Plus,
   Receipt,
@@ -17,9 +17,13 @@ import { Link } from "react-router-dom";
 import { apiService, type ReceiptData } from "../../services/api";
 import { formatCompactCurrency } from "../../utils";
 import ThemeSelector from "../common/ThemeSelector";
+import EmailForwardingCard from "../common/EmailForwardingCard";
+import HowItWorksModal from "../common/HowItWorksModal";
+import ReceiptSourceBadge from "../common/ReceiptSourceBadge";
 
 export default function Dashboard() {
   const { has, getToken } = useAuth();
+  const { user } = useUser();
   const [searchTerm, setSearchTerm] = useState("");
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [receipts, setReceipts] = useState<ReceiptData[]>([]);
@@ -30,6 +34,7 @@ export default function Dashboard() {
   const [processing, setProcessing] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [showHowItWorks, setShowHowItWorks] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Premium features access control (managed manually via Clerk dashboard)
@@ -811,12 +816,22 @@ export default function Dashboard() {
                             />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <h3
-                              className="text-sm md:text-phi-md font-semibold truncate"
-                              style={{ color: "var(--color-text-primary)" }}
-                            >
-                              {receipt.item}
-                            </h3>
+                            <div className="flex items-center gap-2 mb-1">
+                              <h3
+                                className="text-sm md:text-phi-md font-semibold truncate"
+                                style={{ color: "var(--color-text-primary)" }}
+                              >
+                                {receipt.item}
+                              </h3>
+                              {receipt.parsed_data && (() => {
+                                try {
+                                  const parsedData = JSON.parse(receipt.parsed_data);
+                                  return <ReceiptSourceBadge source={parsedData.source} />;
+                                } catch {
+                                  return null;
+                                }
+                              })()}
+                            </div>
                             <p
                               className="text-xs md:text-phi-base mt-1 truncate"
                               style={{ color: "var(--color-text-secondary)" }}
@@ -917,57 +932,50 @@ export default function Dashboard() {
             )}
           </div>
 
-          {/* Upload Instructions */}
+          {/* How to Add Receipts Section */}
           <div
-            className="mt-phi-xl rounded-phi-lg p-4 md:p-phi-xl border"
+            id="email-forwarding-card"
+            className="mt-phi-xl rounded-phi-lg border"
             style={{
               background: "var(--color-bg-secondary)",
               borderColor: "var(--color-border)",
             }}
           >
-            <h3
-              className="text-base md:text-phi-md font-semibold mb-4 md:mb-phi-lg"
-              style={{ color: "var(--color-text-primary)" }}
-            >
-              How to Add Receipts
-            </h3>
-            <div className="grid md:grid-cols-2 gap-4 md:gap-phi-lg">
-              <div>
-                <h4
-                  className="font-medium text-phi-base mb-phi"
-                  style={{ color: "var(--color-text-primary)" }}
-                >
-                  Email Forwarding (Recommended)
-                </h4>
-                <p
-                  className="text-phi-sm mb-phi"
-                  style={{ color: "var(--color-text-secondary)" }}
-                >
-                  Forward any purchase email to:
-                </p>
-                <code
-                  className="px-phi py-phi rounded-phi-sm text-phi-sm inline-block font-mono"
-                  style={{
-                    background: "var(--color-info-bg)",
-                    color: "var(--color-accent-400)",
-                    border: "1px solid rgba(96, 165, 250, 0.3)",
-                  }}
-                >
-                  save@retreat-app.tech
-                </code>
+            <div className="p-4 md:p-phi-lg">
+              <h3
+                className="text-lg md:text-phi-lg font-semibold mb-4 md:mb-phi-lg"
+                style={{ color: "var(--color-text-primary)" }}
+              >
+                How to Add Receipts
+              </h3>
+
+              {/* Email Forwarding */}
+              <div className="mb-4 md:mb-phi-lg">
+                <EmailForwardingCard 
+                  userEmail={user?.primaryEmailAddress?.emailAddress || user?.emailAddresses[0]?.emailAddress || "your-email@example.com"}
+                  onShowHelp={() => setShowHowItWorks(true)}
+                />
               </div>
+
+              {/* Divider */}
+              <div
+                className="my-4 md:my-phi-lg h-px"
+                style={{ background: "var(--color-border)" }}
+              />
+
+              {/* Manual Upload */}
               <div>
                 <h4
-                  className="font-medium text-phi-base mb-phi"
+                  className="text-base md:text-phi-md font-semibold mb-2 md:mb-phi"
                   style={{ color: "var(--color-text-primary)" }}
                 >
-                  Manual Upload
+                  Alternative: Manual Upload
                 </h4>
                 <p
-                  className="text-phi-sm"
+                  className="text-xs md:text-phi-sm"
                   style={{ color: "var(--color-text-secondary)" }}
                 >
-                  Upload PDF receipts or paste email text manually using the
+                  You can also upload PDF receipts or paste email text manually using the
                   "Add Receipt" button above.
                 </p>
               </div>
@@ -1216,6 +1224,9 @@ export default function Dashboard() {
           </div>
         </div>
       )}
+
+      {/* How It Works Modal */}
+      <HowItWorksModal isOpen={showHowItWorks} onClose={() => setShowHowItWorks(false)} />
     </div>
   );
 }
