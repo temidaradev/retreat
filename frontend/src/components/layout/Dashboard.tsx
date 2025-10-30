@@ -862,25 +862,7 @@ export default function Dashboard() {
                             >
                               {receipt.store}
                             </p>
-                            {/* Hide inline dates in collapsed view to prevent overlap on small screens */}
-                            <p
-                              className="hidden md:block text-phi-sm mt-1"
-                              style={{ color: "var(--color-text-tertiary)" }}
-                            >
-                              Purchased:{" "}
-                              {new Date(
-                                receipt.purchase_date
-                              ).toLocaleDateString()}
-                            </p>
-                            <p
-                              className="hidden md:block text-phi-sm mt-1"
-                              style={{ color: "var(--color-text-secondary)" }}
-                            >
-                              Expires:{" "}
-                              {new Date(
-                                receipt.warranty_expiry
-                              ).toLocaleDateString()}
-                            </p>
+                            {/* Dates are shown only in expanded details */}
                           </div>
                         </div>
 
@@ -950,7 +932,7 @@ export default function Dashboard() {
                           </div>
                         </div>
                         {/* Expandable details */}
-                        <button
+                <button
                           onClick={() => {
                             setExpandedIds((prev) => {
                               const next = new Set(prev);
@@ -959,20 +941,21 @@ export default function Dashboard() {
                               return next;
                             });
                           }}
-                          className="mt-3 text-left w-full"
+                  className="mt-2 text-left w-full"
                           style={{ color: "var(--color-accent-400)" }}
                           aria-expanded={expandedIds.has(receipt.id)}
                         >
                           {expandedIds.has(receipt.id) ? "Hide details" : "View details"}
                         </button>
-                        {expandedIds.has(receipt.id) && (
-                          <div className="mt-3 grid gap-2 md:grid-cols-2">
+                {expandedIds.has(receipt.id) && (
+                  <div className="mt-3 p-3 md:p-4 border rounded-phi-md grid gap-3 md:grid-cols-2"
+                       style={{ borderColor: "var(--color-border)", background: "var(--color-bg-tertiary)" }}>
                             <div className="text-sm" style={{ color: "var(--color-text-secondary)" }}>
                               <div><strong style={{ color: "var(--color-text-primary)" }}>Store:</strong> {receipt.store}</div>
                               <div><strong style={{ color: "var(--color-text-primary)" }}>Item:</strong> {receipt.item}</div>
                               <div><strong style={{ color: "var(--color-text-primary)" }}>Amount:</strong> {receipt.amount} {receipt.currency}</div>
-                              <div><strong style={{ color: "var(--color-text-primary)" }}>Purchased:</strong> {new Date(receipt.purchase_date).toLocaleString()}</div>
-                              <div><strong style={{ color: "var(--color-text-primary)" }}>Warranty Expiry:</strong> {new Date(receipt.warranty_expiry).toLocaleString()}</div>
+                      <div><strong style={{ color: "var(--color-text-primary)" }}>Purchased:</strong> {new Date(receipt.purchase_date).toLocaleDateString()}</div>
+                      <div><strong style={{ color: "var(--color-text-primary)" }}>Warranty Expiry:</strong> {new Date(receipt.warranty_expiry).toLocaleDateString()}</div>
                             </div>
                             <div>
                               {receiptPhotoById[receipt.id] && (
