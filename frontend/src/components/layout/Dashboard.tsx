@@ -825,7 +825,8 @@ export default function Dashboard() {
                         e.currentTarget.style.background = "transparent";
                       }}
                     >
-                      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-phi">
+                      {/* Main receipt summary - full width horizontally */}
+                      <div className="flex flex-row items-center justify-between gap-3 md:gap-phi w-full">
                         <div className="flex items-start gap-3 md:gap-phi flex-1 min-w-0">
                           <div
                             className="w-10 h-10 md:w-16 md:h-16 rounded-lg flex items-center justify-center border flex-shrink-0"
@@ -862,114 +863,112 @@ export default function Dashboard() {
                             >
                               {receipt.store}
                             </p>
-                            {/* Dates are shown only in expanded details */}
                           </div>
                         </div>
 
-                        <div className="flex items-center justify-between md:flex-col md:items-end gap-2 md:gap-phi">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            {(() => {
-                              const style = getStatusStyle(receipt.status);
-                              return (
-                                <span
-                                  className="px-2 md:px-phi py-1 md:py-phi rounded-full text-xs md:text-phi-xs font-medium flex items-center gap-1 md:gap-phi border"
-                                  style={{
-                                    background: style.bg,
-                                    color: style.text,
-                                    borderColor: style.border,
-                                  }}
-                                >
-                                  {getStatusIcon(receipt.status)}
-                                  <span className="capitalize hidden sm:inline">
-                                    {receipt.status}
-                                  </span>
+                        <div className="flex items-center gap-2 md:gap-phi flex-shrink-0">
+                          {(() => {
+                            const style = getStatusStyle(receipt.status);
+                            return (
+                              <span
+                                className="px-2 md:px-phi py-1 md:py-phi rounded-full text-xs md:text-phi-xs font-medium flex items-center gap-1 md:gap-phi border"
+                                style={{
+                                  background: style.bg,
+                                  color: style.text,
+                                  borderColor: style.border,
+                                }}
+                              >
+                                {getStatusIcon(receipt.status)}
+                                <span className="capitalize hidden sm:inline">
+                                  {receipt.status}
                                 </span>
-                              );
-                            })()}
-                          </div>
-                          <div className="flex items-center gap-2 md:gap-phi">
-                            <div className="text-right min-w-0">
-                              <p
-                                className="text-base md:text-phi-md font-semibold truncate"
-                                style={{ color: "var(--color-text-primary)" }}
-                              >
-                                {formatCompactCurrency(receipt.amount)}
-                              </p>
-                              <p
-                                className="text-xs md:text-phi-sm mt-1 hidden md:block truncate"
-                                style={{ color: "var(--color-text-secondary)" }}
-                              >
-                                Expires:{" "}
-                                {new Date(
-                                  receipt.warranty_expiry
-                                ).toLocaleDateString()}
-                              </p>
-                            </div>
-                            <button
-                              onClick={() => setDeleteConfirm(receipt.id)}
-                              className="w-8 h-8 md:w-10 md:h-10 rounded-lg flex items-center justify-center transition-all duration-200 hover-lift border flex-shrink-0"
-                              style={{
-                                background: "var(--color-bg-primary)",
-                                borderColor: "var(--color-border)",
-                                color: "var(--color-text-tertiary)",
-                              }}
-                              onMouseEnter={(e) => {
-                                e.currentTarget.style.borderColor =
-                                  "var(--color-danger)";
-                                e.currentTarget.style.color =
-                                  "var(--color-danger)";
-                              }}
-                              onMouseLeave={(e) => {
-                                e.currentTarget.style.borderColor =
-                                  "var(--color-border)";
-                                e.currentTarget.style.color =
-                                  "var(--color-text-tertiary)";
-                              }}
-                              title="Delete receipt"
+                              </span>
+                            );
+                          })()}
+                          <div className="text-right min-w-0">
+                            <p
+                              className="text-base md:text-phi-md font-semibold truncate"
+                              style={{ color: "var(--color-text-primary)" }}
                             >
-                              <Trash2 className="w-4 h-4 md:w-5 md:h-5" />
-                            </button>
+                              {formatCompactCurrency(receipt.amount)}
+                            </p>
+                            <p
+                              className="text-xs md:text-phi-sm mt-1 hidden md:block truncate"
+                              style={{ color: "var(--color-text-secondary)" }}
+                            >
+                              Expires:{" "}
+                              {new Date(
+                                receipt.warranty_expiry
+                              ).toLocaleDateString()}
+                            </p>
                           </div>
+                          <button
+                            onClick={() => setDeleteConfirm(receipt.id)}
+                            className="w-8 h-8 md:w-10 md:h-10 rounded-lg flex items-center justify-center transition-all duration-200 hover-lift border flex-shrink-0"
+                            style={{
+                              background: "var(--color-bg-primary)",
+                              borderColor: "var(--color-border)",
+                              color: "var(--color-text-tertiary)",
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.borderColor =
+                                "var(--color-danger)";
+                              e.currentTarget.style.color =
+                                "var(--color-danger)";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.borderColor =
+                                "var(--color-border)";
+                              e.currentTarget.style.color =
+                                "var(--color-text-tertiary)";
+                            }}
+                            title="Delete receipt"
+                          >
+                            <Trash2 className="w-4 h-4 md:w-5 md:h-5" />
+                          </button>
                         </div>
-                        {/* Expandable details */}
-                <button
-                          onClick={() => {
-                            setExpandedIds((prev) => {
-                              const next = new Set(prev);
-                              if (next.has(receipt.id)) next.delete(receipt.id);
-                              else next.add(receipt.id);
-                              return next;
-                            });
-                          }}
-                  className="mt-2 text-left w-full"
-                          style={{ color: "var(--color-accent-400)" }}
-                          aria-expanded={expandedIds.has(receipt.id)}
-                        >
-                          {expandedIds.has(receipt.id) ? "Hide details" : "View details"}
-                        </button>
-                {expandedIds.has(receipt.id) && (
-                  <div
-                    className="mt-3 p-3 md:p-4 border rounded-phi-md w-full space-y-2"
-                    style={{ borderColor: "var(--color-border)", background: "var(--color-bg-tertiary)" }}
-                  >
-                    <div className="text-sm" style={{ color: "var(--color-text-secondary)" }}>
-                      <div><strong style={{ color: "var(--color-text-primary)" }}>Store:</strong> {receipt.store}</div>
-                      <div><strong style={{ color: "var(--color-text-primary)" }}>Item:</strong> {receipt.item}</div>
-                      <div><strong style={{ color: "var(--color-text-primary)" }}>Amount:</strong> {receipt.amount} {receipt.currency}</div>
-                      <div><strong style={{ color: "var(--color-text-primary)" }}>Purchased:</strong> {new Date(receipt.purchase_date).toLocaleDateString()}</div>
-                      <div><strong style={{ color: "var(--color-text-primary)" }}>Warranty Expiry:</strong> {new Date(receipt.warranty_expiry).toLocaleDateString()}</div>
-                    </div>
-                    {receiptPhotoById[receipt.id] && (
-                      <img
-                        src={receiptPhotoById[receipt.id]}
-                        alt="Receipt attachment"
-                        className="rounded-phi-md border max-h-56 object-contain"
-                        style={{ borderColor: "var(--color-border)", background: "var(--color-bg-primary)" }}
-                      />
-                    )}
-                  </div>
-                )}
                       </div>
+                      
+                      {/* Expandable details button */}
+                      <button
+                        onClick={() => {
+                          setExpandedIds((prev) => {
+                            const next = new Set(prev);
+                            if (next.has(receipt.id)) next.delete(receipt.id);
+                            else next.add(receipt.id);
+                            return next;
+                          });
+                        }}
+                        className="mt-2 text-left w-full"
+                        style={{ color: "var(--color-accent-400)" }}
+                        aria-expanded={expandedIds.has(receipt.id)}
+                      >
+                        {expandedIds.has(receipt.id) ? "Hide details" : "View details"}
+                      </button>
+                      
+                      {/* Expanded details - stacks vertically below */}
+                      {expandedIds.has(receipt.id) && (
+                        <div
+                          className="mt-3 p-3 md:p-4 border rounded-phi-md w-full space-y-2"
+                          style={{ borderColor: "var(--color-border)", background: "var(--color-bg-tertiary)" }}
+                        >
+                          <div className="text-sm" style={{ color: "var(--color-text-secondary)" }}>
+                            <div><strong style={{ color: "var(--color-text-primary)" }}>Store:</strong> {receipt.store}</div>
+                            <div><strong style={{ color: "var(--color-text-primary)" }}>Item:</strong> {receipt.item}</div>
+                            <div><strong style={{ color: "var(--color-text-primary)" }}>Amount:</strong> {receipt.amount} {receipt.currency}</div>
+                            <div><strong style={{ color: "var(--color-text-primary)" }}>Purchased:</strong> {new Date(receipt.purchase_date).toLocaleDateString()}</div>
+                            <div><strong style={{ color: "var(--color-text-primary)" }}>Warranty Expiry:</strong> {new Date(receipt.warranty_expiry).toLocaleDateString()}</div>
+                          </div>
+                          {receiptPhotoById[receipt.id] && (
+                            <img
+                              src={receiptPhotoById[receipt.id]}
+                              alt="Receipt attachment"
+                              className="rounded-phi-md border max-h-56 object-contain"
+                              style={{ borderColor: "var(--color-border)", background: "var(--color-bg-primary)" }}
+                            />
+                          )}
+                        </div>
+                      )}
                     </div>
                   ))
                 )}
