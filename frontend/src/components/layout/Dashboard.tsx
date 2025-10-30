@@ -39,6 +39,16 @@ export default function Dashboard() {
   const [deleting, setDeleting] = useState(false);
   const [showHowItWorks, setShowHowItWorks] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+  const [manualStore, setManualStore] = useState("");
+  const [manualItem, setManualItem] = useState("");
+  const [manualPurchaseDate, setManualPurchaseDate] = useState("");
+  const [manualWarrantyExpiry, setManualWarrantyExpiry] = useState("");
+  const [manualAmount, setManualAmount] = useState("");
+  const [manualCurrency, setManualCurrency] = useState("USD");
+  const [manualPhoto, setManualPhoto] = useState<File | null>(null);
+  const [creatingManual, setCreatingManual] = useState(false);
+  const [receiptPhotoById, setReceiptPhotoById] = useState<Record<string, string>>({});
 
   // Premium features access control (managed manually via Clerk dashboard)
   const hasRetreatPlan = has?.({ plan: "retreat" }) ?? false;
@@ -938,6 +948,43 @@ export default function Dashboard() {
                             </button>
                           </div>
                         </div>
+                        {/* Expandable details */}
+                        <button
+                          onClick={() => {
+                            setExpandedIds((prev) => {
+                              const next = new Set(prev);
+                              if (next.has(receipt.id)) next.delete(receipt.id);
+                              else next.add(receipt.id);
+                              return next;
+                            });
+                          }}
+                          className="mt-3 text-left w-full"
+                          style={{ color: "var(--color-accent-400)" }}
+                          aria-expanded={expandedIds.has(receipt.id)}
+                        >
+                          {expandedIds.has(receipt.id) ? "Hide details" : "View details"}
+                        </button>
+                        {expandedIds.has(receipt.id) && (
+                          <div className="mt-3 grid gap-2 md:grid-cols-2">
+                            <div className="text-sm" style={{ color: "var(--color-text-secondary)" }}>
+                              <div><strong style={{ color: "var(--color-text-primary)" }}>Store:</strong> {receipt.store}</div>
+                              <div><strong style={{ color: "var(--color-text-primary)" }}>Item:</strong> {receipt.item}</div>
+                              <div><strong style={{ color: "var(--color-text-primary)" }}>Amount:</strong> {receipt.amount} {receipt.currency}</div>
+                              <div><strong style={{ color: "var(--color-text-primary)" }}>Purchased:</strong> {new Date(receipt.purchase_date).toLocaleString()}</div>
+                              <div><strong style={{ color: "var(--color-text-primary)" }}>Warranty Expiry:</strong> {new Date(receipt.warranty_expiry).toLocaleString()}</div>
+                            </div>
+                            <div>
+                              {receiptPhotoById[receipt.id] && (
+                                <img
+                                  src={receiptPhotoById[receipt.id]}
+                                  alt="Receipt attachment"
+                                  className="rounded-phi-md border max-h-56 object-contain"
+                                  style={{ borderColor: "var(--color-border)", background: "var(--color-bg-primary)" }}
+                                />
+                              )}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                   ))
@@ -1210,6 +1257,126 @@ export default function Dashboard() {
                   >
                     Paste a Turkish e‑archive invoice URL (efinans.com.tr)
                   </p>
+                </div>
+
+                {/* Manual add */}
+                <div>
+                  <label
+                    className="block text-sm md:text-phi-base font-medium mb-3 md:mb-phi text-center"
+                    style={{ color: "var(--color-text-primary)" }}
+                  >
+                    Or create manually
+                  </label>
+                  <div className="grid gap-2" style={{ maxWidth: "400px", margin: "0 auto" }}>
+                    <input
+                      placeholder="Store"
+                      value={manualStore}
+                      onChange={(e) => setManualStore(e.target.value)}
+                      className="w-full px-3 md:px-4 py-2 md:py-phi border rounded-phi-md focus-ring text-sm md:text-phi-base"
+                      style={{ background: "var(--color-bg-primary)", borderColor: "var(--color-border)", color: "var(--color-text-primary)" }}
+                    />
+                    <input
+                      placeholder="Item"
+                      value={manualItem}
+                      onChange={(e) => setManualItem(e.target.value)}
+                      className="w-full px-3 md:px-4 py-2 md:py-phi border rounded-phi-md focus-ring text-sm md:text-phi-base"
+                      style={{ background: "var(--color-bg-primary)", borderColor: "var(--color-border)", color: "var(--color-text-primary)" }}
+                    />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <input
+                        type="date"
+                        aria-label="Purchase date"
+                        value={manualPurchaseDate}
+                        onChange={(e) => setManualPurchaseDate(e.target.value)}
+                        className="w-full px-3 md:px-4 py-2 md:py-phi border rounded-phi-md focus-ring text-sm md:text-phi-base"
+                        style={{ background: "var(--color-bg-primary)", borderColor: "var(--color-border)", color: "var(--color-text-primary)" }}
+                      />
+                      <input
+                        type="date"
+                        aria-label="Warranty expiry"
+                        value={manualWarrantyExpiry}
+                        onChange={(e) => setManualWarrantyExpiry(e.target.value)}
+                        className="w-full px-3 md:px-4 py-2 md:py-phi border rounded-phi-md focus-ring text-sm md:text-phi-base"
+                        style={{ background: "var(--color-bg-primary)", borderColor: "var(--color-border)", color: "var(--color-text-primary)" }}
+                      />
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <input
+                        type="number"
+                        step="0.01"
+                        placeholder="Amount"
+                        value={manualAmount}
+                        onChange={(e) => setManualAmount(e.target.value)}
+                        className="w-full px-3 md:px-4 py-2 md:py-phi border rounded-phi-md focus-ring text-sm md:text-phi-base"
+                        style={{ background: "var(--color-bg-primary)", borderColor: "var(--color-border)", color: "var(--color-text-primary)" }}
+                      />
+                      <select
+                        value={manualCurrency}
+                        onChange={(e) => setManualCurrency(e.target.value)}
+                        className="w-full px-3 md:px-4 py-2 md:py-phi border rounded-phi-md focus-ring text-sm md:text-phi-base"
+                        style={{ background: "var(--color-bg-primary)", borderColor: "var(--color-border)", color: "var(--color-text-primary)" }}
+                      >
+                        <option value="USD">USD</option>
+                        <option value="EUR">EUR</option>
+                        <option value="TRY">TRY</option>
+                        <option value="GBP">GBP</option>
+                      </select>
+                    </div>
+                    <div>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => setManualPhoto(e.target.files?.[0] || null)}
+                        className="w-full text-sm"
+                      />
+                    </div>
+                    <button
+                      onClick={async () => {
+                        if (!manualStore.trim() || !manualItem.trim() || !manualPurchaseDate || !manualWarrantyExpiry || !manualAmount) {
+                          alert("Please complete all fields.");
+                          return;
+                        }
+                        setCreatingManual(true);
+                        try {
+                          const token = await getToken();
+                          apiService.setAuthToken(token);
+                          const created = await apiService.createReceipt({
+                            store: manualStore.trim(),
+                            item: manualItem.trim(),
+                            purchase_date: manualPurchaseDate,
+                            warranty_expiry: manualWarrantyExpiry,
+                            amount: parseFloat(manualAmount),
+                            currency: manualCurrency,
+                          });
+                          if (manualPhoto) {
+                            const url = URL.createObjectURL(manualPhoto);
+                            setReceiptPhotoById((prev) => ({ ...prev, [created.id]: url }));
+                          }
+                          alert("Receipt created successfully");
+                          setManualStore("");
+                          setManualItem("");
+                          setManualPurchaseDate("");
+                          setManualWarrantyExpiry("");
+                          setManualAmount("");
+                          setManualCurrency("USD");
+                          setManualPhoto(null);
+                          await loadReceipts();
+                          setShowUploadModal(false);
+                        } catch (err: any) {
+                          const msg = err?.message || "Failed to create receipt";
+                          console.error("[ManualCreate] error", err);
+                          alert(msg);
+                        } finally {
+                          setCreatingManual(false);
+                        }
+                      }}
+                      disabled={creatingManual}
+                      className="w-full md:w-auto px-4 md:px-phi py-2 md:py-phi-sm rounded-phi-md font-medium text-sm md:text-phi-base transition-all duration-200 hover-lift disabled:opacity-50 disabled:cursor-not-allowed"
+                      style={{ background: "linear-gradient(135deg, var(--color-accent-500), var(--color-accent-600))", color: "white", boxShadow: "0 4px 16px rgba(59, 130, 246, 0.3)" }}
+                    >
+                      {creatingManual ? "Creating..." : "Create receipt"}
+                    </button>
+                  </div>
                 </div>
               </div>
 
