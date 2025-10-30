@@ -189,6 +189,17 @@ class ApiService {
         })
     }
 
+    // Parse invoice link
+    async parseInvoiceLink(link: string): Promise<{ receipt_id: string; message?: string }> {
+        return this.request<{ receipt_id: string; message?: string }>(
+            '/receipts/parse-link',
+            {
+                method: 'POST',
+                body: JSON.stringify({ link }),
+            }
+        )
+    }
+
     // Email management
     async getEmails(): Promise<{ emails: UserEmail[] }> {
         return this.request<{ emails: UserEmail[] }>('/emails')

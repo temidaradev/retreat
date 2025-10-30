@@ -32,6 +32,8 @@ export default function Dashboard() {
   const [error, setError] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [emailText, setEmailText] = useState("");
+  const [invoiceLink, setInvoiceLink] = useState("");
+  const [parsingLink, setParsingLink] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -1126,6 +1128,88 @@ export default function Dashboard() {
                       display: "block",
                     }}
                   />
+                </div>
+
+                <div>
+                  <label
+                    className="block text-sm md:text-phi-base font-medium mb-3 md:mb-phi text-center"
+                    style={{ color: "var(--color-text-primary)" }}
+                  >
+                    Or parse Turkish e‑archive invoice link
+                  </label>
+                  <div
+                    className="flex gap-2 max-w-[400px] mx-auto"
+                    role="group"
+                    aria-label="Parse invoice link"
+                  >
+                    <input
+                      type="url"
+                      inputMode="url"
+                      placeholder="https://earsiv.efinans.com.tr/..."
+                      value={invoiceLink}
+                      onChange={(e) => setInvoiceLink(e.target.value)}
+                      className="flex-1 px-3 md:px-4 py-2 md:py-phi border rounded-phi-md focus-ring text-sm md:text-phi-base"
+                      style={{
+                        background: "var(--color-bg-primary)",
+                        borderColor: "var(--color-border)",
+                        color: "var(--color-text-primary)",
+                      }}
+                      aria-label="Invoice link"
+                    />
+                    <button
+                      onClick={async () => {
+                        // Validate URL & host
+                        let valid = false;
+                        try {
+                          const u = new URL(invoiceLink);
+                          valid = u.hostname.includes("efinans.com.tr");
+                        } catch {}
+                        if (!valid) return;
+
+                        setParsingLink(true);
+                        try {
+                          const token = await getToken();
+                          apiService.setAuthToken(token);
+                          const res = await apiService.parseInvoiceLink(invoiceLink.trim());
+                          alert(res?.message || `Parsed successfully. Receipt ID: ${res.receipt_id}`);
+                          setInvoiceLink("");
+                          await loadReceipts();
+                          setShowUploadModal(false);
+                        } catch (err: any) {
+                          const status = err?.status;
+                          const msg = err?.message || "Failed to parse invoice link";
+                          console.error("[ParseLink] error", { status, msg, err });
+                          alert(msg);
+                        } finally {
+                          setParsingLink(false);
+                        }
+                      }}
+                      disabled={(() => {
+                        try {
+                          const u = new URL(invoiceLink);
+                          return parsingLink || !u.hostname.includes("efinans.com.tr");
+                        } catch {
+                          return true || parsingLink;
+                        }
+                      })()}
+                      className="px-4 md:px-phi py-2 md:py-phi-sm rounded-phi-md font-medium text-sm md:text-phi-base transition-all duration-200 hover-lift disabled:opacity-50 disabled:cursor-not-allowed"
+                      style={{
+                        background: "linear-gradient(135deg, var(--color-accent-500), var(--color-accent-600))",
+                        color: "white",
+                        boxShadow: "0 4px 16px rgba(59, 130, 246, 0.3)",
+                        whiteSpace: "nowrap",
+                      }}
+                      aria-disabled={parsingLink}
+                    >
+                      {parsingLink ? "Parsing..." : "Parse link"}
+                    </button>
+                  </div>
+                  <p
+                    className="text-phi-xs mt-2 text-center"
+                    style={{ color: "var(--color-text-tertiary)" }}
+                  >
+                    Paste a Turkish e‑archive invoice URL (efinans.com.tr)
+                  </p>
                 </div>
               </div>
 
