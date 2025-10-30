@@ -99,7 +99,7 @@ export default function AddEmailForm({ onAdd }: AddEmailFormProps) {
         className="text-xs mt-3"
         style={{ color: 'var(--color-text-tertiary)' }}
       >
-        A verification email will be sent to the new address
+        If verification is required, a verification email will be sent to the new address
       </p>
     </div>
   );

@@ -40,10 +40,15 @@ export default function EmailSettings() {
     try {
       const token = await getToken();
       apiService.setAuthToken(token);
-      await apiService.addEmail(email);
+      const res = await apiService.addEmail(email);
       
-      // Show success message
-      alert(`Verification email sent to ${email}! Check your inbox.`);
+      // Show backend message or context-aware fallback
+      const created = res?.email;
+      const msg = res?.message
+        || (created?.verified
+              ? `Email ${created.email} added and verified`
+              : `Verification email sent to ${email}. Check your inbox.`);
+      alert(msg);
       
       // Reload emails
       await loadEmails();
@@ -106,7 +111,12 @@ export default function EmailSettings() {
       
       alert("Verification email sent! Check your inbox.");
     } catch (err: any) {
-      const errorMessage = err.message || "Failed to resend verification";
+      const status = err?.status;
+      if (status === 400) {
+        alert("Email verification is disabled by the server.");
+        return;
+      }
+      const errorMessage = err?.message || "Failed to resend verification";
       alert(errorMessage);
     }
   };
