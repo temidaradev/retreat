@@ -862,8 +862,9 @@ export default function Dashboard() {
                             >
                               {receipt.store}
                             </p>
+                            {/* Hide inline dates in collapsed view to prevent overlap on small screens */}
                             <p
-                              className="text-xs md:text-phi-sm mt-1"
+                              className="hidden md:block text-phi-sm mt-1"
                               style={{ color: "var(--color-text-tertiary)" }}
                             >
                               Purchased:{" "}
@@ -872,7 +873,7 @@ export default function Dashboard() {
                               ).toLocaleDateString()}
                             </p>
                             <p
-                              className="text-xs mt-1 md:hidden"
+                              className="hidden md:block text-phi-sm mt-1"
                               style={{ color: "var(--color-text-secondary)" }}
                             >
                               Expires:{" "}
