@@ -55,7 +55,7 @@ export default function EmailInfoBanner({ onLearnMore }: EmailInfoBannerProps) {
             className="text-xs md:text-phi-sm mb-3"
             style={{ color: 'var(--color-text-secondary)' }}
           >
-            Forward receipt emails from any of your verified addresses to automatically save them
+            Forward receipt emails from any of your addresses to automatically save them
           </p>
 
           <div

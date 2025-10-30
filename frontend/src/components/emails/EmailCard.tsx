@@ -58,20 +58,6 @@ export default function EmailCard({ email, onDelete, onSetPrimary, onResend }: E
 
         {!email.is_primary && (
           <div className="flex flex-wrap gap-2">
-            {!email.verified && (
-              <button
-                onClick={handleResend}
-                disabled={loading}
-                className="px-3 py-1.5 rounded-phi-md text-xs md:text-phi-sm font-medium border transition-all duration-200 hover-lift disabled:opacity-50"
-                style={{
-                  background: 'var(--color-bg-tertiary)',
-                  borderColor: 'var(--color-border)',
-                  color: 'var(--color-text-primary)',
-                }}
-              >
-                Resend Verification
-              </button>
-            )}
             {email.verified && (
               <button
                 onClick={handleSetPrimary}

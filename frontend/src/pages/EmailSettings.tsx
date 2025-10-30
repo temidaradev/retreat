@@ -104,21 +104,8 @@ export default function EmailSettings() {
   };
 
   const handleResendVerification = async (emailId: string) => {
-    try {
-      const token = await getToken();
-      apiService.setAuthToken(token);
-      await apiService.resendVerification(emailId);
-      
-      alert("Verification email sent! Check your inbox.");
-    } catch (err: any) {
-      const status = err?.status;
-      if (status === 400) {
-        alert("Email verification is disabled by the server.");
-        return;
-      }
-      const errorMessage = err?.message || "Failed to resend verification";
-      alert(errorMessage);
-    }
+    // Verification routes are disabled server-side; provide immediate feedback
+    alert("Email verification is disabled by the server.");
   };
 
   return (
