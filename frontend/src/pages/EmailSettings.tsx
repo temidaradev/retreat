@@ -103,7 +103,7 @@ export default function EmailSettings() {
     }
   };
 
-  const handleResendVerification = async (emailId: string) => {
+  const handleResendVerification = async (_emailId: string) => {
     // Verification routes are disabled server-side; provide immediate feedback
     alert("Email verification is disabled by the server.");
   };

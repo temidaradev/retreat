@@ -10,7 +10,7 @@ interface EmailCardProps {
   onResend: (emailId: string) => void;
 }
 
-export default function EmailCard({ email, onDelete, onSetPrimary, onResend }: EmailCardProps) {
+export default function EmailCard({ email, onDelete, onSetPrimary }: EmailCardProps) {
   const [loading, setLoading] = useState(false);
 
   const handleSetPrimary = async () => {
@@ -19,11 +19,7 @@ export default function EmailCard({ email, onDelete, onSetPrimary, onResend }: E
     setLoading(false);
   };
 
-  const handleResend = async () => {
-    setLoading(true);
-    await onResend(email.id);
-    setLoading(false);
-  };
+  // Resend verification disabled server-side
 
   const handleDelete = async () => {
     setLoading(true);
