@@ -949,7 +949,7 @@ export default function Dashboard() {
                         </button>
                 {expandedIds.has(receipt.id) && (
                   <div
-                    className="mt-3 p-3 md:p-4 border rounded-phi-md space-y-2"
+                    className="mt-3 p-3 md:p-4 border rounded-phi-md w-full space-y-2"
                     style={{ borderColor: "var(--color-border)", background: "var(--color-bg-tertiary)" }}
                   >
                     <div className="text-sm" style={{ color: "var(--color-text-secondary)" }}>
