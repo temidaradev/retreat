@@ -948,27 +948,27 @@ export default function Dashboard() {
                           {expandedIds.has(receipt.id) ? "Hide details" : "View details"}
                         </button>
                 {expandedIds.has(receipt.id) && (
-                  <div className="mt-3 p-3 md:p-4 border rounded-phi-md grid gap-3 md:grid-cols-2"
-                       style={{ borderColor: "var(--color-border)", background: "var(--color-bg-tertiary)" }}>
-                            <div className="text-sm" style={{ color: "var(--color-text-secondary)" }}>
-                              <div><strong style={{ color: "var(--color-text-primary)" }}>Store:</strong> {receipt.store}</div>
-                              <div><strong style={{ color: "var(--color-text-primary)" }}>Item:</strong> {receipt.item}</div>
-                              <div><strong style={{ color: "var(--color-text-primary)" }}>Amount:</strong> {receipt.amount} {receipt.currency}</div>
+                  <div
+                    className="mt-3 p-3 md:p-4 border rounded-phi-md space-y-2"
+                    style={{ borderColor: "var(--color-border)", background: "var(--color-bg-tertiary)" }}
+                  >
+                    <div className="text-sm" style={{ color: "var(--color-text-secondary)" }}>
+                      <div><strong style={{ color: "var(--color-text-primary)" }}>Store:</strong> {receipt.store}</div>
+                      <div><strong style={{ color: "var(--color-text-primary)" }}>Item:</strong> {receipt.item}</div>
+                      <div><strong style={{ color: "var(--color-text-primary)" }}>Amount:</strong> {receipt.amount} {receipt.currency}</div>
                       <div><strong style={{ color: "var(--color-text-primary)" }}>Purchased:</strong> {new Date(receipt.purchase_date).toLocaleDateString()}</div>
                       <div><strong style={{ color: "var(--color-text-primary)" }}>Warranty Expiry:</strong> {new Date(receipt.warranty_expiry).toLocaleDateString()}</div>
-                            </div>
-                            <div>
-                              {receiptPhotoById[receipt.id] && (
-                                <img
-                                  src={receiptPhotoById[receipt.id]}
-                                  alt="Receipt attachment"
-                                  className="rounded-phi-md border max-h-56 object-contain"
-                                  style={{ borderColor: "var(--color-border)", background: "var(--color-bg-primary)" }}
-                                />
-                              )}
-                            </div>
-                          </div>
-                        )}
+                    </div>
+                    {receiptPhotoById[receipt.id] && (
+                      <img
+                        src={receiptPhotoById[receipt.id]}
+                        alt="Receipt attachment"
+                        className="rounded-phi-md border max-h-56 object-contain"
+                        style={{ borderColor: "var(--color-border)", background: "var(--color-bg-primary)" }}
+                      />
+                    )}
+                  </div>
+                )}
                       </div>
                     </div>
                   ))
