@@ -62,13 +62,19 @@ export default function EmailSettings() {
     try {
       const token = await getToken();
       apiService.setAuthToken(token);
+      console.log("[DeleteEmail] Sending DELETE for emailId:", emailId);
       await apiService.deleteEmail(emailId);
       
       // Remove from local state
       setEmails(emails.filter(e => e.id !== emailId));
       alert("Email address deleted successfully");
     } catch (err: any) {
-      const errorMessage = err.message || "Failed to delete email address";
+      const status = err?.status;
+      console.error("[DeleteEmail] Error deleting email", { emailId, status, message: err?.message, error: err });
+      const errorMessage =
+        status === 404
+          ? "Email delete API not available. Backend route /api/v1/emails/:id is missing."
+          : err?.message || "Failed to delete email address";
       alert(errorMessage);
     }
   };
