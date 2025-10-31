@@ -68,7 +68,6 @@ func (s *EmailParserService) ParseReceiptEmail(email *types.InboundEmailWebhook)
 		receipt.PurchaseDate = purchaseDate
 		receipt.Confidence += 0.2
 	} else {
-
 		receipt.PurchaseDate = time.Now()
 	}
 
@@ -76,7 +75,6 @@ func (s *EmailParserService) ParseReceiptEmail(email *types.InboundEmailWebhook)
 		receipt.WarrantyExpiry = warrantyExpiry
 		receipt.Confidence += 0.2
 	} else {
-
 		receipt.WarrantyExpiry = receipt.PurchaseDate.AddDate(1, 0, 0)
 	}
 
@@ -99,7 +97,6 @@ func (s *EmailParserService) ParseReceiptEmail(email *types.InboundEmailWebhook)
 }
 
 func (s *EmailParserService) extractStore(subject, content, sender string) string {
-
 	storePatterns := []string{
 		`(?i)receipt from (.+?)(?:\s*-|\s*$)`,
 		`(?i)order from (.+?)(?:\s*-|\s*$)`,
@@ -160,7 +157,6 @@ func (s *EmailParserService) extractItem(content string) string {
 }
 
 func (s *EmailParserService) extractAmountAndCurrency(content string) (float64, string) {
-
 	amountPatterns := []string{
 		`(?i)total[:\s]*\$?([\d,]+\.?\d*)`,
 		`(?i)amount[:\s]*\$?([\d,]+\.?\d*)`,
@@ -170,7 +166,6 @@ func (s *EmailParserService) extractAmountAndCurrency(content string) (float64, 
 		`(?i)USD\s*([\d,]+\.?\d*)`,
 		`(?i)€\s*([\d,]+\.?\d*)`,
 		`(?i)£\s*([\d,]+\.?\d*)`,
-
 		`₺\s*([\d\.\,]+)`,
 		`(?i)TL\s*([\d\.\,]+)`,
 		`(?i)TRY\s*([\d\.\,]+)`,
@@ -180,20 +175,16 @@ func (s *EmailParserService) extractAmountAndCurrency(content string) (float64, 
 		re := regexp.MustCompile(pattern)
 		if matches := re.FindStringSubmatch(content); len(matches) > 1 {
 			amountStr := matches[1]
-
 			amountStr = strings.ReplaceAll(amountStr, " ", "")
-
 			if strings.Contains(amountStr, ",") && strings.Contains(amountStr, ".") {
 				amountStr = strings.ReplaceAll(amountStr, ",", "")
 			} else if strings.Contains(amountStr, ",") && !strings.Contains(amountStr, ".") {
-
 				amountStr = strings.ReplaceAll(amountStr, ",", ".")
 			}
 			amountStr = strings.ReplaceAll(amountStr, "\u00A0", "")
 			amountStr = strings.ReplaceAll(amountStr, ",", "")
 			var amount float64
 			if _, err := fmt.Sscanf(amountStr, "%f", &amount); err == nil {
-
 				currency := "USD"
 				if strings.Contains(content, "€") || strings.Contains(content, "EUR") {
 					currency = "EUR"
@@ -214,7 +205,6 @@ func (s *EmailParserService) tryParseFromKnownInvoiceLinks(content string, sende
 	urlRe := regexp.MustCompile(`https?://[^\s]+`)
 	urls := urlRe.FindAllString(content, -1)
 	for _, raw := range urls {
-
 		cleaned := strings.TrimRight(raw, ".,;!?)]")
 		u, err := url.Parse(cleaned)
 		if err != nil || u.Host == "" {
@@ -264,8 +254,7 @@ func (s *EmailParserService) fetchAndParseEfinansHTML(link string, sender string
 			store = s.cleanText(m[1])
 			break
 		}
-		re2 := regexp.MustCompile(p)
-		if m := re2.FindStringSubmatch(text); store == "" && len(m) > 1 {
+		if m := re.FindStringSubmatch(text); store == "" && len(m) > 1 {
 			store = s.cleanText(m[1])
 			break
 		}
@@ -284,7 +273,6 @@ func (s *EmailParserService) fetchAndParseEfinansHTML(link string, sender string
 	for _, p := range amountPatterns {
 		re := regexp.MustCompile(p)
 		if m := re.FindAllStringSubmatch(text, -1); len(m) > 0 {
-
 			picked = m[len(m)-1][1]
 			break
 		}
@@ -308,14 +296,14 @@ func (s *EmailParserService) fetchAndParseEfinansHTML(link string, sender string
 		}
 	}
 	if amount == 0 {
-
 		amount, currency = s.extractAmountAndCurrency(text)
 		if currency == "USD" {
 			currency = "TRY"
 		}
 	}
 	if currency == "USD" {
-		if strings.Contains(text, "₺") || strings.Contains(strings.ToUpper(text), " TL") || strings.Contains(strings.ToUpper(text), "TRY") {
+		upper := strings.ToUpper(text)
+		if strings.Contains(text, "₺") || strings.Contains(upper, " TL") || strings.Contains(upper, "TRY") {
 			currency = "TRY"
 		}
 	}
@@ -415,7 +403,6 @@ func (s *EmailParserService) extractWarrantyDate(content string) time.Time {
 	for _, pattern := range warrantyPatterns {
 		re := regexp.MustCompile(pattern)
 		if matches := re.FindStringSubmatch(content); len(matches) > 1 {
-
 			if len(matches) > 2 {
 				var duration int
 				fmt.Sscanf(matches[1], "%d", &duration)
@@ -447,7 +434,6 @@ func (s *EmailParserService) extractWarrantyDate(content string) time.Time {
 }
 
 func (s *EmailParserService) stripHTML(html string) string {
-
 	re := regexp.MustCompile(`<[^>]*>`)
 	text := re.ReplaceAllString(html, " ")
 
@@ -464,7 +450,6 @@ func (s *EmailParserService) stripHTML(html string) string {
 }
 
 func (s *EmailParserService) cleanText(text string) string {
-
 	re := regexp.MustCompile(`\s+`)
 	text = re.ReplaceAllString(text, " ")
 
@@ -507,7 +492,6 @@ func (s *EmailParserService) GetUserByEmail(email string) (string, error) {
 }
 
 func (s *EmailParserService) CreateReceiptFromParsedData(userID string, receipt *types.ParsedReceiptData, originalEmail string) (string, error) {
-
 	tx, err := s.db.Begin()
 	if err != nil {
 		return "", fmt.Errorf("failed to begin transaction: %w", err)
