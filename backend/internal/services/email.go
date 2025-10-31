@@ -10,14 +10,20 @@ import (
 	"os"
 	"strings"
 	"time"
+
+	"receiptlocker/internal/config"
 )
 
 type EmailService struct {
-	db *sql.DB
+	db     *sql.DB
+	config *config.Config
 }
 
-func NewEmailService(db *sql.DB) *EmailService {
-	return &EmailService{db: db}
+func NewEmailService(db *sql.DB, cfg *config.Config) *EmailService {
+	return &EmailService{
+		db:     db,
+		config: cfg,
+	}
 }
 
 func (e *EmailService) SendWarrantyReminder(userEmail string, receipt ReceiptInfo) error {
@@ -46,7 +52,7 @@ func (e *EmailService) SendWarrantyReminder(userEmail string, receipt ReceiptInf
         <div class="content">
             <p>Hello!</p>
             <p>This is a friendly reminder that your warranty for the following item will expire soon:</p>
-
+            
             <div class="receipt-info">
                 <h3>{{.Item}}</h3>
                 <p><strong>Store:</strong> {{.Store}}</p>
@@ -54,14 +60,14 @@ func (e *EmailService) SendWarrantyReminder(userEmail string, receipt ReceiptInf
                 <p><strong>Warranty Expires:</strong> <span class="warning">{{.WarrantyExpiry}}</span></p>
                 <p><strong>Amount:</strong> ${{.Amount}}</p>
             </div>
-
+            
             <p>Don't forget to:</p>
             <ul>
                 <li>Check if you need any repairs or replacements</li>
                 <li>Contact the store for warranty claims</li>
                 <li>Keep your receipt safe for warranty purposes</li>
             </ul>
-
+            
             <p>Best regards,<br>The Retreat Team</p>
         </div>
         <div class="footer">
@@ -84,7 +90,7 @@ func (e *EmailService) SendWarrantyReminder(userEmail string, receipt ReceiptInf
 		return fmt.Errorf("failed to execute template: %v", err)
 	}
 
-	return e.sendEmail(userEmail, "Warranty Expiry Reminder", body.String())
+	return e.SendEmail(userEmail, "Warranty Expiry Reminder", body.String())
 }
 
 func (e *EmailService) CheckAndSendReminders() error {
@@ -134,13 +140,13 @@ func (e *EmailService) CheckAndSendReminders() error {
 	return nil
 }
 
-func (e *EmailService) sendEmail(to, subject, body string) error {
+func (e *EmailService) SendEmail(to, subject, body string) error {
 
-	smtpHost := os.Getenv("SMTP_HOST")
-	smtpPort := os.Getenv("SMTP_PORT")
-	smtpUser := os.Getenv("SMTP_USER")
-	smtpPass := os.Getenv("SMTP_PASS")
-	fromEmail := os.Getenv("FROM_EMAIL")
+	smtpHost := e.config.Email.SMTPHost
+	smtpPort := fmt.Sprintf("%d", e.config.Email.SMTPPort)
+	smtpUser := e.config.Email.SMTPUsername
+	smtpPass := e.config.Email.SMTPPassword
+	fromEmail := e.config.Email.FromEmail
 
 	if smtpHost == "" || smtpPort == "" || smtpUser == "" || smtpPass == "" || fromEmail == "" {
 		return fmt.Errorf("SMTP configuration missing")
@@ -189,7 +195,7 @@ func (e *EmailService) SendSponsorshipVerificationNotification(verification Spon
         <div class="content">
             <p>Hello Admin,</p>
             <p>A new sponsorship verification request has been submitted:</p>
-
+            
             <div class="verification-info">
                 <h3>Verification Details</h3>
                 <p><strong>Platform:</strong> {{.Platform}}</p>
@@ -198,14 +204,14 @@ func (e *EmailService) SendSponsorshipVerificationNotification(verification Spon
                 <p><strong>User ID:</strong> {{.UserID}}</p>
                 <p><strong>Request Date:</strong> {{.RequestDate}}</p>
             </div>
-
+            
             {{if .Proof}}
             <div class="proof-section">
                 <h3>Additional Proof</h3>
                 <p>{{.Proof}}</p>
             </div>
             {{end}}
-
+            
             {{if .ScreenshotPath}}
             <div class="proof-section">
                 <h3>Screenshot Uploaded</h3>
@@ -213,9 +219,9 @@ func (e *EmailService) SendSponsorshipVerificationNotification(verification Spon
                 <p><strong>Note:</strong> Please check the server uploads directory to view the screenshot.</p>
             </div>
             {{end}}
-
+            
             <p>Please review the verification request manually.</p>
-
+            
             <p>Best regards,<br>Receipt Store System</p>
         </div>
         <div class="footer">
@@ -241,7 +247,7 @@ func (e *EmailService) SendSponsorshipVerificationNotification(verification Spon
 	if adminEmail == "" {
 		return fmt.Errorf("ADMIN_EMAIL not configured, cannot send notification")
 	}
-	return e.sendEmail(adminEmail, "New Sponsorship Verification Request", body.String())
+	return e.SendEmail(adminEmail, "New Sponsorship Verification Request", body.String())
 }
 
 func (e *EmailService) SendBMCMembershipNotification(eventType, userNickname, membershipName, userEmail string) error {
@@ -296,7 +302,7 @@ func (e *EmailService) SendBMCMembershipNotification(eventType, userNickname, me
         <div class="content">
             <p>Hello,</p>
             <p>A Buy Me a Coffee membership event has occurred:</p>
-
+            
             <div class="info-box">
                 <h3>Event Details</h3>
                 <p><strong>Event Type:</strong> {{.EventType}}</p>
@@ -306,7 +312,7 @@ func (e *EmailService) SendBMCMembershipNotification(eventType, userNickname, me
                 <p><strong>User Email:</strong> {{.UserEmail}}</p>
                 {{end}}
             </div>
-
+            
             {{if eq .EventType "membership.started"}}
             <p>✅ A new member has subscribed to your "Retreat" membership!</p>
             <p>Their premium access should be automatically granted if they've linked their BMC username in the app.</p>
@@ -314,7 +320,7 @@ func (e *EmailService) SendBMCMembershipNotification(eventType, userNickname, me
             <p>⚠️ A member has cancelled their "Retreat" membership.</p>
             <p>Their premium access will be automatically revoked.</p>
             {{end}}
-
+            
             <p>Best regards,<br>Retreat Receipt Store System</p>
         </div>
         <div class="footer">
@@ -344,7 +350,7 @@ func (e *EmailService) SendBMCMembershipNotification(eventType, userNickname, me
 		return fmt.Errorf("failed to execute template: %v", err)
 	}
 
-	return e.sendEmail(adminEmail, subject, body.String())
+	return e.SendEmail(adminEmail, subject, body.String())
 }
 
 func (e *EmailService) SendVerificationStatusUpdate(userEmail string, status string, reason string) error {
@@ -389,14 +395,14 @@ func (e *EmailService) SendVerificationStatusUpdate(userEmail string, status str
         </div>
         <div class="content">
             <p>Hello,</p>
-
+            
             <div class="status-info">
                 <h3>Verification Status: {{.Status}}</h3>
                 {{if .Reason}}
                 <p><strong>Reason:</strong> {{.Reason}}</p>
                 {{end}}
             </div>
-
+            
             {{if eq .Status "approved"}}
             <p>🎉 Congratulations! You now have access to premium features:</p>
             <ul>
@@ -409,7 +415,7 @@ func (e *EmailService) SendVerificationStatusUpdate(userEmail string, status str
             {{else if eq .Status "rejected"}}
             <p>If you believe this is an error, please contact support with additional proof of your sponsorship.</p>
             {{end}}
-
+            
             <p>Best regards,<br>The Receipt Store Team</p>
         </div>
         <div class="footer">
@@ -437,7 +443,7 @@ func (e *EmailService) SendVerificationStatusUpdate(userEmail string, status str
 		return fmt.Errorf("failed to execute template: %v", err)
 	}
 
-	return e.sendEmail(userEmail, subject, body.String())
+	return e.SendEmail(userEmail, subject, body.String())
 }
 
 func (e *EmailService) getAdminEmail() string {

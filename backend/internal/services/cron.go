@@ -18,7 +18,7 @@ type CronService struct {
 }
 
 func NewCronService(db *sql.DB, cfg *config.Config) *CronService {
-	emailService := NewEmailService(db)
+	emailService := NewEmailService(db, cfg)
 	bmcService := NewBuyMeACoffeeService(db, cfg)
 	c := cron.New(cron.WithLocation(time.UTC))
 

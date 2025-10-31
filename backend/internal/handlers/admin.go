@@ -239,6 +239,7 @@ func (h *AdminHandler) GrantSubscription(c *fiber.Ctx) error {
 	err = tx.QueryRow(checkQuery, req.ClerkUserID).Scan(&existingID, &existingStatus)
 
 	if err == sql.ErrNoRows {
+
 		var userUUID sql.NullString
 		uuidQuery := `SELECT user_uuid FROM user_clerk_mapping WHERE clerk_user_id = $1`
 		_ = tx.QueryRow(uuidQuery, req.ClerkUserID).Scan(&userUUID)
@@ -400,6 +401,7 @@ func (h *AdminHandler) LinkBMCUsername(c *fiber.Ctx) error {
 	err = tx.QueryRow(checkQuery, bmcUsername, req.ClerkUserID).Scan(&existingClerkUserID)
 
 	if err == nil {
+
 		logging.Warn("Admin attempted to link BMC username already linked to another account", map[string]interface{}{
 			"admin_user":       c.Locals("userID"),
 			"target_user_id":   req.ClerkUserID,
@@ -429,6 +431,7 @@ func (h *AdminHandler) LinkBMCUsername(c *fiber.Ctx) error {
 	`
 	_, err = tx.Exec(query, req.ClerkUserID, bmcUsername)
 	if err != nil {
+
 		if strings.Contains(err.Error(), "unique constraint") || strings.Contains(err.Error(), "duplicate key") {
 			logging.Warn("Unique constraint violation on BMC username link (admin action)", map[string]interface{}{
 				"error":          err.Error(),

@@ -16,7 +16,7 @@ import (
 type BuyMeACoffeeService struct {
 	db            *sql.DB
 	webhookSecret string
-	emailService  *EmailService
+	config        *config.Config
 }
 
 type BMCWebhookEvent struct {
@@ -42,7 +42,7 @@ func NewBuyMeACoffeeService(db *sql.DB, cfg *config.Config) *BuyMeACoffeeService
 	return &BuyMeACoffeeService{
 		db:            db,
 		webhookSecret: cfg.BuyMeACoffee.WebhookSecret,
-		emailService:  NewEmailService(db),
+		config:        cfg,
 	}
 }
 
@@ -131,6 +131,7 @@ func (b *BuyMeACoffeeService) ProcessMembershipEvent(event BMCWebhookEvent) erro
 	if err == sql.ErrNoRows {
 		logging.Info("BMC member not linked to app user yet", map[string]interface{}{
 			"bmc_username":            event.Data.User.Nickname,
+			"bmc_username_original":   nickname,
 			"bmc_username_normalized": nicknameNormalized,
 			"bmc_id":                  event.Data.User.ID,
 			"membership_name":         membershipName,
@@ -162,7 +163,6 @@ func (b *BuyMeACoffeeService) ProcessMembershipEvent(event BMCWebhookEvent) erro
 		return fmt.Errorf("failed to verify stored username: %w", err)
 	}
 
-	// Compare normalized versions to ensure exact match
 	if strings.ToLower(storedUsername) != nicknameNormalized {
 		logging.Warn("Webhook username mismatch with stored username", map[string]interface{}{
 			"clerk_user_id":      clerkUserID,
@@ -236,18 +236,7 @@ func (b *BuyMeACoffeeService) ProcessMembershipEvent(event BMCWebhookEvent) erro
 				"clerk_user_id": clerkUserID,
 			})
 
-			go func() {
-				if err := b.emailService.SendBMCMembershipNotification(
-					event.Type,
-					event.Data.User.Nickname,
-					membershipName,
-					event.Data.User.Email,
-				); err != nil {
-					logging.Error("Failed to send BMC membership notification email", map[string]interface{}{
-						"error": err.Error(),
-					})
-				}
-			}()
+			b.logAdminNotification(event.Type, event.Data.User.Nickname, membershipName, event.Data.User.Email)
 		} else if err == nil {
 
 			if existingStatus != "active" {
@@ -305,18 +294,7 @@ func (b *BuyMeACoffeeService) ProcessMembershipEvent(event BMCWebhookEvent) erro
 				"clerk_user_id": clerkUserID,
 			})
 
-			go func() {
-				if err := b.emailService.SendBMCMembershipNotification(
-					event.Type,
-					event.Data.User.Nickname,
-					membershipName,
-					event.Data.User.Email,
-				); err != nil {
-					logging.Error("Failed to send BMC cancellation notification email", map[string]interface{}{
-						"error": err.Error(),
-					})
-				}
-			}()
+			b.logAdminNotification(event.Type, event.Data.User.Nickname, membershipName, event.Data.User.Email)
 		}
 	}
 
@@ -325,4 +303,14 @@ func (b *BuyMeACoffeeService) ProcessMembershipEvent(event BMCWebhookEvent) erro
 	}
 
 	return nil
+}
+
+func (b *BuyMeACoffeeService) logAdminNotification(eventType, username, membership, email string) {
+	logging.Info("BMC Membership Event", map[string]interface{}{
+		"event_type":      eventType,
+		"bmc_username":    username,
+		"membership_name": membership,
+		"user_email":      email,
+		"notification":    "Admin should be notified",
+	})
 }

@@ -8,7 +8,6 @@ import (
 )
 
 type Config struct {
-
 	Server ServerConfig
 
 	Database DatabaseConfig
@@ -55,11 +54,17 @@ type AuthConfig struct {
 }
 
 type EmailConfig struct {
-	SMTPHost     string
-	SMTPPort     int
-	SMTPUsername string
-	SMTPPassword string
-	FromEmail    string
+	SMTPHost             string
+	SMTPPort             int
+	SMTPUsername         string
+	SMTPPassword         string
+	FromEmail            string
+	InboundEmail         string
+	InboundWebhookSecret string
+
+	VerificationBaseURL string
+
+	VerifyRequired bool
 }
 
 type BuyMeACoffeeConfig struct {
@@ -114,11 +119,15 @@ func Load() *Config {
 			ClerkSecretKey: getEnv("CLERK_SECRET_KEY", ""),
 		},
 		Email: EmailConfig{
-			SMTPHost:     getEnv("SMTP_HOST", "smtp.gmail.com"),
-			SMTPPort:     getEnvInt("SMTP_PORT", 587),
-			SMTPUsername: getEnv("SMTP_USERNAME", ""),
-			SMTPPassword: getEnv("SMTP_PASSWORD", ""),
-			FromEmail:    getEnv("FROM_EMAIL", "noreply@retreat-app.tech"),
+			SMTPHost:             getEnv("SMTP_HOST", "smtp.gmail.com"),
+			SMTPPort:             getEnvInt("SMTP_PORT", 587),
+			SMTPUsername:         getEnv("SMTP_USERNAME", ""),
+			SMTPPassword:         getEnv("SMTP_PASSWORD", ""),
+			FromEmail:            getEnv("FROM_EMAIL", "noreply@retreat-app.tech"),
+			InboundEmail:         getEnv("INBOUND_EMAIL", "save@retreat-app.tech"),
+			InboundWebhookSecret: getEnv("INBOUND_EMAIL_WEBHOOK_SECRET", ""),
+			VerificationBaseURL:  getEnv("VERIFICATION_BASE_URL", "https://api.retreat-app.tech/api/v1"),
+			VerifyRequired:       getEnvBool("VERIFY_EMAILS_REQUIRED", true),
 		},
 		BuyMeACoffee: BuyMeACoffeeConfig{
 			WebhookSecret: getEnv("BUYMEACOFFEE_WEBHOOK_SECRET", ""),

@@ -14,6 +14,7 @@ import (
 	"receiptlocker/internal/logging"
 	"receiptlocker/internal/middleware"
 	"receiptlocker/internal/services"
+	"receiptlocker/internal/utils"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -97,6 +98,15 @@ func main() {
 		ExposeHeaders:    "Content-Length,Content-Type",
 	}))
 
+	uploadsDir := utils.GetUploadsDir()
+	if err := os.MkdirAll(uploadsDir, 0755); err != nil {
+		logging.Fatal("Failed to create uploads directory", map[string]interface{}{
+			"dir":   uploadsDir,
+			"error": err.Error(),
+		})
+	}
+	app.Static("/uploads", uploadsDir)
+
 	middleware.SetupProductionMiddleware(app)
 
 	app.Use(func(c *fiber.Ctx) error {
@@ -104,10 +114,14 @@ func main() {
 		return c.Next()
 	})
 
+	emailService := services.NewEmailService(db, cfg)
+	bmcService := services.NewBuyMeACoffeeService(db, cfg)
+
 	receiptHandler := handlers.NewReceiptHandler(db)
 	bmcHandler := handlers.NewBMCHandler(db, cfg)
-	bmcService := services.NewBuyMeACoffeeService(db, cfg)
 	adminHandler := handlers.NewAdminHandler(db, cfg, bmcService)
+	emailHandler := handlers.NewEmailHandler(db, cfg, emailService)
+	userEmailHandler := handlers.NewUserEmailHandler(db, cfg, emailService)
 
 	cronService := services.NewCronService(db, cfg)
 	cronService.Start()
@@ -115,6 +129,7 @@ func main() {
 
 	api := app.Group("/api/v1")
 	{
+
 		api.Options("/*", func(c *fiber.Ctx) error {
 			return c.SendStatus(fiber.StatusOK)
 		})
@@ -153,8 +168,13 @@ func main() {
 			})
 		})
 
+		api.Post("/bmc/webhook", bmcHandler.HandleWebhook)
+
+		api.Post("/email/inbound", emailHandler.HandleInboundEmail)
+
 		protected := api.Group("", middleware.ClerkAuthMiddleware())
 		{
+
 			receipts := protected.Group("/receipts")
 			{
 				receipts.Get("", receiptHandler.GetReceipts)
@@ -162,11 +182,21 @@ func main() {
 				receipts.Get("/:id", receiptHandler.GetReceipt)
 				receipts.Put("/:id", receiptHandler.UpdateReceipt)
 				receipts.Delete("/:id", receiptHandler.DeleteReceipt)
+				receipts.Put("/:id/photo", receiptHandler.UploadReceiptPhoto)
+				receipts.Post("/parse-link", receiptHandler.ParseLink)
 			}
 
 			protected.Post("/parse-email", receiptHandler.ParseEmail)
+
 			protected.Post("/parse-pdf", receiptHandler.ParsePDF)
+
 			protected.Post("/bmc/link-username", bmcHandler.LinkBMCUsername)
+
+			protected.Get("/emails", userEmailHandler.GetUserEmails)
+			protected.Post("/emails", userEmailHandler.AddUserEmail)
+			protected.Delete("/emails/:id", userEmailHandler.DeleteUserEmail)
+			protected.Post("/emails/:id/set-primary", userEmailHandler.SetPrimaryEmail)
+			protected.Post("/emails/:id/resend-verification", userEmailHandler.ResendVerification)
 
 			protected.Get("/me", func(c *fiber.Ctx) error {
 				cfg, _ := c.Locals("config").(*config.Config)
@@ -188,19 +218,21 @@ func main() {
 			})
 		}
 
-		api.Post("/bmc/webhook", bmcHandler.HandleWebhook)
-
 		admin := api.Group("/admin", middleware.ClerkAuthMiddleware(), middleware.AdminAuthMiddleware())
 		{
+
 			admin.Get("/dashboard", adminHandler.GetDashboard)
 			admin.Get("/system-info", adminHandler.GetSystemInfo)
+
 			admin.Get("/bmc/users", adminHandler.GetBMCUsers)
 			admin.Post("/bmc/sync", adminHandler.SyncBMCMemberships)
 			admin.Post("/bmc/link-username", adminHandler.LinkBMCUsername)
+
 			admin.Get("/subscriptions", adminHandler.GetSubscriptions)
 			admin.Post("/subscriptions/grant", adminHandler.GrantSubscription)
 			admin.Post("/subscriptions/revoke", adminHandler.RevokeSubscription)
 		}
+
 	}
 
 	port := cfg.Server.Port
@@ -241,6 +273,7 @@ func main() {
 			logging.Error("Error during graceful shutdown", map[string]interface{}{
 				"error": err.Error(),
 			})
+
 			if err := app.Shutdown(); err != nil {
 				logging.Fatal("Force shutdown failed", map[string]interface{}{
 					"error": err.Error(),
@@ -253,6 +286,7 @@ func main() {
 }
 
 func customErrorHandler(c *fiber.Ctx, err error) error {
+
 	code := fiber.StatusInternalServerError
 	message := "Internal Server Error"
 

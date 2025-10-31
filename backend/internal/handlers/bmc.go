@@ -63,7 +63,7 @@ func (h *BMCHandler) LinkBMCUsername(c *fiber.Ctx) error {
 	err = tx.QueryRow(checkQuery, bmcUsername, userID).Scan(&existingClerkUserID)
 
 	if err == nil {
-		// Username is already linked to a different user
+
 		logging.Warn("Attempt to link BMC username already linked to another account", map[string]interface{}{
 			"user_id":          userID,
 			"bmc_username":     bmcUsername,
@@ -74,7 +74,7 @@ func (h *BMCHandler) LinkBMCUsername(c *fiber.Ctx) error {
 			"error": "This Buy Me a Coffee username is already linked to another account. Please ensure you're using the correct username.",
 		})
 	} else if err != sql.ErrNoRows {
-		// Database error (not just "not found")
+
 		logging.Error("Failed to check for existing BMC username", map[string]interface{}{
 			"error":        err.Error(),
 			"user_id":      userID,
@@ -94,6 +94,7 @@ func (h *BMCHandler) LinkBMCUsername(c *fiber.Ctx) error {
 	`
 	_, err = tx.Exec(query, userID, bmcUsername)
 	if err != nil {
+
 		if strings.Contains(err.Error(), "unique constraint") || strings.Contains(err.Error(), "duplicate key") {
 			logging.Warn("Unique constraint violation on BMC username link (race condition?)", map[string]interface{}{
 				"error":        err.Error(),
@@ -105,6 +106,7 @@ func (h *BMCHandler) LinkBMCUsername(c *fiber.Ctx) error {
 				"error": "This Buy Me a Coffee username is already linked to another account. Please ensure you're using the correct username.",
 			})
 		}
+
 		logging.Error("Failed to link BMC username", map[string]interface{}{
 			"error":        err.Error(),
 			"user_id":      userID,

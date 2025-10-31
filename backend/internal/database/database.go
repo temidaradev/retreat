@@ -14,14 +14,12 @@ import (
 
 var DB *sql.DB
 
-// InitDB initializes the database connection with connection pooling
 func InitDB() (*sql.DB, error) {
 	cfg := config.Load()
 
-	// Get database URL from config
 	dbURL := cfg.Database.URL
 	if dbURL == "" {
-		// Fallback to individual components
+
 		dbURL = fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
 			cfg.Database.Host,
 			cfg.Database.Port,
@@ -31,19 +29,16 @@ func InitDB() (*sql.DB, error) {
 			cfg.Database.SSLMode)
 	}
 
-	// Connect to database
 	db, err := sql.Open("postgres", dbURL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open database: %w", err)
 	}
 
-	// Configure connection pool
 	db.SetMaxOpenConns(cfg.Database.MaxOpenConns)
 	db.SetMaxIdleConns(cfg.Database.MaxIdleConns)
 	db.SetConnMaxLifetime(cfg.Database.ConnMaxLifetime)
 	db.SetConnMaxIdleTime(cfg.Database.ConnMaxIdleTime)
 
-	// Test connection with retry logic
 	maxRetries := 5
 	retryDelay := 2 * time.Second
 
@@ -67,7 +62,6 @@ func InitDB() (*sql.DB, error) {
 		break
 	}
 
-	// Run migrations
 	if err := runMigrations(db); err != nil {
 		return nil, fmt.Errorf("failed to run migrations: %w", err)
 	}
@@ -80,7 +74,6 @@ func InitDB() (*sql.DB, error) {
 	return db, nil
 }
 
-// runMigrations creates the necessary tables
 func runMigrations(db *sql.DB) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -148,7 +141,6 @@ func runMigrations(db *sql.DB) error {
 		return fmt.Errorf("failed to create tables: %w", err)
 	}
 
-	// Run additional migrations for existing databases
 	alterTableSQL := `
 	-- Add deleted_at column if it doesn't exist (for existing databases)
 	DO $$ 
@@ -232,10 +224,53 @@ func runMigrations(db *sql.DB) error {
 	END $$;
 	
 	CREATE INDEX IF NOT EXISTS idx_subscriptions_clerk_user_id ON subscriptions(clerk_user_id);
+	
+	-- Add index on user email for faster lookups during email forwarding
+	CREATE INDEX IF NOT EXISTS idx_users_email_lower ON users(LOWER(email));
+	
+	-- Add index on receipts for email source tracking
+	CREATE INDEX IF NOT EXISTS idx_receipts_original_email ON receipts(original_email) WHERE original_email IS NOT NULL;
+	
+	-- Create user_emails table for multiple email addresses per user
+	-- Note: user_id is VARCHAR because we use Clerk IDs (not UUID)
+	CREATE TABLE IF NOT EXISTS user_emails (
+		id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+		user_id VARCHAR(255) NOT NULL,
+		email VARCHAR(255) NOT NULL,
+		verified BOOLEAN DEFAULT FALSE,
+		is_primary BOOLEAN DEFAULT FALSE,
+		verification_token VARCHAR(255),
+		verification_expires_at TIMESTAMP,
+		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+		updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+		UNIQUE(email)
+	);
+	
+	CREATE INDEX IF NOT EXISTS idx_user_emails_user_id ON user_emails(user_id);
+	CREATE INDEX IF NOT EXISTS idx_user_emails_email_lower ON user_emails(LOWER(email));
+	CREATE INDEX IF NOT EXISTS idx_user_emails_token ON user_emails(verification_token) WHERE verification_token IS NOT NULL;
+	
+	-- Add photo columns to receipts if they don't exist
+	DO $$
+	BEGIN
+		IF NOT EXISTS (
+			SELECT 1 FROM information_schema.columns 
+			WHERE table_name = 'receipts' AND column_name = 'photo_url'
+		) THEN
+			ALTER TABLE receipts ADD COLUMN photo_url TEXT;
+		END IF;
+		IF NOT EXISTS (
+			SELECT 1 FROM information_schema.columns 
+			WHERE table_name = 'receipts' AND column_name = 'photo_mime'
+		) THEN
+			ALTER TABLE receipts ADD COLUMN photo_mime TEXT;
+		END IF;
+	END $$;
 	`
 
 	_, err = db.ExecContext(ctx, alterTableSQL)
 	if err != nil {
+
 		logging.Warn("Failed to run alter table migrations", map[string]interface{}{
 			"error": err.Error(),
 		})

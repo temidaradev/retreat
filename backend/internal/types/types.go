@@ -16,6 +16,8 @@ type Receipt struct {
 	Status         string     `json:"status" db:"status"`
 	OriginalEmail  string     `json:"original_email" db:"original_email"`
 	ParsedData     string     `json:"parsed_data" db:"parsed_data"`
+	PhotoURL       string     `json:"photo_url,omitempty" db:"photo_url"`
+	PhotoMIME      string     `json:"photo_mime,omitempty" db:"photo_mime"`
 	DeletedAt      *time.Time `json:"deleted_at,omitempty" db:"deleted_at"`
 	CreatedAt      time.Time  `json:"created_at" db:"created_at"`
 	UpdatedAt      time.Time  `json:"updated_at" db:"updated_at"`
@@ -120,4 +122,52 @@ type SponsorshipVerificationRequestPayload struct {
 	Platform string `json:"platform" validate:"required"`
 	Username string `json:"username" validate:"required"`
 	Proof    string `json:"proof"`
+}
+
+type InboundEmailWebhook struct {
+	From        string            `json:"from"`
+	To          string            `json:"to"`
+	Subject     string            `json:"subject"`
+	Text        string            `json:"text"`
+	HTML        string            `json:"html"`
+	Headers     map[string]string `json:"headers"`
+	Attachments []EmailAttachment `json:"attachments"`
+}
+
+type EmailAttachment struct {
+	Filename    string `json:"filename"`
+	ContentType string `json:"content_type"`
+	Content     []byte `json:"content"`
+	Size        int64  `json:"size"`
+}
+
+type ParsedReceiptData struct {
+	Store          string    `json:"store"`
+	Item           string    `json:"item"`
+	PurchaseDate   time.Time `json:"purchase_date"`
+	WarrantyExpiry time.Time `json:"warranty_expiry"`
+	Amount         float64   `json:"amount"`
+	Currency       string    `json:"currency"`
+	Confidence     float64   `json:"confidence"`
+	Source         string    `json:"source"`
+}
+
+type UserEmail struct {
+	ID                    string     `json:"id" db:"id"`
+	UserID                string     `json:"user_id" db:"user_id"`
+	Email                 string     `json:"email" db:"email"`
+	Verified              bool       `json:"verified" db:"verified"`
+	IsPrimary             bool       `json:"is_primary" db:"is_primary"`
+	VerificationToken     *string    `json:"-" db:"verification_token"`
+	VerificationExpiresAt *time.Time `json:"-" db:"verification_expires_at"`
+	CreatedAt             time.Time  `json:"created_at" db:"created_at"`
+	UpdatedAt             time.Time  `json:"updated_at" db:"updated_at"`
+}
+
+type AddEmailRequest struct {
+	Email string `json:"email" validate:"required,email"`
+}
+
+type VerifyEmailRequest struct {
+	Token string `json:"token" validate:"required"`
 }
