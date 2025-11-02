@@ -1,0 +1,60 @@
+{
+    "expo": {
+        "name": "Retreat",
+        "slug": "retreat-mobile",
+        "version": "1.0.0",
+        "orientation": "portrait",
+        "icon": "./assets/icon.png",
+        "userInterfaceStyle": "automatic",
+        "splash": {
+            "image": "./assets/splash.png",
+            "resizeMode": "contain",
+            "backgroundColor": "#3b82f6"
+        },
+        "assetBundlePatterns": [
+            "**/*"
+        ],
+        "ios": {
+            "supportsTablet": true,
+            "bundleIdentifier": "com.retreat.app",
+            "infoPlist": {
+                "NSCameraUsageDescription": "Retreat needs access to your camera to take photos of receipts.",
+                "NSPhotoLibraryUsageDescription": "Retreat needs access to your photo library to select receipt images."
+            }
+        },
+        "android": {
+            "adaptiveIcon": {
+                "foregroundImage": "./assets/adaptive-icon.png",
+                "backgroundColor": "#3b82f6"
+            },
+            "package": "com.retreat.app",
+            "permissions": [
+                "CAMERA",
+                "READ_EXTERNAL_STORAGE",
+                "WRITE_EXTERNAL_STORAGE"
+            ]
+        },
+        "web": {
+            "favicon": "./assets/favicon.png"
+        },
+        "plugins": [
+            [
+                "expo-camera",
+                {
+                    "cameraPermission": "Allow Retreat to access your camera to take photos of receipts."
+                }
+            ],
+            [
+                "expo-image-picker",
+                {
+                    "photosPermission": "Allow Retreat to access your photos to select receipt images."
+                }
+            ]
+        ],
+        "extra": {
+            "eas": {
+                "projectId": "your-project-id"
+            }
+        }
+    }
+}
