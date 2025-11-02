@@ -278,6 +278,8 @@ class ApiService {
                         status: string
                         is_premium: boolean
                         expires_at?: string
+                        receipt_limit?: number
+                        receipt_count?: number
                     }
                 }>('/me')
 
@@ -287,7 +289,9 @@ class ApiService {
                         is_premium: userInfo.subscription.is_premium,
                         plan: userInfo.subscription.plan,
                         status: userInfo.subscription.status,
-                        expires_at: userInfo.subscription.expires_at
+                        expires_at: userInfo.subscription.expires_at,
+                        receipt_limit: userInfo.subscription.receipt_limit,
+                        receipt_count: userInfo.subscription.receipt_count
                     }
                 }
             } catch (meError) {
@@ -318,6 +322,21 @@ class ApiService {
             // Default to free on any error
             return { is_premium: false, plan: 'free', status: 'none', receipt_limit: 5, receipt_count: 0 }
         }
+    }
+
+    // Get sponsorship status (requires authentication)
+    async getSponsorshipStatus(): Promise<{
+        status: string
+        message?: string
+        plan?: string
+        expires_at?: string
+    }> {
+        return this.request<{
+            status: string
+            message?: string
+            plan?: string
+            expires_at?: string
+        }>('/sponsorship/status')
     }
 
     // Health check
