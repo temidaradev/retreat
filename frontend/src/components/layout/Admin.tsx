@@ -138,18 +138,34 @@ export default function Admin() {
       return;
     }
 
+    // Validate Clerk User ID format
+    if (!selectedUserId.startsWith("user_")) {
+      alert("Invalid Clerk User ID format. It should start with 'user_'");
+      return;
+    }
+
     try {
       setProcessing(true);
       const token = await getToken();
       apiService.setAuthToken(token);
-      await apiService.grantSubscription(selectedUserId, durationMonths);
+      const response = await apiService.grantSubscription(selectedUserId, durationMonths);
+      
+      // Close modal and reset form
       setGrantModalOpen(false);
       setSelectedUserId("");
       setDurationMonths(1);
+      
+      // Refresh the subscriptions list
       await loadData();
-      alert("Subscription granted successfully!");
+      
+      // Show success message with details
+      const expiresAt = response.data?.expires_at 
+        ? new Date(response.data.expires_at).toLocaleDateString()
+        : 'N/A';
+      alert(`✅ Premium subscription granted successfully!\n\nUser: ${selectedUserId}\nDuration: ${durationMonths} month(s)\nExpires: ${expiresAt}`);
     } catch (err: any) {
-      alert(err.message || "Failed to grant subscription");
+      const errorMessage = err.message || "Failed to grant subscription";
+      alert(`❌ Error: ${errorMessage}`);
     } finally {
       setProcessing(false);
     }
@@ -539,8 +555,8 @@ export default function Admin() {
                           setDurationMonths(1);
                           setGrantModalOpen(true);
                         }}
-                        className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium"
-                        style={{ background: "var(--color-success)", color: "white" }}
+                        className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover-lift"
+                        style={{ background: "var(--color-success)", color: "white", boxShadow: "0 2px 8px rgba(34, 197, 94, 0.3)" }}
                       >
                         <Plus className="w-4 h-4" />
                         Grant Subscription
@@ -587,8 +603,8 @@ export default function Admin() {
                                 <td className="px-4 py-3 text-sm font-mono" style={{ color: "var(--color-text-primary)" }}>
                                   {sub.clerk_user_id || sub.user_id || "N/A"}
                                 </td>
-                                <td className="px-4 py-3 text-sm capitalize" style={{ color: "var(--color-text-secondary)" }}>
-                                  {sub.plan}
+                                <td className="px-4 py-3 text-sm font-medium" style={{ color: "var(--color-text-primary)" }}>
+                                  {sub.plan === "premium" ? "Premium" : sub.plan.charAt(0).toUpperCase() + sub.plan.slice(1)}
                                 </td>
                                 <td className="px-4 py-3">
                                   <span
@@ -830,50 +846,76 @@ export default function Admin() {
           style={{ background: "rgba(0, 0, 0, 0.7)", backdropFilter: "blur(4px)" }}
           onClick={() => setGrantModalOpen(false)}
         >
-          <div className="card-modern max-w-md w-full p-6" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-lg font-semibold mb-4" style={{ color: "var(--color-text-primary)" }}>
-              Grant Subscription
-            </h3>
+          <div 
+            className="card-modern max-w-md w-full p-6 animate-scale-in" 
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: "var(--color-bg-secondary)",
+              borderColor: "var(--color-border)",
+            }}
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <Crown className="w-6 h-6" style={{ color: "var(--color-success)" }} />
+              <h3 className="text-lg font-semibold" style={{ color: "var(--color-text-primary)" }}>
+                Grant Premium Subscription
+              </h3>
+            </div>
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium mb-2" style={{ color: "var(--color-text-primary)" }}>
-                  Clerk User ID
+                  Clerk User ID <span style={{ color: "var(--color-danger)" }}>*</span>
                 </label>
                 <input
                   type="text"
                   value={selectedUserId}
                   onChange={(e) => setSelectedUserId(e.target.value)}
-                  className="w-full px-3 py-2 border rounded-lg"
+                  className="w-full px-3 py-2 border rounded-lg focus-ring transition-all duration-200"
                   style={{
                     background: "var(--color-bg-primary)",
                     borderColor: "var(--color-border)",
                     color: "var(--color-text-primary)",
                   }}
                   placeholder="user_xxxxxxxx"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !processing && selectedUserId.trim()) {
+                      handleGrantSubscription();
+                    }
+                  }}
                 />
+                <p className="text-xs mt-1" style={{ color: "var(--color-text-tertiary)" }}>
+                  Enter the Clerk User ID of the user you want to grant premium access to
+                </p>
               </div>
               <div>
                 <label className="block text-sm font-medium mb-2" style={{ color: "var(--color-text-primary)" }}>
-                  Duration (months)
+                  Duration (months) <span style={{ color: "var(--color-danger)" }}>*</span>
                 </label>
                 <input
                   type="number"
                   min="1"
+                  max="12"
                   value={durationMonths}
-                  onChange={(e) => setDurationMonths(parseInt(e.target.value) || 1)}
-                  className="w-full px-3 py-2 border rounded-lg"
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value) || 1;
+                    setDurationMonths(Math.max(1, Math.min(12, val)));
+                  }}
+                  className="w-full px-3 py-2 border rounded-lg focus-ring transition-all duration-200"
                   style={{
                     background: "var(--color-bg-primary)",
                     borderColor: "var(--color-border)",
                     color: "var(--color-text-primary)",
                   }}
                 />
+                <p className="text-xs mt-1" style={{ color: "var(--color-text-tertiary)" }}>
+                  Subscription will be active for {durationMonths} month{durationMonths !== 1 ? 's' : ''}
+                </p>
               </div>
             </div>
             <div className="flex gap-3 mt-6">
               <button
                 onClick={() => setGrantModalOpen(false)}
-                className="flex-1 px-4 py-2 border rounded-lg font-medium"
+                disabled={processing}
+                className="flex-1 px-4 py-2 border rounded-lg font-medium transition-all duration-200 hover-lift disabled:opacity-50"
                 style={{
                   borderColor: "var(--color-border)",
                   background: "transparent",
@@ -884,11 +926,25 @@ export default function Admin() {
               </button>
               <button
                 onClick={handleGrantSubscription}
-                disabled={processing}
-                className="flex-1 px-4 py-2 rounded-lg font-medium"
-                style={{ background: "var(--color-success)", color: "white" }}
+                disabled={processing || !selectedUserId.trim()}
+                className="flex-1 px-4 py-2 rounded-lg font-medium transition-all duration-200 hover-lift disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{ 
+                  background: "var(--color-success)", 
+                  color: "white",
+                  boxShadow: processing ? "none" : "0 2px 8px rgba(34, 197, 94, 0.3)",
+                }}
               >
-                {processing ? "Processing..." : "Grant"}
+                {processing ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 inline mr-2 animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle className="w-4 h-4 inline mr-2" />
+                    Grant Premium Access
+                  </>
+                )}
               </button>
             </div>
           </div>
