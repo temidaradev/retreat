@@ -288,13 +288,34 @@ export default function Dashboard() {
         parsedData = response.parsed_data;
       }
 
+      // Validate parsed data
+      if (!parsedData.purchase_date || !parsedData.warranty_expiry) {
+        alert(
+          "Could not extract dates from the receipt. Please try manual entry instead."
+        );
+        setProcessing(false);
+        return;
+      }
+
+      // Warn if amount is 0 or missing
+      const amount = parsedData.amount || 0;
+      if (amount === 0) {
+        const proceed = confirm(
+          "Could not detect the receipt amount ($0). Would you like to continue creating the receipt? You can edit it later."
+        );
+        if (!proceed) {
+          setProcessing(false);
+          return;
+        }
+      }
+
       // Create receipt with parsed data
       const receiptData = {
         store: parsedData.store || "Unknown Store",
         item: parsedData.item || "Unknown Item",
         purchase_date: parsedData.purchase_date,
         warranty_expiry: parsedData.warranty_expiry,
-        amount: parsedData.amount || 0,
+        amount: amount,
         currency: parsedData.currency || "USD",
         original_email: selectedFile ? `PDF: ${selectedFile.name}` : emailText,
       };
@@ -314,7 +335,11 @@ export default function Dashboard() {
       alert("Receipt processed successfully!");
     } catch (error) {
       console.error("Error processing receipt:", error);
-      alert("Failed to process receipt. Please try again.");
+      const errorMsg =
+        error instanceof Error
+          ? error.message
+          : "Failed to process receipt. Please try again.";
+      alert(errorMsg);
     } finally {
       setProcessing(false);
     }
@@ -1342,6 +1367,67 @@ export default function Dashboard() {
                   />
                 </div>
 
+                {/* Show Process Receipt button only if PDF or email is provided */}
+                {(selectedFile || emailText.trim()) && (
+                  <div className="flex flex-col sm:flex-row gap-3 md:gap-phi justify-center">
+                    <button
+                      onClick={() => {
+                        setShowUploadModal(false);
+                        resetUploadForm();
+                      }}
+                      className="btn-phi-md border font-medium hover-lift transition-all duration-200 w-full sm:w-auto"
+                      style={{
+                        borderColor: "var(--color-border)",
+                        background: "transparent",
+                        color: "var(--color-text-primary)",
+                        minWidth: "120px",
+                      }}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleProcessReceipt}
+                      disabled={processing}
+                      className="btn-phi-md font-medium hover-lift transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto"
+                      style={{
+                        background:
+                          "linear-gradient(135deg, var(--color-accent-500), var(--color-accent-600))",
+                        color: "white",
+                        boxShadow: "0 4px 16px rgba(59, 130, 246, 0.3)",
+                        minWidth: "120px",
+                      }}
+                    >
+                      {processing ? "Processing..." : "Process Receipt"}
+                    </button>
+                  </div>
+                )}
+
+                {/* Divider */}
+                {!selectedFile && !emailText.trim() && (
+                  <div className="relative">
+                    <div
+                      className="absolute inset-0 flex items-center"
+                      style={{ maxWidth: "400px", margin: "0 auto" }}
+                    >
+                      <div
+                        className="w-full border-t"
+                        style={{ borderColor: "var(--color-border)" }}
+                      />
+                    </div>
+                    <div className="relative flex justify-center text-xs">
+                      <span
+                        className="px-2"
+                        style={{
+                          background: "var(--color-bg-secondary)",
+                          color: "var(--color-text-tertiary)",
+                        }}
+                      >
+                        or
+                      </span>
+                    </div>
+                  </div>
+                )}
+
                 {/* Manual add */}
                 <div>
                   <label
@@ -1509,37 +1595,26 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              <div className="flex flex-col sm:flex-row gap-3 md:gap-phi mt-4 md:mt-phi-lg justify-center">
-                <button
-                  onClick={() => {
-                    setShowUploadModal(false);
-                    resetUploadForm();
-                  }}
-                  className="btn-phi-md border font-medium hover-lift transition-all duration-200 w-full sm:w-auto"
-                  style={{
-                    borderColor: "var(--color-border)",
-                    background: "transparent",
-                    color: "var(--color-text-primary)",
-                    minWidth: "120px",
-                  }}
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleProcessReceipt}
-                  disabled={processing}
-                  className="btn-phi-md font-medium hover-lift transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto"
-                  style={{
-                    background:
-                      "linear-gradient(135deg, var(--color-accent-500), var(--color-accent-600))",
-                    color: "white",
-                    boxShadow: "0 4px 16px rgba(59, 130, 246, 0.3)",
-                    minWidth: "120px",
-                  }}
-                >
-                  {processing ? "Processing..." : "Process Receipt"}
-                </button>
-              </div>
+              {/* Show close button if manual entry or nothing is filled */}
+              {!selectedFile && !emailText.trim() && (
+                <div className="flex justify-center mt-4">
+                  <button
+                    onClick={() => {
+                      setShowUploadModal(false);
+                      resetUploadForm();
+                    }}
+                    className="btn-phi-md border font-medium hover-lift transition-all duration-200 w-full sm:w-auto"
+                    style={{
+                      borderColor: "var(--color-border)",
+                      background: "transparent",
+                      color: "var(--color-text-primary)",
+                      minWidth: "120px",
+                    }}
+                  >
+                    Close
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
