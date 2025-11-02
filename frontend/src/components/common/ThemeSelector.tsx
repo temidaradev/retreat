@@ -37,7 +37,7 @@ export default function ThemeSelector() {
   };
 
   return (
-    <div className="relative" ref={dropdownRef} style={{ zIndex: 9999 }}>
+    <div className="relative" ref={dropdownRef} style={{ zIndex: 10001 }}>
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="p-2 rounded-lg transition-all duration-200 hover:scale-105 flex items-center justify-center"
@@ -54,11 +54,11 @@ export default function ThemeSelector() {
 
       {isOpen && (
         <div
-          className="absolute right-0 mt-2 w-56 rounded-lg shadow-lg border overflow-hidden"
+          className="absolute right-0 top-full mt-2 w-56 rounded-lg shadow-lg border overflow-hidden"
           style={{
             background: "var(--color-bg-secondary)",
             borderColor: "var(--color-border)",
-            zIndex: 9999,
+            zIndex: 10000,
             boxShadow: "0 10px 40px rgba(0, 0, 0, 0.5)",
           }}
         >

@@ -265,7 +265,7 @@ export default function Dashboard() {
           borderColor: "var(--color-border)",
         }}
       >
-        <div className="px-3 sm:px-4 md:px-phi-lg py-2.5 sm:py-3 md:py-phi flex justify-between items-center gap-2 overflow-hidden">
+        <div className="px-3 sm:px-4 md:px-phi-lg py-2.5 sm:py-3 md:py-phi flex justify-between items-center gap-2">
           <div className="flex items-center gap-1.5 sm:gap-2 md:gap-phi min-w-0 flex-shrink">
             <div
               className="w-7 h-7 sm:w-8 sm:h-8 md:icon-phi-md rounded-lg md:rounded-phi-md flex items-center justify-center flex-shrink-0"
