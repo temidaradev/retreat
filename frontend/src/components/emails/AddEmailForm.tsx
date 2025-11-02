@@ -1,4 +1,4 @@
-import { Plus } from 'lucide-react';
+import { Plus, CheckCircle } from 'lucide-react';
 import { useState } from 'react';
 
 interface AddEmailFormProps {
@@ -9,6 +9,7 @@ export default function AddEmailForm({ onAdd }: AddEmailFormProps) {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
 
   const validateEmail = (email: string): boolean => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -18,6 +19,7 @@ export default function AddEmailForm({ onAdd }: AddEmailFormProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setSuccessMessage('');
 
     if (!email.trim()) {
       setError('Please enter an email address');
@@ -33,6 +35,9 @@ export default function AddEmailForm({ onAdd }: AddEmailFormProps) {
     try {
       await onAdd(email);
       setEmail('');
+      setSuccessMessage(`Verification email sent to ${email}! Please check your inbox to verify.`);
+      // Clear success message after 10 seconds
+      setTimeout(() => setSuccessMessage(''), 10000);
     } catch (err) {
       // Error handling done in parent
     } finally {
@@ -56,12 +61,48 @@ export default function AddEmailForm({ onAdd }: AddEmailFormProps) {
         Add New Email Address
       </h4>
 
+      {successMessage && (
+        <div
+          className="rounded-lg p-3 mb-3 border flex items-start gap-2"
+          style={{
+            background: 'var(--color-success-bg)',
+            borderColor: 'var(--color-success)',
+          }}
+        >
+          <CheckCircle className="w-4 h-4 md:w-5 md:h-5 flex-shrink-0 mt-0.5" style={{ color: 'var(--color-success)' }} />
+          <div className="flex-1">
+            <p
+              className="text-xs md:text-phi-sm font-medium mb-1"
+              style={{ color: 'var(--color-success)' }}
+            >
+              Verification email sent!
+            </p>
+            <p
+              className="text-xs md:text-phi-sm"
+              style={{ color: 'var(--color-text-secondary)' }}
+            >
+              {successMessage}
+            </p>
+            <p
+              className="text-xs md:text-phi-sm mt-1"
+              style={{ color: 'var(--color-text-tertiary)' }}
+            >
+              You must verify this email before you can forward receipts from it.
+            </p>
+          </div>
+        </div>
+      )}
+
       <form onSubmit={handleSubmit} className="space-y-3">
         <div>
           <input
             type="email"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e) => {
+              setEmail(e.target.value);
+              setError('');
+              setSuccessMessage('');
+            }}
             placeholder="new-email@example.com"
             className="w-full px-3 md:px-4 py-2 md:py-phi border rounded-phi-md focus-ring text-sm md:text-phi-base transition-all duration-200"
             style={{
@@ -99,7 +140,7 @@ export default function AddEmailForm({ onAdd }: AddEmailFormProps) {
         className="text-xs mt-3"
         style={{ color: 'var(--color-text-tertiary)' }}
       >
-        If verification is required, a verification email will be sent to the new address
+        A verification email will be sent automatically. Please check your inbox to verify.
       </p>
     </div>
   );

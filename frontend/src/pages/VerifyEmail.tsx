@@ -21,24 +21,24 @@ export default function VerifyEmail() {
     }
 
     try {
-      const response = await fetch(`${apiConfig.baseUrl}/api/verify-email/${token}`);
+      const response = await fetch(`${apiConfig.baseUrl}/api/v1/verify-email/${token}`);
       const data = await response.json();
 
       if (response.ok) {
         setStatus('success');
         setMessage(data.message || 'Email verified successfully!');
         
-        // Redirect to email settings after 3 seconds
+        // Redirect to email settings after 3 seconds with refresh flag
         setTimeout(() => {
-          navigate('/emails');
+          navigate('/emails', { state: { fromVerification: true } });
         }, 3000);
       } else {
         setStatus('error');
-        setMessage(data.error || 'Verification failed');
+        setMessage(data.error || 'Verification failed. The link may have expired or is invalid.');
       }
     } catch (err) {
       setStatus('error');
-      setMessage('Failed to verify email. Please try again.');
+      setMessage('Failed to verify email. Please try again or request a new verification link.');
     }
   };
 

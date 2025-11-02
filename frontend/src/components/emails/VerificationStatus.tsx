@@ -1,4 +1,4 @@
-import { Check, Clock, Star } from 'lucide-react';
+import { Check, Clock, Star, AlertTriangle } from 'lucide-react';
 
 interface VerificationStatusProps {
   verified: boolean;
@@ -16,6 +16,7 @@ export default function VerificationStatus({ verified, isPrimary }: Verification
             color: 'var(--color-success)',
             border: '1px solid var(--color-success)',
           }}
+          title="This email is verified and can forward receipts"
         >
           <Check className="w-3 h-3" />
           Verified
@@ -28,9 +29,10 @@ export default function VerificationStatus({ verified, isPrimary }: Verification
             color: 'var(--color-warning)',
             border: '1px solid var(--color-warning)',
           }}
+          title="This email is not verified. Please verify it to forward receipts."
         >
-          <Clock className="w-3 h-3" />
-          Pending
+          <AlertTriangle className="w-3 h-3" />
+          Not Verified
         </span>
       )}
       

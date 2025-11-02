@@ -10,16 +10,27 @@ interface EmailCardProps {
   onResend: (emailId: string) => void;
 }
 
-export default function EmailCard({ email, onDelete, onSetPrimary }: EmailCardProps) {
+export default function EmailCard({ email, onDelete, onSetPrimary, onResend }: EmailCardProps) {
   const [loading, setLoading] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
 
   const handleSetPrimary = async () => {
+    if (!email.verified) {
+      return;
+    }
     setLoading(true);
     await onSetPrimary(email.id);
     setLoading(false);
   };
 
-  // Resend verification disabled server-side
+  const handleResendVerification = async () => {
+    setResendLoading(true);
+    try {
+      await onResend(email.id);
+    } finally {
+      setResendLoading(false);
+    }
+  };
 
   const handleDelete = async () => {
     setLoading(true);
@@ -52,25 +63,54 @@ export default function EmailCard({ email, onDelete, onSetPrimary }: EmailCardPr
           <VerificationStatus verified={email.verified} isPrimary={email.is_primary} />
         </div>
 
+        {!email.verified && (
+          <div
+            className="rounded-lg p-3 border"
+            style={{
+              background: 'var(--color-warning-bg)',
+              borderColor: 'var(--color-warning)',
+            }}
+          >
+            <p
+              className="text-xs md:text-phi-sm mb-2"
+              style={{ color: 'var(--color-warning)' }}
+            >
+              <strong>Email not verified.</strong> You must verify this email before you can forward receipts from it.
+            </p>
+            <button
+              onClick={handleResendVerification}
+              disabled={resendLoading}
+              className="px-3 py-1.5 rounded-phi-md text-xs md:text-phi-sm font-medium border transition-all duration-200 hover-lift disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+              style={{
+                background: 'var(--color-warning)',
+                borderColor: 'var(--color-warning)',
+                color: 'white',
+              }}
+            >
+              <Mail className="w-3 h-3 md:w-4 md:h-4" />
+              {resendLoading ? 'Sending...' : 'Resend Verification Email'}
+            </button>
+          </div>
+        )}
+
         {!email.is_primary && (
           <div className="flex flex-wrap gap-2">
-            {email.verified && (
-              <button
-                onClick={handleSetPrimary}
-                disabled={loading}
-                className="px-3 py-1.5 rounded-phi-md text-xs md:text-phi-sm font-medium border transition-all duration-200 hover-lift disabled:opacity-50"
-                style={{
-                  background: 'var(--color-accent-500)',
-                  borderColor: 'var(--color-accent-500)',
-                  color: 'white',
-                }}
-              >
-                Set as Primary
-              </button>
-            )}
+            <button
+              onClick={handleSetPrimary}
+              disabled={loading || !email.verified}
+              className="px-3 py-1.5 rounded-phi-md text-xs md:text-phi-sm font-medium border transition-all duration-200 hover-lift disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{
+                background: email.verified ? 'var(--color-accent-500)' : 'var(--color-bg-tertiary)',
+                borderColor: email.verified ? 'var(--color-accent-500)' : 'var(--color-border)',
+                color: email.verified ? 'white' : 'var(--color-text-tertiary)',
+              }}
+              title={!email.verified ? 'Email must be verified before setting as primary' : 'Set this email as your primary email address'}
+            >
+              Set as Primary
+            </button>
             <button
               onClick={handleDelete}
-              disabled={loading}
+              disabled={loading || resendLoading}
               className="px-3 py-1.5 rounded-phi-md text-xs md:text-phi-sm font-medium border transition-all duration-200 hover-lift disabled:opacity-50 flex items-center gap-1"
               style={{
                 background: 'var(--color-bg-tertiary)',

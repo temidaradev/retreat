@@ -1,7 +1,7 @@
 import { UserButton, useAuth } from "@clerk/clerk-react";
 import { ArrowLeft, Mail, Crown } from "lucide-react";
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { apiService, type UserEmail } from "../services/api";
 import ThemeSelector from "../components/common/ThemeSelector";
 import EmailList from "../components/emails/EmailList";
@@ -12,6 +12,7 @@ import HowItWorksModal from "../components/common/HowItWorksModal";
 export default function EmailSettings() {
   const { has, getToken } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [emails, setEmails] = useState<UserEmail[]>([]);
   const [loading, setLoading] = useState(true);
   const [showHowItWorks, setShowHowItWorks] = useState(false);
@@ -20,6 +21,14 @@ export default function EmailSettings() {
   useEffect(() => {
     loadEmails();
   }, []);
+
+  // Refresh emails when navigating to this page from verification
+  // Check if we're coming from a verify-email route
+  useEffect(() => {
+    if (location.pathname === '/emails' && location.state?.fromVerification) {
+      loadEmails();
+    }
+  }, [location]);
 
   const loadEmails = async () => {
     try {
@@ -42,15 +51,10 @@ export default function EmailSettings() {
       apiService.setAuthToken(token);
       const res = await apiService.addEmail(email);
       
-      // Show backend message or context-aware fallback
-      const created = res?.email;
-      const msg = res?.message
-        || (created?.verified
-              ? `Email ${created.email} added and verified`
-              : `Verification email sent to ${email}. Check your inbox.`);
-      alert(msg);
+      // Email is automatically sent by backend, no need to alert here
+      // The form will show its own success message
       
-      // Reload emails
+      // Reload emails to get updated verification status
       await loadEmails();
     } catch (err: any) {
       const errorMessage = err.message || "Failed to add email address";
@@ -103,9 +107,17 @@ export default function EmailSettings() {
     }
   };
 
-  const handleResendVerification = async (_emailId: string) => {
-    // Verification routes are disabled server-side; provide immediate feedback
-    alert("Email verification is disabled by the server.");
+  const handleResendVerification = async (emailId: string) => {
+    try {
+      const token = await getToken();
+      apiService.setAuthToken(token);
+      await apiService.resendVerification(emailId);
+      
+      alert("Verification email sent successfully! Please check your inbox.");
+    } catch (err: any) {
+      const errorMessage = err.message || "Failed to resend verification email";
+      alert(errorMessage);
+    }
   };
 
   return (
