@@ -13,6 +13,8 @@ import {
   CheckCircle,
   XCircle,
   AlertCircle,
+  Copy,
+  Check,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
@@ -45,11 +47,20 @@ interface BMCUser {
   updated_at: string;
 }
 
+interface EnhancedError {
+  message?: string;
+  user_id?: string;
+  email?: string;
+  config_help?: string;
+}
+
 export default function Admin() {
   const { getToken } = useAuth();
   const [activeTab, setActiveTab] = useState<"dashboard" | "subscriptions" | "bmc" | "system">("dashboard");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [enhancedError, setEnhancedError] = useState<EnhancedError | null>(null);
+  const [copied, setCopied] = useState(false);
 
   // Dashboard state
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -80,6 +91,7 @@ export default function Admin() {
     try {
       setLoading(true);
       setError(null);
+      setEnhancedError(null);
       const token = await getToken();
       apiService.setAuthToken(token);
 
@@ -101,8 +113,18 @@ export default function Admin() {
       const errorMessage = err.message || "Failed to load data";
       
       if (err.status === 403 || err.status === 401 || errorMessage.includes("Admin access required") || errorMessage.includes("admin") || errorMessage.includes("Admin")) {
-        setError("Access denied. You need admin privileges to access this page. Please ensure your email is configured as an admin in the backend.");
+        // Enhanced error handling - extract additional info from API response
+        const enhanced: EnhancedError = {
+          message: err.message || errorMessage,
+          user_id: err.user_id,
+          email: err.email,
+          config_help: err.config_help,
+        };
+        
+        setEnhancedError(enhanced);
+        setError(errorMessage || "Admin access required");
       } else {
+        setEnhancedError(null);
         setError(errorMessage);
       }
     } finally {
@@ -186,24 +208,143 @@ export default function Admin() {
     return new Date(dateString).toLocaleString();
   };
 
+  const copyConfigHelp = async () => {
+    if (enhancedError?.config_help) {
+      await navigator.clipboard.writeText(enhancedError.config_help);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
   if (error && (error.includes("Access denied") || error.includes("Admin access required") || error.includes("admin"))) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--color-bg-primary)" }}>
-        <div className="text-center p-8 max-w-2xl">
-          <AlertCircle className="w-16 h-16 mx-auto mb-4" style={{ color: "var(--color-danger)" }} />
-          <h1 className="text-2xl font-bold mb-2" style={{ color: "var(--color-text-primary)" }}>
-            Access Denied
-          </h1>
-          <p className="mb-4" style={{ color: "var(--color-text-secondary)" }}>{error}</p>
-          
-          <Link
-            to="/"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg"
-            style={{ background: "var(--color-accent-500)", color: "white" }}
+      <div className="min-h-screen flex items-center justify-center p-4" style={{ background: "var(--color-bg-primary)" }}>
+        <div className="max-w-2xl w-full">
+          <div
+            className="rounded-phi-lg border p-6 md:p-8"
+            style={{
+              background: "var(--color-bg-secondary)",
+              borderColor: "var(--color-danger)",
+            }}
           >
-            <ArrowLeft className="w-4 h-4" />
-            Back to Dashboard
-          </Link>
+            <AlertCircle className="w-16 h-16 mx-auto mb-4" style={{ color: "var(--color-danger)" }} />
+            <h1 className="text-2xl font-bold mb-4 text-center" style={{ color: "var(--color-text-primary)" }}>
+              Access Denied
+            </h1>
+            
+            {/* Main error message */}
+            <div className="mb-6">
+              <p className="text-base mb-2 text-center" style={{ color: "var(--color-text-secondary)" }}>
+                {enhancedError?.message || error}
+              </p>
+            </div>
+
+            {/* Enhanced error details */}
+            {enhancedError && (
+              <div className="space-y-4 mb-6">
+                {/* User ID */}
+                {enhancedError.user_id && (
+                  <div
+                    className="rounded-lg p-3 border"
+                    style={{
+                      background: "var(--color-bg-primary)",
+                      borderColor: "var(--color-border)",
+                    }}
+                  >
+                    <p className="text-xs mb-1 font-medium" style={{ color: "var(--color-text-tertiary)" }}>
+                      Your Clerk User ID:
+                    </p>
+                    <code className="text-sm font-mono" style={{ color: "var(--color-text-primary)" }}>
+                      {enhancedError.user_id}
+                    </code>
+                  </div>
+                )}
+
+                {/* Email */}
+                {enhancedError.email && (
+                  <div
+                    className="rounded-lg p-3 border"
+                    style={{
+                      background: "var(--color-bg-primary)",
+                      borderColor: "var(--color-border)",
+                    }}
+                  >
+                    <p className="text-xs mb-1 font-medium" style={{ color: "var(--color-text-tertiary)" }}>
+                      Your Email:
+                    </p>
+                    <code className="text-sm font-mono" style={{ color: "var(--color-text-primary)" }}>
+                      {enhancedError.email}
+                    </code>
+                  </div>
+                )}
+
+                {/* Config Help */}
+                {enhancedError.config_help && (
+                  <div
+                    className="rounded-lg p-4 border"
+                    style={{
+                      background: "var(--color-warning-bg)",
+                      borderColor: "var(--color-warning)",
+                    }}
+                  >
+                    <div className="flex items-start justify-between gap-3 mb-2">
+                      <div>
+                        <p className="text-sm font-semibold mb-2" style={{ color: "var(--color-warning)" }}>
+                          Configuration Required
+                        </p>
+                        <p className="text-xs mb-3" style={{ color: "var(--color-text-secondary)" }}>
+                          A backend administrator needs to add your user ID to the admin list. Use the following configuration:
+                        </p>
+                      </div>
+                    </div>
+                    <div className="relative">
+                      <code
+                        className="block p-3 rounded-md text-xs font-mono overflow-x-auto"
+                        style={{
+                          background: "var(--color-bg-primary)",
+                          color: "var(--color-text-primary)",
+                          border: "1px solid var(--color-border)",
+                        }}
+                      >
+                        {enhancedError.config_help}
+                      </code>
+                      <button
+                        onClick={copyConfigHelp}
+                        className="absolute top-2 right-2 p-2 rounded transition-all duration-200 hover-lift"
+                        style={{
+                          background: copied ? "var(--color-success-bg)" : "var(--color-bg-secondary)",
+                          borderColor: copied ? "var(--color-success)" : "var(--color-border)",
+                          border: "1px solid",
+                        }}
+                        title="Copy configuration"
+                      >
+                        {copied ? (
+                          <Check className="w-4 h-4" style={{ color: "var(--color-success)" }} />
+                        ) : (
+                          <Copy className="w-4 h-4" style={{ color: "var(--color-text-tertiary)" }} />
+                        )}
+                      </button>
+                    </div>
+                    <p className="text-xs mt-3" style={{ color: "var(--color-text-tertiary)" }}>
+                      Contact your backend administrator to add this to your environment variables.
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Action buttons */}
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <Link
+                to="/"
+                className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-medium transition-all duration-200 hover-lift"
+                style={{ background: "var(--color-accent-500)", color: "white" }}
+              >
+                <ArrowLeft className="w-4 h-4" />
+                Back to Dashboard
+              </Link>
+            </div>
+          </div>
         </div>
       </div>
     );

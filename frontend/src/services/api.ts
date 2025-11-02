@@ -54,6 +54,10 @@ export interface ApiError {
     status: number
     request_id?: string
     timestamp?: string
+    message?: string
+    user_id?: string
+    email?: string
+    config_help?: string
 }
 
 export interface UserEmail {
@@ -110,9 +114,11 @@ class ApiService {
             if (!response.ok) {
                 // Try to parse error response
                 let errorMessage = `API request failed: ${response.statusText}`
+                let errorData: ApiError | null = null
+
                 try {
-                    const errorData: ApiError = await response.json()
-                    errorMessage = errorData.error || errorMessage
+                    errorData = await response.json() as ApiError
+                    errorMessage = errorData.error || errorData.message || errorMessage
                 } catch {
                     // If parsing fails, try to get text
                     try {
@@ -125,8 +131,19 @@ class ApiService {
                     }
                 }
 
-                const error = new Error(errorMessage) as Error & { status?: number }
+                const error = new Error(errorMessage) as Error & ApiError
                 error.status = response.status
+
+                // Preserve enhanced error fields from API response
+                if (errorData) {
+                    error.message = errorData.message || errorMessage
+                    error.user_id = errorData.user_id
+                    error.email = errorData.email
+                    error.config_help = errorData.config_help
+                    error.request_id = errorData.request_id
+                    error.timestamp = errorData.timestamp
+                }
+
                 throw error
             }
 
