@@ -1,4 +1,4 @@
-import { Check, Clock, Star, AlertTriangle } from 'lucide-react';
+import { Check, Star, AlertTriangle } from 'lucide-react';
 
 interface VerificationStatusProps {
   verified: boolean;

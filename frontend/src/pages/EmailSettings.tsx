@@ -49,7 +49,7 @@ export default function EmailSettings() {
     try {
       const token = await getToken();
       apiService.setAuthToken(token);
-      const res = await apiService.addEmail(email);
+      await apiService.addEmail(email);
       
       // Email is automatically sent by backend, no need to alert here
       // The form will show its own success message
