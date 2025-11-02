@@ -122,6 +122,7 @@ func main() {
 	adminHandler := handlers.NewAdminHandler(db, cfg, bmcService)
 	emailHandler := handlers.NewEmailHandler(db, cfg, emailService)
 	userEmailHandler := handlers.NewUserEmailHandler(db, cfg, emailService)
+	feedbackHandler := handlers.NewFeedbackHandler(db, cfg, emailService)
 
 	cronService := services.NewCronService(db, cfg)
 	cronService.Start()
@@ -171,6 +172,8 @@ func main() {
 		api.Post("/bmc/webhook", bmcHandler.HandleWebhook)
 
 		api.Post("/email/inbound", emailHandler.HandleInboundEmail)
+
+		api.Post("/feedback", feedbackHandler.SendFeedback)
 
 		protected := api.Group("", middleware.ClerkAuthMiddleware())
 		{

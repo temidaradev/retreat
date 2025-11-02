@@ -369,6 +369,19 @@ class ApiService {
     }> {
         return this.request('/admin/system-info')
     }
+
+    // Feedback
+    async sendFeedback(data: {
+        name: string
+        email: string
+        subject: string
+        message: string
+    }): Promise<{ message: string }> {
+        return this.request<{ message: string }>('/feedback', {
+            method: 'POST',
+            body: JSON.stringify(data),
+        })
+    }
 }
 
 export const apiService = new ApiService()

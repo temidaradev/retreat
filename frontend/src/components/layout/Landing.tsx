@@ -11,10 +11,15 @@ import {
   FileText,
   Bell,
   Crown,
+  MessageSquare,
 } from "lucide-react";
+import { useState } from "react";
 import ThemeSelector from "../common/ThemeSelector";
+import FeedbackModal from "../common/FeedbackModal";
 
 export default function Landing() {
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+
   return (
     <div
       className="min-h-screen flex flex-col relative overflow-hidden"
@@ -40,6 +45,17 @@ export default function Landing() {
           </span>
         </div>
         <div className="flex items-center gap-3">
+          <button
+            onClick={() => setShowFeedbackModal(true)}
+            className="p-2 rounded-lg hover-lift transition-all duration-200"
+            style={{
+              background: "var(--color-bg-secondary)",
+              color: "var(--color-text-primary)",
+            }}
+            title="Send Feedback"
+          >
+            <MessageSquare className="w-4 h-4 md:w-5 md:h-5" />
+          </button>
           <ThemeSelector />
           <SignInButton mode="modal">
             <button
@@ -827,6 +843,9 @@ export default function Landing() {
           </div>
         </div>
       </footer>
+
+      {/* Feedback Modal */}
+      <FeedbackModal isOpen={showFeedbackModal} onClose={() => setShowFeedbackModal(false)} />
     </div>
   );
 }

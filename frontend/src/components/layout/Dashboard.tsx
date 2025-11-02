@@ -12,6 +12,8 @@ import {
   Download,
   Trash2,
   Mail,
+  MessageSquare,
+  Coffee,
 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
@@ -21,6 +23,7 @@ import ThemeSelector from "../common/ThemeSelector";
 import EmailForwardingCard from "../common/EmailForwardingCard";
 import HowItWorksModal from "../common/HowItWorksModal";
 import ReceiptSourceBadge from "../common/ReceiptSourceBadge";
+import FeedbackModal from "../common/FeedbackModal";
 
 export default function Dashboard() {
   const { has, getToken } = useAuth();
@@ -47,6 +50,7 @@ export default function Dashboard() {
   const [manualPhoto, setManualPhoto] = useState<File | null>(null);
   const [creatingManual, setCreatingManual] = useState(false);
   const [receiptPhotoById, setReceiptPhotoById] = useState<Record<string, string>>({});
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
 
   // Premium features access control (managed manually via Clerk dashboard)
   const hasRetreatPlan = has?.({ plan: "retreat" }) ?? false;
@@ -261,37 +265,85 @@ export default function Dashboard() {
           borderColor: "var(--color-border)",
         }}
       >
-        <div className="px-4 md:px-phi-lg py-3 md:py-phi flex justify-between items-center">
-          <div className="flex items-center gap-2 md:gap-phi">
+        <div className="px-4 md:px-phi-lg py-3 md:py-phi flex justify-between items-center gap-2 md:gap-phi flex-wrap">
+          <div className="flex items-center gap-2 md:gap-phi flex-shrink-0">
             <div
-              className="w-8 h-8 md:icon-phi-md rounded-lg md:rounded-phi-md flex items-center justify-center"
+              className="w-8 h-8 md:icon-phi-md rounded-lg md:rounded-phi-md flex items-center justify-center flex-shrink-0"
               style={{ background: "var(--color-accent-500)" }}
             >
               <Receipt className="w-4 h-4 md:w-5 md:h-5 text-white" />
             </div>
             <span
-              className="text-base md:text-phi-lg font-bold"
+              className="text-base md:text-phi-lg font-bold whitespace-nowrap"
               style={{ color: "var(--color-text-primary)" }}
             >
               Retreat
             </span>
             {hasRetreatPlan && (
               <div
-                className="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium"
+                className="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium flex-shrink-0"
                 style={{
                   background: "var(--color-accent-500)",
                   color: "white",
                 }}
               >
-                <Crown className="w-3 h-3" />
+                <Crown className="w-3 h-3 flex-shrink-0" />
                 <span className="hidden sm:inline">Sponsor</span>
               </div>
             )}
           </div>
-          <div className="flex items-center gap-2 md:gap-phi">
+          <div className="flex items-center gap-1.5 sm:gap-2 md:gap-phi flex-shrink-0 flex-wrap">
+            {!hasRetreatPlan && (
+              <Link
+                to="/pricing"
+                className="flex items-center gap-1 md:gap-phi px-2 sm:px-3 md:px-phi py-1.5 sm:py-2 md:py-phi-sm rounded-full md:rounded-phi-md text-xs md:text-phi-sm font-medium transition-all duration-200 hover-lift bg-accent-gradient shadow-accent-glow text-white whitespace-nowrap"
+              >
+                <Crown className="w-3 h-3 md:w-4 md:h-4 flex-shrink-0" />
+                <span className="hidden sm:inline">Become a </span>
+                <span>Sponsor</span>
+              </Link>
+            )}
+            {/* Mobile BMC Button - Icon Only */}
+            <a
+              href="https://www.buymeacoffee.com/temidaradev"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="md:hidden p-2 rounded-lg hover-lift transition-all duration-200 flex items-center justify-center flex-shrink-0"
+              style={{
+                background: '#FFDD00',
+                color: '#000000',
+              }}
+              title="Buy me a coffee"
+            >
+              <Coffee className="w-4 h-4 md:w-5 md:h-5" />
+            </a>
+            {/* Desktop BMC Button */}
+            <a
+              href="https://www.buymeacoffee.com/temidaradev"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hidden md:inline-block flex-shrink-0"
+            >
+              <img
+                src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=☕&slug=temidaradev&button_colour=FFDD00&font_colour=000000&font_family=Cookie&outline_colour=000000&coffee_colour=ffffff"
+                alt="Buy me a coffee"
+                className="h-8"
+              />
+            </a>
+            <button
+              onClick={() => setShowFeedbackModal(true)}
+              className="p-2 rounded-lg hover-lift transition-all duration-200 flex-shrink-0"
+              style={{
+                background: 'var(--color-bg-tertiary)',
+                color: 'var(--color-text-primary)',
+              }}
+              title="Send Feedback to Developer"
+            >
+              <MessageSquare className="w-4 h-4 md:w-5 md:h-5" />
+            </button>
             <Link
               to="/emails"
-              className="p-2 rounded-lg hover-lift transition-all duration-200"
+              className="p-2 rounded-lg hover-lift transition-all duration-200 flex-shrink-0"
               style={{
                 background: 'var(--color-bg-tertiary)',
                 color: 'var(--color-text-primary)',
@@ -300,29 +352,12 @@ export default function Dashboard() {
             >
               <Mail className="w-4 h-4 md:w-5 md:h-5" />
             </Link>
-            {!hasRetreatPlan && (
-              <Link
-                to="/pricing"
-                className="flex items-center gap-1 md:gap-phi px-3 md:px-phi py-2 md:py-phi-sm rounded-full md:rounded-phi-md text-xs md:text-phi-sm font-medium transition-all duration-200 hover-lift bg-accent-gradient shadow-accent-glow text-white"
-              >
-                <Crown className="w-3 h-3 md:w-4 md:h-4" />
-                <span className="hidden sm:inline">Become a</span> Sponsor
-              </Link>
-            )}
-            <a
-              href="https://www.buymeacoffee.com/temidaradev"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hidden md:inline-block"
-            >
-              <img
-                src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=☕&slug=temidaradev&button_colour=FFDD00&font_colour=000000&font_family=Cookie&outline_colour=000000&coffee_colour=ffffff"
-                alt="Buy me a coffee"
-                className="h-8"
-              />
-            </a>
-            <ThemeSelector />
-            <UserButton afterSignOutUrl="/" />
+            <div className="flex-shrink-0">
+              <ThemeSelector />
+            </div>
+            <div className="flex-shrink-0">
+              <UserButton afterSignOutUrl="/" />
+            </div>
           </div>
         </div>
       </header>
@@ -1389,6 +1424,9 @@ export default function Dashboard() {
 
       {/* How It Works Modal */}
       <HowItWorksModal isOpen={showHowItWorks} onClose={() => setShowHowItWorks(false)} />
+
+      {/* Feedback Modal */}
+      <FeedbackModal isOpen={showFeedbackModal} onClose={() => setShowFeedbackModal(false)} />
     </div>
   );
 }
