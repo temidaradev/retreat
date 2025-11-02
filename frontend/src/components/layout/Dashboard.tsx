@@ -265,23 +265,23 @@ export default function Dashboard() {
           borderColor: "var(--color-border)",
         }}
       >
-        <div className="px-4 md:px-phi-lg py-3 md:py-phi flex justify-between items-center gap-2 md:gap-phi flex-wrap">
-          <div className="flex items-center gap-2 md:gap-phi flex-shrink-0">
+        <div className="px-3 sm:px-4 md:px-phi-lg py-2.5 sm:py-3 md:py-phi flex justify-between items-center gap-2 overflow-hidden">
+          <div className="flex items-center gap-1.5 sm:gap-2 md:gap-phi min-w-0 flex-shrink">
             <div
-              className="w-8 h-8 md:icon-phi-md rounded-lg md:rounded-phi-md flex items-center justify-center flex-shrink-0"
+              className="w-7 h-7 sm:w-8 sm:h-8 md:icon-phi-md rounded-lg md:rounded-phi-md flex items-center justify-center flex-shrink-0"
               style={{ background: "var(--color-accent-500)" }}
             >
-              <Receipt className="w-4 h-4 md:w-5 md:h-5 text-white" />
+              <Receipt className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5 text-white" />
             </div>
             <span
-              className="text-base md:text-phi-lg font-bold whitespace-nowrap"
+              className="text-sm sm:text-base md:text-phi-lg font-bold whitespace-nowrap"
               style={{ color: "var(--color-text-primary)" }}
             >
               Retreat
             </span>
             {hasRetreatPlan && (
               <div
-                className="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium flex-shrink-0"
+                className="flex items-center gap-1 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full text-xs font-medium flex-shrink-0"
                 style={{
                   background: "var(--color-accent-500)",
                   color: "white",
@@ -292,11 +292,11 @@ export default function Dashboard() {
               </div>
             )}
           </div>
-          <div className="flex items-center gap-1.5 sm:gap-2 md:gap-phi flex-shrink-0 flex-wrap">
+          <div className="flex items-center gap-1 sm:gap-1.5 md:gap-phi flex-shrink-0">
             {!hasRetreatPlan && (
               <Link
                 to="/pricing"
-                className="flex items-center gap-1 md:gap-phi px-2 sm:px-3 md:px-phi py-1.5 sm:py-2 md:py-phi-sm rounded-full md:rounded-phi-md text-xs md:text-phi-sm font-medium transition-all duration-200 hover-lift bg-accent-gradient shadow-accent-glow text-white whitespace-nowrap"
+                className="flex items-center gap-0.5 sm:gap-1 md:gap-phi px-2 sm:px-3 md:px-phi py-1.5 sm:py-2 md:py-phi-sm rounded-full md:rounded-phi-md text-xs md:text-phi-sm font-medium transition-all duration-200 hover-lift bg-accent-gradient shadow-accent-glow text-white whitespace-nowrap flex-shrink-0"
               >
                 <Crown className="w-3 h-3 md:w-4 md:h-4 flex-shrink-0" />
                 <span className="hidden sm:inline">Become a </span>
@@ -308,7 +308,7 @@ export default function Dashboard() {
               href="https://www.buymeacoffee.com/temidaradev"
               target="_blank"
               rel="noopener noreferrer"
-              className="md:hidden p-2 rounded-lg hover-lift transition-all duration-200 flex items-center justify-center flex-shrink-0"
+              className="md:hidden p-1.5 sm:p-2 rounded-lg hover-lift transition-all duration-200 flex items-center justify-center flex-shrink-0 min-w-[2rem] sm:min-w-[2.5rem]"
               style={{
                 background: '#FFDD00',
                 color: '#000000',
@@ -332,25 +332,27 @@ export default function Dashboard() {
             </a>
             <button
               onClick={() => setShowFeedbackModal(true)}
-              className="p-2 rounded-lg hover-lift transition-all duration-200 flex-shrink-0"
+              className="p-2 rounded-lg transition-all duration-200 hover:scale-105 flex items-center justify-center flex-shrink-0"
               style={{
-                background: 'var(--color-bg-tertiary)',
-                color: 'var(--color-text-primary)',
+                background: "var(--color-bg-secondary)",
+                border: "1px solid var(--color-border)",
+                color: "var(--color-text-primary)",
               }}
               title="Send Feedback to Developer"
             >
-              <MessageSquare className="w-4 h-4 md:w-5 md:h-5" />
+              <MessageSquare className="w-5 h-5" />
             </button>
             <Link
               to="/emails"
-              className="p-2 rounded-lg hover-lift transition-all duration-200 flex-shrink-0"
+              className="p-2 rounded-lg transition-all duration-200 hover:scale-105 flex items-center justify-center flex-shrink-0"
               style={{
-                background: 'var(--color-bg-tertiary)',
-                color: 'var(--color-text-primary)',
+                background: "var(--color-bg-secondary)",
+                border: "1px solid var(--color-border)",
+                color: "var(--color-text-primary)",
               }}
               title="Email Settings"
             >
-              <Mail className="w-4 h-4 md:w-5 md:h-5" />
+              <Mail className="w-5 h-5" />
             </Link>
             <div className="flex-shrink-0">
               <ThemeSelector />
