@@ -153,14 +153,22 @@ export default function Dashboard() {
 
       await apiService.deleteReceipt(receiptId);
 
-      // Remove the receipt from the local state
-      setReceipts((prevReceipts) =>
-        prevReceipts.filter((r) => r.id !== receiptId)
-      );
+      // Close the delete confirmation modal
       setDeleteConfirm(null);
+
+      // Refresh the receipt list and subscription data from the server
+      // This ensures the UI is in sync with the backend after deletion
+      await loadReceipts();
+
+      // Also refresh subscription status to update receipt count
+      await checkSubscriptionStatus();
     } catch (err) {
       console.error("Error deleting receipt:", err);
-      alert("Failed to delete receipt. Please try again.");
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : "Failed to delete receipt. Please try again.";
+      alert(errorMessage);
     } finally {
       setDeleting(false);
     }
