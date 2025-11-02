@@ -247,6 +247,80 @@ class ApiService {
         })
     }
 
+    // Get current user's subscription status from backend
+    // This checks the database subscription, not Clerk metadata
+    async getUserSubscription(): Promise<{
+        is_premium: boolean
+        plan?: string
+        status?: string
+        expires_at?: string
+    }> {
+        try {
+            // First, get user info to get their clerk_user_id
+            const userInfo = await this.request<{
+                user_id: string
+                email?: string
+                username?: string
+            }>('/me')
+
+            if (!userInfo.user_id) {
+                return { is_premium: false, plan: 'free', status: 'none' }
+            }
+
+            // Try to check via admin subscriptions endpoint (works if user is admin)
+            try {
+                const subscriptions = await this.getAdminSubscriptions('active')
+                const userSubscription = subscriptions.data.find(
+                    sub => sub.clerk_user_id === userInfo.user_id && sub.status === 'active'
+                )
+
+                if (userSubscription) {
+                    return {
+                        is_premium: true,
+                        plan: userSubscription.plan || 'premium',
+                        status: userSubscription.status,
+                        expires_at: userSubscription.current_period_end
+                    }
+                }
+                // If admin but no subscription found, return free
+                return { is_premium: false, plan: 'free', status: 'none' }
+            } catch (adminError: any) {
+                // User is not admin (403/401) or other error - try alternative method
+                if (adminError?.status !== 403 && adminError?.status !== 401) {
+                    console.error('Unexpected error checking admin subscriptions:', adminError)
+                }
+
+                // For non-admin users, infer from receipt count
+                // Premium users can have more than 5 receipts (free limit is 5)
+                try {
+                    const receipts = await this.getReceipts()
+                    const receiptCount = receipts.receipts?.length || 0
+
+                    // If user has more than 5 receipts, they must have premium
+                    // (backend enforces the 5 receipt limit for free users)
+                    if (receiptCount > 5) {
+                        return {
+                            is_premium: true,
+                            plan: 'premium',
+                            status: 'active'
+                        }
+                    }
+
+                    // If 5 or fewer receipts, could be free or premium
+                    // Default to free to be safe
+                    return { is_premium: false, plan: 'free', status: 'none' }
+                } catch {
+                    // If receipt check fails, default to free
+                    return { is_premium: false, plan: 'free', status: 'none' }
+                }
+            }
+        } catch (error) {
+            console.error('Error checking subscription status:', error)
+            // Default to free on any error
+            return { is_premium: false, plan: 'free', status: 'none' }
+        }
+    }
+
     // Health check
     async healthCheck(): Promise<{ status: string }> {
         return this.request<{ status: string }>('/health')

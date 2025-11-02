@@ -50,9 +50,7 @@ export default function Dashboard() {
   const [creatingManual, setCreatingManual] = useState(false);
   const [receiptPhotoById, setReceiptPhotoById] = useState<Record<string, string>>({});
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
-
-  // Premium features access control (managed manually via Clerk dashboard)
-  const hasRetreatPlan = has?.({ plan: "retreat" }) ?? false;
+  const [hasRetreatPlan, setHasRetreatPlan] = useState(false);
 
   // Free plan limits
   const FREE_PLAN_LIMIT = 5;
@@ -61,7 +59,41 @@ export default function Dashboard() {
 
   useEffect(() => {
     loadReceipts();
+    checkSubscriptionStatus();
   }, []);
+
+  // Refresh subscription status periodically and when window regains focus
+  useEffect(() => {
+    const handleFocus = () => {
+      checkSubscriptionStatus();
+    };
+    
+    // Refresh every 30 seconds to catch subscription changes
+    const interval = setInterval(() => {
+      checkSubscriptionStatus();
+    }, 30000);
+    
+    window.addEventListener('focus', handleFocus);
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      clearInterval(interval);
+    };
+  }, []);
+
+  const checkSubscriptionStatus = async () => {
+    try {
+      const token = await getToken();
+      if (!token) return;
+      
+      apiService.setAuthToken(token);
+      const subscription = await apiService.getUserSubscription();
+      setHasRetreatPlan(subscription.is_premium);
+    } catch (err) {
+      console.error("Error checking subscription status:", err);
+      // Fallback to Clerk check if backend check fails
+      setHasRetreatPlan(has?.({ plan: "retreat" }) ?? false);
+    }
+  };
 
   const loadReceipts = async () => {
     try {
@@ -230,6 +262,9 @@ export default function Dashboard() {
 
       // Refresh receipts list
       await loadReceipts();
+      
+      // Refresh subscription status in case it changed
+      await checkSubscriptionStatus();
 
       // Close modal and reset form
       setShowUploadModal(false);

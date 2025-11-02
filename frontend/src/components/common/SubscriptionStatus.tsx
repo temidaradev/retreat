@@ -1,12 +1,36 @@
 import { UserButton, useAuth } from "@clerk/clerk-react";
 import { Crown, ArrowLeft, Coffee, Mail, CheckCircle } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { apiService } from "../../services/api";
 import { external } from "../../config";
 
 export default function SubscriptionStatus() {
-  const { has, isLoaded } = useAuth();
+  const { has, isLoaded, getToken } = useAuth();
+  const [hasRetreatPlan, setHasRetreatPlan] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  if (!isLoaded) {
+  useEffect(() => {
+    checkSubscriptionStatus();
+  }, []);
+
+  const checkSubscriptionStatus = async () => {
+    try {
+      setLoading(true);
+      const token = await getToken();
+      apiService.setAuthToken(token);
+      const subscription = await apiService.getUserSubscription();
+      setHasRetreatPlan(subscription.is_premium);
+    } catch (err) {
+      console.error("Error checking subscription status:", err);
+      // Fallback to Clerk check if backend check fails
+      setHasRetreatPlan(has?.({ plan: "retreat" }) ?? false);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!isLoaded || loading) {
     return (
       <div className="p-phi-lg">
         <div className="animate-pulse">
@@ -17,7 +41,6 @@ export default function SubscriptionStatus() {
     );
   }
 
-  const hasRetreatPlan = has?.({ plan: "retreat" }) ?? false;
   const currentPlan = hasRetreatPlan ? "Sponsor" : "Free";
   const planColor = hasRetreatPlan
     ? "var(--color-accent-500)"

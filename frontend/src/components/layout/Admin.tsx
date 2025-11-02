@@ -162,7 +162,7 @@ export default function Admin() {
       const expiresAt = response.data?.expires_at 
         ? new Date(response.data.expires_at).toLocaleDateString()
         : 'N/A';
-      alert(`✅ Premium subscription granted successfully!\n\nUser: ${selectedUserId}\nDuration: ${durationMonths} month(s)\nExpires: ${expiresAt}`);
+      alert(`✅ Premium subscription granted successfully!\n\nUser: ${selectedUserId}\nDuration: ${durationMonths} month(s)\nExpires: ${expiresAt}\n\nNote: The user may need to refresh their page to see premium features.`);
     } catch (err: any) {
       let errorMessage = "Failed to grant subscription";
       
