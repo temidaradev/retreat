@@ -1,4 +1,4 @@
-import { UserButton, useAuth, useUser } from "@clerk/clerk-react";
+import { UserButton, useAuth } from "@clerk/clerk-react";
 import {
   Plus,
   Receipt,
@@ -27,7 +27,6 @@ import FeedbackModal from "../common/FeedbackModal";
 
 export default function Dashboard() {
   const { has, getToken } = useAuth();
-  const { user } = useUser();
   const [searchTerm, setSearchTerm] = useState("");
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [receipts, setReceipts] = useState<ReceiptData[]>([]);
