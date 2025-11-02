@@ -17,7 +17,11 @@ import {
 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
-import { apiService, type ReceiptData } from "../../services/api";
+import {
+  apiService,
+  type ReceiptData,
+  type SubscriptionData,
+} from "../../services/api";
 import { formatCompactCurrency } from "../../utils";
 import ThemeSelector from "../common/ThemeSelector";
 import EmailForwardingCard from "../common/EmailForwardingCard";
@@ -48,14 +52,18 @@ export default function Dashboard() {
   const [manualCurrency, setManualCurrency] = useState("USD");
   const [manualPhoto, setManualPhoto] = useState<File | null>(null);
   const [creatingManual, setCreatingManual] = useState(false);
-  const [receiptPhotoById, setReceiptPhotoById] = useState<Record<string, string>>({});
+  const [receiptPhotoById, setReceiptPhotoById] = useState<
+    Record<string, string>
+  >({});
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [hasRetreatPlan, setHasRetreatPlan] = useState(false);
+  const [subscriptionData, setSubscriptionData] =
+    useState<SubscriptionData | null>(null);
 
-  // Free plan limits
-  const FREE_PLAN_LIMIT = 5;
-  const SPONSOR_PLAN_LIMIT = 50;
-  const isAtFreeLimit = !hasRetreatPlan && receipts.length >= FREE_PLAN_LIMIT;
+  // Dynamic plan limits from subscription data
+  const receiptLimit = subscriptionData?.receipt_limit || 5;
+  const currentReceiptCount = receipts.length;
+  const isAtLimit = !hasRetreatPlan && currentReceiptCount >= receiptLimit;
 
   useEffect(() => {
     loadReceipts();
@@ -67,15 +75,15 @@ export default function Dashboard() {
     const handleFocus = () => {
       checkSubscriptionStatus();
     };
-    
+
     // Refresh every 30 seconds to catch subscription changes
     const interval = setInterval(() => {
       checkSubscriptionStatus();
     }, 30000);
-    
-    window.addEventListener('focus', handleFocus);
+
+    window.addEventListener("focus", handleFocus);
     return () => {
-      window.removeEventListener('focus', handleFocus);
+      window.removeEventListener("focus", handleFocus);
       clearInterval(interval);
     };
   }, []);
@@ -84,14 +92,27 @@ export default function Dashboard() {
     try {
       const token = await getToken();
       if (!token) return;
-      
+
       apiService.setAuthToken(token);
       const subscription = await apiService.getUserSubscription();
       setHasRetreatPlan(subscription.is_premium);
+      setSubscriptionData({
+        is_premium: subscription.is_premium,
+        plan: subscription.plan || "free",
+        receipt_limit: subscription.receipt_limit || 5,
+        receipt_count: subscription.receipt_count || 0,
+        expires_at: subscription.expires_at,
+      });
     } catch (err) {
       console.error("Error checking subscription status:", err);
       // Fallback to Clerk check if backend check fails
       setHasRetreatPlan(has?.({ plan: "retreat" }) ?? false);
+      setSubscriptionData({
+        is_premium: false,
+        plan: "free",
+        receipt_limit: 5,
+        receipt_count: 0,
+      });
     }
   };
 
@@ -104,6 +125,18 @@ export default function Dashboard() {
 
       const response = await apiService.getReceipts();
       setReceipts(response.receipts || []);
+
+      // Update subscription data from receipts response
+      if (response.subscription) {
+        setSubscriptionData({
+          is_premium: response.subscription.is_premium,
+          plan: response.subscription.plan,
+          receipt_limit: response.subscription.receipt_limit,
+          receipt_count: response.subscription.receipt_count,
+          expires_at: response.subscription.expires_at,
+        });
+        setHasRetreatPlan(response.subscription.is_premium);
+      }
     } catch (err) {
       setError("Failed to load receipts");
       console.error("Error loading receipts:", err);
@@ -262,7 +295,7 @@ export default function Dashboard() {
 
       // Refresh receipts list
       await loadReceipts();
-      
+
       // Refresh subscription status in case it changed
       await checkSubscriptionStatus();
 
@@ -344,8 +377,8 @@ export default function Dashboard() {
               rel="noopener noreferrer"
               className="md:hidden p-1.5 sm:p-2 rounded-lg hover-lift transition-all duration-200 flex items-center justify-center flex-shrink-0 min-w-[2rem] sm:min-w-[2.5rem]"
               style={{
-                background: '#FFDD00',
-                color: '#000000',
+                background: "#FFDD00",
+                color: "#000000",
               }}
               title="Buy me a coffee"
             >
@@ -436,13 +469,13 @@ export default function Dashboard() {
                           className="text-xs md:text-sm font-medium"
                           style={{ color: "var(--color-text-primary)" }}
                         >
-                          {SPONSOR_PLAN_LIMIT} Receipts
+                          {receiptLimit} Receipts
                         </p>
                         <p
                           className="text-xs"
                           style={{ color: "var(--color-text-tertiary)" }}
                         >
-                          {SPONSOR_PLAN_LIMIT - FREE_PLAN_LIMIT} more than free
+                          {receiptLimit - 5} more than free
                         </p>
                       </div>
                     </div>
@@ -498,15 +531,15 @@ export default function Dashboard() {
             </div>
           )}
 
-          {/* Free Plan Limit Warning or Progress */}
+          {/* Plan Limit Warning or Progress */}
           {!hasRetreatPlan && (
             <div
               className="rounded-phi-lg p-4 md:p-phi-lg border mb-phi-lg"
               style={{
-                background: isAtFreeLimit
+                background: isAtLimit
                   ? "var(--color-warning-bg)"
                   : "var(--color-info-bg)",
-                borderColor: isAtFreeLimit
+                borderColor: isAtLimit
                   ? "var(--color-warning)"
                   : "var(--color-accent-500)",
                 borderWidth: "2px",
@@ -514,7 +547,7 @@ export default function Dashboard() {
             >
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between flex-wrap gap-3 md:gap-phi">
                 <div className="flex items-start sm:items-center gap-3 md:gap-phi flex-1 min-w-0">
-                  {isAtFreeLimit ? (
+                  {isAtLimit ? (
                     <Lock
                       className="w-5 h-5 flex-shrink-0 mt-0.5 sm:mt-0"
                       style={{ color: "var(--color-warning)" }}
@@ -529,28 +562,44 @@ export default function Dashboard() {
                     <h3
                       className="text-sm md:text-phi-base font-semibold"
                       style={{
-                        color: isAtFreeLimit
+                        color: isAtLimit
                           ? "var(--color-warning)"
                           : "var(--color-accent-500)",
                       }}
                     >
-                      {isAtFreeLimit ? "Free Plan Limit Reached" : "Free Plan"}
+                      {isAtLimit
+                        ? `${
+                            subscriptionData?.plan === "premium"
+                              ? "Premium"
+                              : "Free"
+                          } Plan Limit Reached`
+                        : `${
+                            subscriptionData?.plan === "premium"
+                              ? "Premium"
+                              : "Free"
+                          } Plan`}
                     </h3>
                     <p
                       className="text-xs md:text-phi-sm mt-1"
                       style={{ color: "var(--color-text-secondary)" }}
                     >
-                      {isAtFreeLimit
-                        ? `You've reached the ${FREE_PLAN_LIMIT} receipt limit. Become a sponsor for up to ${SPONSOR_PLAN_LIMIT} receipts.`
-                        : `You have ${
-                            FREE_PLAN_LIMIT - receipts.length
-                          } receipt${
-                            FREE_PLAN_LIMIT - receipts.length !== 1 ? "s" : ""
-                          } remaining. Become a sponsor for up to ${SPONSOR_PLAN_LIMIT} receipts and premium features.`}
+                      {isAtLimit
+                        ? `You've reached the ${receiptLimit} receipt limit. ${
+                            receiptLimit === 5
+                              ? `Become a sponsor for up to 50 receipts.`
+                              : "Contact support for higher limits."
+                          }`
+                        : `You have ${receiptLimit - receipts.length} receipt${
+                            receiptLimit - receipts.length !== 1 ? "s" : ""
+                          } remaining. ${
+                            receiptLimit === 5
+                              ? "Become a sponsor for up to 50 receipts and premium features."
+                              : ""
+                          }`}
                     </p>
 
                     {/* Progress bar */}
-                    {!isAtFreeLimit && (
+                    {!isAtLimit && (
                       <div className="mt-phi-sm">
                         <div
                           className="h-2 rounded-full overflow-hidden"
@@ -560,10 +609,10 @@ export default function Dashboard() {
                             className="h-full transition-all duration-300"
                             style={{
                               width: `${
-                                (receipts.length / FREE_PLAN_LIMIT) * 100
+                                (receipts.length / receiptLimit) * 100
                               }%`,
                               background:
-                                receipts.length >= FREE_PLAN_LIMIT * 0.8
+                                receipts.length >= receiptLimit * 0.8
                                   ? "var(--color-warning)"
                                   : "var(--color-accent-500)",
                             }}
@@ -573,7 +622,7 @@ export default function Dashboard() {
                           className="text-phi-xs mt-1"
                           style={{ color: "var(--color-text-tertiary)" }}
                         >
-                          {receipts.length} of {FREE_PLAN_LIMIT} receipts used
+                          {receipts.length} of {receiptLimit} receipts used
                         </p>
                       </div>
                     )}
@@ -583,14 +632,14 @@ export default function Dashboard() {
                   to="/pricing"
                   className="flex items-center justify-center gap-2 md:gap-phi px-4 md:px-phi py-2 md:py-phi-sm rounded-phi-md text-xs md:text-phi-sm font-medium transition-all duration-200 hover-lift whitespace-nowrap w-full sm:w-auto"
                   style={{
-                    background: isAtFreeLimit
+                    background: isAtLimit
                       ? "var(--color-warning)"
                       : "var(--color-accent-500)",
                     color: "white",
                   }}
                 >
                   <Crown className="w-4 h-4" />
-                  {isAtFreeLimit ? "Become a Sponsor" : "View Details"}
+                  {isAtLimit ? "Become a Sponsor" : "View Details"}
                 </Link>
               </div>
             </div>
@@ -739,7 +788,7 @@ export default function Dashboard() {
 
             {/* Show appropriate button based on plan and receipt count */}
             <div className="flex items-center gap-2 md:gap-phi flex-wrap sm:flex-nowrap">
-              {/* Receipt count indicator for free users */}
+              {/* Receipt count indicator for non-premium users */}
               {!hasRetreatPlan && (
                 <div
                   className="text-xs md:text-phi-sm whitespace-nowrap"
@@ -749,19 +798,19 @@ export default function Dashboard() {
                     className="font-medium"
                     style={{
                       color:
-                        receipts.length >= FREE_PLAN_LIMIT
+                        receipts.length >= receiptLimit
                           ? "var(--color-warning)"
                           : "var(--color-text-primary)",
                     }}
                   >
-                    {receipts.length}/{FREE_PLAN_LIMIT}
+                    {receipts.length}/{receiptLimit}
                   </span>{" "}
                   receipts
                 </div>
               )}
 
               {/* Show "Become a Sponsor" only when at limit */}
-              {isAtFreeLimit ? (
+              {isAtLimit ? (
                 <Link
                   to="/pricing"
                   className="font-medium transition-all duration-200 hover-lift flex items-center justify-center gap-2 md:gap-phi whitespace-nowrap border-0 flex-1 sm:flex-none"
@@ -917,14 +966,21 @@ export default function Dashboard() {
                               >
                                 {receipt.item}
                               </h3>
-                              {receipt.parsed_data && (() => {
-                                try {
-                                  const parsedData = JSON.parse(receipt.parsed_data);
-                                  return <ReceiptSourceBadge source={parsedData.source} />;
-                                } catch {
-                                  return null;
-                                }
-                              })()}
+                              {receipt.parsed_data &&
+                                (() => {
+                                  try {
+                                    const parsedData = JSON.parse(
+                                      receipt.parsed_data
+                                    );
+                                    return (
+                                      <ReceiptSourceBadge
+                                        source={parsedData.source}
+                                      />
+                                    );
+                                  } catch {
+                                    return null;
+                                  }
+                                })()}
                             </div>
                             <p
                               className="text-xs md:text-phi-base mt-1 truncate"
@@ -997,7 +1053,7 @@ export default function Dashboard() {
                           </button>
                         </div>
                       </div>
-                      
+
                       {/* Expandable details button */}
                       <button
                         onClick={() => {
@@ -1012,28 +1068,78 @@ export default function Dashboard() {
                         style={{ color: "var(--color-accent-400)" }}
                         aria-expanded={expandedIds.has(receipt.id)}
                       >
-                        {expandedIds.has(receipt.id) ? "Hide details" : "View details"}
+                        {expandedIds.has(receipt.id)
+                          ? "Hide details"
+                          : "View details"}
                       </button>
-                      
+
                       {/* Expanded details - stacks vertically below */}
                       {expandedIds.has(receipt.id) && (
                         <div
                           className="mt-3 p-3 md:p-4 border rounded-phi-md w-full space-y-2"
-                          style={{ borderColor: "var(--color-border)", background: "var(--color-bg-tertiary)" }}
+                          style={{
+                            borderColor: "var(--color-border)",
+                            background: "var(--color-bg-tertiary)",
+                          }}
                         >
-                          <div className="text-sm" style={{ color: "var(--color-text-secondary)" }}>
-                            <div><strong style={{ color: "var(--color-text-primary)" }}>Store:</strong> {receipt.store}</div>
-                            <div><strong style={{ color: "var(--color-text-primary)" }}>Item:</strong> {receipt.item}</div>
-                            <div><strong style={{ color: "var(--color-text-primary)" }}>Amount:</strong> {receipt.amount} {receipt.currency}</div>
-                            <div><strong style={{ color: "var(--color-text-primary)" }}>Purchased:</strong> {new Date(receipt.purchase_date).toLocaleDateString()}</div>
-                            <div><strong style={{ color: "var(--color-text-primary)" }}>Warranty Expiry:</strong> {new Date(receipt.warranty_expiry).toLocaleDateString()}</div>
+                          <div
+                            className="text-sm"
+                            style={{ color: "var(--color-text-secondary)" }}
+                          >
+                            <div>
+                              <strong
+                                style={{ color: "var(--color-text-primary)" }}
+                              >
+                                Store:
+                              </strong>{" "}
+                              {receipt.store}
+                            </div>
+                            <div>
+                              <strong
+                                style={{ color: "var(--color-text-primary)" }}
+                              >
+                                Item:
+                              </strong>{" "}
+                              {receipt.item}
+                            </div>
+                            <div>
+                              <strong
+                                style={{ color: "var(--color-text-primary)" }}
+                              >
+                                Amount:
+                              </strong>{" "}
+                              {receipt.amount} {receipt.currency}
+                            </div>
+                            <div>
+                              <strong
+                                style={{ color: "var(--color-text-primary)" }}
+                              >
+                                Purchased:
+                              </strong>{" "}
+                              {new Date(
+                                receipt.purchase_date
+                              ).toLocaleDateString()}
+                            </div>
+                            <div>
+                              <strong
+                                style={{ color: "var(--color-text-primary)" }}
+                              >
+                                Warranty Expiry:
+                              </strong>{" "}
+                              {new Date(
+                                receipt.warranty_expiry
+                              ).toLocaleDateString()}
+                            </div>
                           </div>
                           {receiptPhotoById[receipt.id] && (
                             <img
                               src={receiptPhotoById[receipt.id]}
                               alt="Receipt attachment"
                               className="rounded-phi-md border max-h-56 object-contain"
-                              style={{ borderColor: "var(--color-border)", background: "var(--color-bg-primary)" }}
+                              style={{
+                                borderColor: "var(--color-border)",
+                                background: "var(--color-bg-primary)",
+                              }}
                             />
                           )}
                         </div>
@@ -1064,7 +1170,7 @@ export default function Dashboard() {
 
               {/* Email Forwarding */}
               <div className="mb-4 md:mb-phi-lg">
-                <EmailForwardingCard 
+                <EmailForwardingCard
                   onShowHelp={() => setShowHowItWorks(true)}
                 />
               </div>
@@ -1087,8 +1193,8 @@ export default function Dashboard() {
                   className="text-xs md:text-phi-sm"
                   style={{ color: "var(--color-text-secondary)" }}
                 >
-                  You can also upload PDF receipts or paste email text manually using the
-                  "Add Receipt" button above.
+                  You can also upload PDF receipts or paste email text manually
+                  using the "Add Receipt" button above.
                 </p>
               </div>
             </div>
@@ -1236,20 +1342,31 @@ export default function Dashboard() {
                   >
                     Or create manually
                   </label>
-                  <div className="grid gap-2" style={{ maxWidth: "400px", margin: "0 auto" }}>
+                  <div
+                    className="grid gap-2"
+                    style={{ maxWidth: "400px", margin: "0 auto" }}
+                  >
                     <input
                       placeholder="Store"
                       value={manualStore}
                       onChange={(e) => setManualStore(e.target.value)}
                       className="w-full px-3 md:px-4 py-2 md:py-phi border rounded-phi-md focus-ring text-sm md:text-phi-base"
-                      style={{ background: "var(--color-bg-primary)", borderColor: "var(--color-border)", color: "var(--color-text-primary)" }}
+                      style={{
+                        background: "var(--color-bg-primary)",
+                        borderColor: "var(--color-border)",
+                        color: "var(--color-text-primary)",
+                      }}
                     />
                     <input
                       placeholder="Item"
                       value={manualItem}
                       onChange={(e) => setManualItem(e.target.value)}
                       className="w-full px-3 md:px-4 py-2 md:py-phi border rounded-phi-md focus-ring text-sm md:text-phi-base"
-                      style={{ background: "var(--color-bg-primary)", borderColor: "var(--color-border)", color: "var(--color-text-primary)" }}
+                      style={{
+                        background: "var(--color-bg-primary)",
+                        borderColor: "var(--color-border)",
+                        color: "var(--color-text-primary)",
+                      }}
                     />
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       <input
@@ -1258,15 +1375,25 @@ export default function Dashboard() {
                         value={manualPurchaseDate}
                         onChange={(e) => setManualPurchaseDate(e.target.value)}
                         className="w-full px-3 md:px-4 py-2 md:py-phi border rounded-phi-md focus-ring text-sm md:text-phi-base"
-                        style={{ background: "var(--color-bg-primary)", borderColor: "var(--color-border)", color: "var(--color-text-primary)" }}
+                        style={{
+                          background: "var(--color-bg-primary)",
+                          borderColor: "var(--color-border)",
+                          color: "var(--color-text-primary)",
+                        }}
                       />
                       <input
                         type="date"
                         aria-label="Warranty expiry"
                         value={manualWarrantyExpiry}
-                        onChange={(e) => setManualWarrantyExpiry(e.target.value)}
+                        onChange={(e) =>
+                          setManualWarrantyExpiry(e.target.value)
+                        }
                         className="w-full px-3 md:px-4 py-2 md:py-phi border rounded-phi-md focus-ring text-sm md:text-phi-base"
-                        style={{ background: "var(--color-bg-primary)", borderColor: "var(--color-border)", color: "var(--color-text-primary)" }}
+                        style={{
+                          background: "var(--color-bg-primary)",
+                          borderColor: "var(--color-border)",
+                          color: "var(--color-text-primary)",
+                        }}
                       />
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -1277,13 +1404,21 @@ export default function Dashboard() {
                         value={manualAmount}
                         onChange={(e) => setManualAmount(e.target.value)}
                         className="w-full px-3 md:px-4 py-2 md:py-phi border rounded-phi-md focus-ring text-sm md:text-phi-base"
-                        style={{ background: "var(--color-bg-primary)", borderColor: "var(--color-border)", color: "var(--color-text-primary)" }}
+                        style={{
+                          background: "var(--color-bg-primary)",
+                          borderColor: "var(--color-border)",
+                          color: "var(--color-text-primary)",
+                        }}
                       />
                       <select
                         value={manualCurrency}
                         onChange={(e) => setManualCurrency(e.target.value)}
                         className="w-full px-3 md:px-4 py-2 md:py-phi border rounded-phi-md focus-ring text-sm md:text-phi-base"
-                        style={{ background: "var(--color-bg-primary)", borderColor: "var(--color-border)", color: "var(--color-text-primary)" }}
+                        style={{
+                          background: "var(--color-bg-primary)",
+                          borderColor: "var(--color-border)",
+                          color: "var(--color-text-primary)",
+                        }}
                       >
                         <option value="USD">USD</option>
                         <option value="EUR">EUR</option>
@@ -1295,13 +1430,21 @@ export default function Dashboard() {
                       <input
                         type="file"
                         accept="image/*"
-                        onChange={(e) => setManualPhoto(e.target.files?.[0] || null)}
+                        onChange={(e) =>
+                          setManualPhoto(e.target.files?.[0] || null)
+                        }
                         className="w-full text-sm"
                       />
                     </div>
                     <button
                       onClick={async () => {
-                        if (!manualStore.trim() || !manualItem.trim() || !manualPurchaseDate || !manualWarrantyExpiry || !manualAmount) {
+                        if (
+                          !manualStore.trim() ||
+                          !manualItem.trim() ||
+                          !manualPurchaseDate ||
+                          !manualWarrantyExpiry ||
+                          !manualAmount
+                        ) {
                           alert("Please complete all fields.");
                           return;
                         }
@@ -1319,7 +1462,10 @@ export default function Dashboard() {
                           });
                           if (manualPhoto) {
                             const url = URL.createObjectURL(manualPhoto);
-                            setReceiptPhotoById((prev) => ({ ...prev, [created.id]: url }));
+                            setReceiptPhotoById((prev) => ({
+                              ...prev,
+                              [created.id]: url,
+                            }));
                           }
                           alert("Receipt created successfully");
                           setManualStore("");
@@ -1332,7 +1478,8 @@ export default function Dashboard() {
                           await loadReceipts();
                           setShowUploadModal(false);
                         } catch (err: any) {
-                          const msg = err?.message || "Failed to create receipt";
+                          const msg =
+                            err?.message || "Failed to create receipt";
                           console.error("[ManualCreate] error", err);
                           alert(msg);
                         } finally {
@@ -1341,7 +1488,12 @@ export default function Dashboard() {
                       }}
                       disabled={creatingManual}
                       className="w-full md:w-auto px-4 md:px-phi py-2 md:py-phi-sm rounded-phi-md font-medium text-sm md:text-phi-base transition-all duration-200 hover-lift disabled:opacity-50 disabled:cursor-not-allowed"
-                      style={{ background: "linear-gradient(135deg, var(--color-accent-500), var(--color-accent-600))", color: "white", boxShadow: "0 4px 16px rgba(59, 130, 246, 0.3)" }}
+                      style={{
+                        background:
+                          "linear-gradient(135deg, var(--color-accent-500), var(--color-accent-600))",
+                        color: "white",
+                        boxShadow: "0 4px 16px rgba(59, 130, 246, 0.3)",
+                      }}
                     >
                       {creatingManual ? "Creating..." : "Create receipt"}
                     </button>
@@ -1458,10 +1610,16 @@ export default function Dashboard() {
       )}
 
       {/* How It Works Modal */}
-      <HowItWorksModal isOpen={showHowItWorks} onClose={() => setShowHowItWorks(false)} />
+      <HowItWorksModal
+        isOpen={showHowItWorks}
+        onClose={() => setShowHowItWorks(false)}
+      />
 
       {/* Feedback Modal */}
-      <FeedbackModal isOpen={showFeedbackModal} onClose={() => setShowFeedbackModal(false)} />
+      <FeedbackModal
+        isOpen={showFeedbackModal}
+        onClose={() => setShowFeedbackModal(false)}
+      />
     </div>
   );
 }

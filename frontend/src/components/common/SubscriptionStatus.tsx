@@ -2,13 +2,15 @@ import { UserButton, useAuth } from "@clerk/clerk-react";
 import { Crown, ArrowLeft, Coffee, Mail, CheckCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { apiService } from "../../services/api";
+import { apiService, type SubscriptionData } from "../../services/api";
 import { external } from "../../config";
 
 export default function SubscriptionStatus() {
   const { has, isLoaded, getToken } = useAuth();
   const [hasRetreatPlan, setHasRetreatPlan] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [subscriptionData, setSubscriptionData] =
+    useState<SubscriptionData | null>(null);
 
   useEffect(() => {
     checkSubscriptionStatus();
@@ -21,10 +23,23 @@ export default function SubscriptionStatus() {
       apiService.setAuthToken(token);
       const subscription = await apiService.getUserSubscription();
       setHasRetreatPlan(subscription.is_premium);
+      setSubscriptionData({
+        is_premium: subscription.is_premium,
+        plan: subscription.plan || "free",
+        receipt_limit: subscription.receipt_limit || 5,
+        receipt_count: subscription.receipt_count || 0,
+        expires_at: subscription.expires_at,
+      });
     } catch (err) {
       console.error("Error checking subscription status:", err);
       // Fallback to Clerk check if backend check fails
       setHasRetreatPlan(has?.({ plan: "retreat" }) ?? false);
+      setSubscriptionData({
+        is_premium: false,
+        plan: "free",
+        receipt_limit: 5,
+        receipt_count: 0,
+      });
     } finally {
       setLoading(false);
     }
@@ -41,10 +56,18 @@ export default function SubscriptionStatus() {
     );
   }
 
-  const currentPlan = hasRetreatPlan ? "Sponsor" : "Free";
-  const planColor = hasRetreatPlan
-    ? "var(--color-accent-500)"
-    : "var(--color-text-tertiary)";
+  const currentPlan =
+    subscriptionData?.plan === "premium"
+      ? "Premium"
+      : hasRetreatPlan
+      ? "Sponsor"
+      : "Free";
+  const planColor =
+    hasRetreatPlan || subscriptionData?.is_premium
+      ? "var(--color-accent-500)"
+      : "var(--color-text-tertiary)";
+  const receiptLimit = subscriptionData?.receipt_limit || 5;
+  const receiptLimitText = `${receiptLimit} receipts`;
 
   return (
     <div
@@ -157,7 +180,7 @@ export default function SubscriptionStatus() {
                     {
                       feature: "Receipt Storage",
                       free: "5 receipts",
-                      sponsor: "50 receipts",
+                      sponsor: receiptLimitText,
                       highlight: true,
                     },
                     {
@@ -197,7 +220,10 @@ export default function SubscriptionStatus() {
                       highlight: true,
                     },
                   ].map((item, index) => {
-                    const hasAccess = hasRetreatPlan ? item.sponsor : item.free;
+                    const hasAccess =
+                      hasRetreatPlan || subscriptionData?.is_premium
+                        ? item.sponsor
+                        : item.free;
                     const displayValue =
                       typeof hasAccess === "string" ? hasAccess : hasAccess;
                     const isPremiumFeature = item.highlight && !hasRetreatPlan;
@@ -381,8 +407,7 @@ export default function SubscriptionStatus() {
                         style={{ color: "var(--color-text-secondary)" }}
                       >
                         We'll verify your sponsorship and upgrade your account
-                        to 50 receipts and premium features within 24
-                        hours!
+                        to 50 receipts and premium features within 24 hours!
                       </p>
                     </div>
                   </div>
@@ -412,7 +437,7 @@ export default function SubscriptionStatus() {
                   Thank You for Your Support!
                 </h3>
                 <p
-                  className="text-phi-base max-w-xl mx-auto"
+                  className="text-phi-base max-w-xl mx-auto mb-phi"
                   style={{ color: "var(--color-text-secondary)" }}
                 >
                   Your sponsorship helps keep Retreat running and enables us to
@@ -420,6 +445,22 @@ export default function SubscriptionStatus() {
                   suggestions, please don't hesitate to reach out for priority
                   support!
                 </p>
+                {subscriptionData?.expires_at && (
+                  <p
+                    className="text-phi-sm max-w-xl mx-auto"
+                    style={{ color: "var(--color-text-tertiary)" }}
+                  >
+                    Your {currentPlan} plan expires on{" "}
+                    {new Date(subscriptionData.expires_at).toLocaleDateString(
+                      "en-US",
+                      {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      }
+                    )}
+                  </p>
+                )}
               </div>
             </div>
           )}
