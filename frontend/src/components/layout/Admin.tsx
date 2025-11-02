@@ -164,7 +164,17 @@ export default function Admin() {
         : 'N/A';
       alert(`✅ Premium subscription granted successfully!\n\nUser: ${selectedUserId}\nDuration: ${durationMonths} month(s)\nExpires: ${expiresAt}`);
     } catch (err: any) {
-      const errorMessage = err.message || "Failed to grant subscription";
+      let errorMessage = "Failed to grant subscription";
+      
+      // Handle specific error cases per API documentation
+      if (err.status === 400) {
+        errorMessage = err.message || "Invalid request. Please check the Clerk User ID and duration.";
+      } else if (err.status === 500) {
+        errorMessage = "Server error occurred. Please try again later.";
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      
       alert(`❌ Error: ${errorMessage}`);
     } finally {
       setProcessing(false);
@@ -177,7 +187,18 @@ export default function Admin() {
       return;
     }
 
-    if (!confirm(`Are you sure you want to revoke the subscription for ${selectedUserId}?`)) {
+    // Find subscription details for better confirmation message
+    const subscription = subscriptions.find(
+      (sub) => sub.clerk_user_id === selectedUserId && sub.status === "active"
+    );
+
+    let confirmMessage = `Are you sure you want to revoke the premium subscription for ${selectedUserId}?`;
+    if (subscription && subscription.current_period_end) {
+      const expiresAt = new Date(subscription.current_period_end).toLocaleDateString();
+      confirmMessage += `\n\nThis subscription expires on ${expiresAt} and will be cancelled immediately.`;
+    }
+
+    if (!confirm(confirmMessage)) {
       return;
     }
 
@@ -189,9 +210,22 @@ export default function Admin() {
       setRevokeModalOpen(false);
       setSelectedUserId("");
       await loadData();
-      alert("Subscription revoked successfully!");
+      alert("✅ Premium subscription revoked successfully!");
     } catch (err: any) {
-      alert(err.message || "Failed to revoke subscription");
+      let errorMessage = "Failed to revoke subscription";
+      
+      // Handle specific error cases per API documentation
+      if (err.status === 404) {
+        errorMessage = "No active subscription found for this user. They may not have an active premium subscription.";
+      } else if (err.status === 400) {
+        errorMessage = err.message || "Invalid request. Please check the Clerk User ID.";
+      } else if (err.status === 500) {
+        errorMessage = "Server error occurred. Please try again later.";
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      
+      alert(`❌ Error: ${errorMessage}`);
     } finally {
       setProcessing(false);
     }
@@ -222,6 +256,26 @@ export default function Admin() {
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString();
+  };
+
+  const formatRelativeTime = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = date.getTime() - now.getTime();
+    const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+    
+    if (diffDays < 0) {
+      return `${Math.abs(diffDays)} day${Math.abs(diffDays) !== 1 ? 's' : ''} ago`;
+    } else if (diffDays === 0) {
+      return "Today";
+    } else if (diffDays === 1) {
+      return "Tomorrow";
+    } else if (diffDays < 30) {
+      return `In ${diffDays} days`;
+    } else {
+      const diffMonths = Math.floor(diffDays / 30);
+      return `In ${diffMonths} month${diffMonths !== 1 ? 's' : ''}`;
+    }
   };
 
   const copyConfigHelp = async () => {
@@ -620,7 +674,16 @@ export default function Admin() {
                                   </span>
                                 </td>
                                 <td className="px-4 py-3 text-sm" style={{ color: "var(--color-text-secondary)" }}>
-                                  {sub.current_period_end ? formatDate(sub.current_period_end) : "N/A"}
+                                  {sub.current_period_end ? (
+                                    <div>
+                                      <div>{formatDate(sub.current_period_end)}</div>
+                                      <div className="text-xs mt-1" style={{ color: "var(--color-text-tertiary)" }}>
+                                        {formatRelativeTime(sub.current_period_end)}
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    "N/A"
+                                  )}
                                 </td>
                                 <td className="px-4 py-3">
                                   {sub.status === "active" && sub.clerk_user_id && (
