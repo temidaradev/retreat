@@ -168,7 +168,20 @@ export default function Dashboard() {
         err instanceof Error
           ? err.message
           : "Failed to delete receipt. Please try again.";
-      alert(errorMessage);
+
+      // Check if it's a permission error (old receipts with wrong user_id)
+      if (
+        errorMessage.includes("permission") ||
+        errorMessage.includes("not have permission")
+      ) {
+        alert(
+          "⚠️ Cannot delete this receipt.\n\n" +
+            "This receipt was created before the recent system update and has incorrect ownership data.\n\n" +
+            "Please contact support at support@retreat-app.tech to have this receipt manually removed, or it will be automatically fixed in the next data migration."
+        );
+      } else {
+        alert(errorMessage);
+      }
     } finally {
       setDeleting(false);
     }
