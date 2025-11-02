@@ -1031,7 +1031,6 @@ export default function Dashboard() {
               {/* Email Forwarding */}
               <div className="mb-4 md:mb-phi-lg">
                 <EmailForwardingCard 
-                  userEmail={user?.primaryEmailAddress?.emailAddress || user?.emailAddresses[0]?.emailAddress || "your-email@example.com"}
                   onShowHelp={() => setShowHowItWorks(true)}
                 />
               </div>

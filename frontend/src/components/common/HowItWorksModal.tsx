@@ -1,4 +1,5 @@
 import { Mail, Zap, Bell, CheckCircle, X } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 interface HowItWorksModalProps {
   isOpen: boolean;
@@ -82,6 +83,7 @@ export default function HowItWorksModal({ isOpen, onClose }: HowItWorksModalProp
                   >
                     save@retreat-app.tech
                   </code>
+                  {' '}from your <strong>verified email address</strong>.
                 </p>
               </div>
             </div>
@@ -178,7 +180,15 @@ export default function HowItWorksModal({ isOpen, onClose }: HowItWorksModalProp
             </h4>
             <ul className="space-y-1 text-xs md:text-phi-sm" style={{ color: 'var(--color-text-secondary)' }}>
               <li>• Forward the original receipt email from the merchant</li>
-              <li>• Make sure to forward from your registered email address</li>
+              <li>• <strong>Forward from a verified email address</strong> -{' '}
+                <Link
+                  to="/emails"
+                  className="underline hover:no-underline"
+                  style={{ color: 'var(--color-accent-400)' }}
+                >
+                  verify your emails here
+                </Link>
+              </li>
               <li>• Include the full email content (don't trim it)</li>
               <li>• Works best with order confirmations and invoices</li>
             </ul>

@@ -1,12 +1,12 @@
 import { Mail, Copy, Check, Info } from 'lucide-react';
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 
 interface EmailForwardingCardProps {
-  userEmail: string;
   onShowHelp?: () => void;
 }
 
-export default function EmailForwardingCard({ userEmail, onShowHelp }: EmailForwardingCardProps) {
+export default function EmailForwardingCard({ onShowHelp }: EmailForwardingCardProps) {
   const [copied, setCopied] = useState(false);
   const forwardingEmail = 'save@retreat-app.tech';
 
@@ -103,19 +103,41 @@ export default function EmailForwardingCard({ userEmail, onShowHelp }: EmailForw
           </div>
 
           <div className="space-y-2">
-            <p
-              className="text-xs md:text-phi-sm"
-              style={{ color: 'var(--color-text-secondary)' }}
+            <div
+              className="rounded-lg p-3 border"
+              style={{
+                background: 'var(--color-info-bg)',
+                borderColor: 'rgba(59, 130, 246, 0.3)',
+              }}
             >
-              <strong style={{ color: 'var(--color-text-primary)' }}>Important:</strong> Forward emails from{' '}
-              <strong style={{ color: 'var(--color-accent-400)' }}>{userEmail}</strong>
-            </p>
-            <p
-              className="text-xs"
-              style={{ color: 'var(--color-text-tertiary)' }}
-            >
-              We'll automatically extract: store name, amount, date, and warranty info
-            </p>
+              <p
+                className="text-xs md:text-phi-sm mb-2"
+                style={{ color: 'var(--color-text-primary)' }}
+              >
+                <strong>Important:</strong> Forward emails from <strong style={{ color: 'var(--color-accent-400)' }}>verified email addresses</strong>
+              </p>
+              <p
+                className="text-xs md:text-phi-sm mb-2"
+                style={{ color: 'var(--color-text-secondary)' }}
+              >
+                Only emails forwarded from verified addresses will be processed. 
+                Make sure to{' '}
+                <Link
+                  to="/emails"
+                  className="underline hover:no-underline font-medium"
+                  style={{ color: 'var(--color-accent-400)' }}
+                >
+                  verify your email addresses
+                </Link>
+                {' '}first.
+              </p>
+              <p
+                className="text-xs"
+                style={{ color: 'var(--color-text-tertiary)' }}
+              >
+                We'll automatically extract: store name, amount, date, and warranty info
+              </p>
+            </div>
           </div>
         </div>
       </div>
