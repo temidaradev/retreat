@@ -118,6 +118,12 @@
   /* gruvbox fg2 - muted text */
 
   --color-border: #504945;
+
+  /* Safe Area Insets for mobile devices */
+  --safe-area-inset-top: env(safe-area-inset-top, 0px);
+  --safe-area-inset-right: env(safe-area-inset-right, 0px);
+  --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-area-inset-left: env(safe-area-inset-left, 0px);
   /* gruvbox dark2 - default borders */
   --color-border-light: #665c54;
   /* gruvbox dark3 - hover borders */

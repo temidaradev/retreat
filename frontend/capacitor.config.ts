@@ -2,7 +2,7 @@ import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'com.receiptlocker.app',
-  appName: 'Receipt Locker',
+  appName: 'Retreat',
   webDir: 'dist',
   server: {
     androidScheme: 'https',
@@ -13,7 +13,7 @@ const config: CapacitorConfig = {
   android: {
     allowMixedContent: false,
     captureInput: true,
-    webContentsDebuggingEnabled: true
+    webContentsDebuggingEnabled: true // Temporarily enabled for debugging
   }
 };
 

@@ -6,6 +6,11 @@
 *.ap_
 *.aab
 
+# Keystore files - NEVER commit these!
+*.jks
+*.keystore
+keystore.properties
+
 # Files for the ART/Dalvik VM
 *.dex
 
