@@ -12,6 +12,7 @@ import {
   Bell,
   Crown,
   MessageSquare,
+  Smartphone,
 } from "lucide-react";
 import { useState } from "react";
 import ThemeSelector from "../common/ThemeSelector";
@@ -47,7 +48,7 @@ export default function Landing() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => setShowFeedbackModal(true)}
-            className="p-2 rounded-lg hover-lift transition-all duration-200"
+            className="flex items-center justify-center p-2 rounded-lg hover-lift transition-all duration-200"
             style={{
               background: "var(--color-bg-secondary)",
               color: "var(--color-text-primary)",
@@ -107,7 +108,10 @@ export default function Landing() {
                 style={{ color: "var(--color-text-primary)" }}
               >
                 <span className="block">Never Lose</span>
-                <span className="block" style={{ color: "var(--color-accent-400)" }}>
+                <span
+                  className="block"
+                  style={{ color: "var(--color-accent-400)" }}
+                >
                   Your Receipts
                 </span>
                 <span className="block">Again</span>
@@ -131,6 +135,19 @@ export default function Landing() {
                     <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 group-hover:translate-x-1 transition-transform" />
                   </button>
                 </SignInButton>
+                <a
+                  href="/retreat.apk"
+                  download
+                  className="group px-6 sm:px-8 py-3 sm:py-4 rounded-full font-semibold text-sm sm:text-base transition-all duration-200 hover-lift border flex items-center justify-center gap-2 w-full sm:w-auto"
+                  style={{
+                    background: "var(--color-bg-secondary)",
+                    borderColor: "var(--color-border)",
+                    color: "var(--color-text-primary)",
+                  }}
+                >
+                  <Smartphone className="w-4 h-4 sm:w-5 sm:h-5" />
+                  Download for Android
+                </a>
               </div>
 
               {/* Trust indicators */}
@@ -719,8 +736,8 @@ export default function Landing() {
                 Ready to Get Started?
               </h2>
               <p className="text-xs sm:text-base md:text-lg mb-6 sm:mb-8 text-white opacity-90 max-w-2xl mx-auto px-2">
-                Free forever with 5 receipts. Need more? Sponsor us for $5 to get 3
-                premium perks!
+                Free forever with 5 receipts. Need more? Sponsor us for $5 to
+                get 3 premium perks!
               </p>
 
               {/* Premium perks list */}
@@ -845,7 +862,10 @@ export default function Landing() {
       </footer>
 
       {/* Feedback Modal */}
-      <FeedbackModal isOpen={showFeedbackModal} onClose={() => setShowFeedbackModal(false)} />
+      <FeedbackModal
+        isOpen={showFeedbackModal}
+        onClose={() => setShowFeedbackModal(false)}
+      />
     </div>
   );
 }

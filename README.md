@@ -2,7 +2,9 @@
 
 ### !! Mail forwarding is still work in progress !!
 
-Never lose your receipts again. 
+### Mobile is work in progress
+
+Never lose your receipts again.
 
 Retreat is a simple app that tracks your receipts and warranty information. Just forward your purchase emails and we'll automatically extract the important stuff - warranty dates, purchase amounts, store names - and send you reminders before things expire.
 

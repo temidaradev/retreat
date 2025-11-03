@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Retreat</string>
+    <string name="title_activity_main">Retreat</string>
+    <string name="package_name">com.receiptlocker.app</string>
+    <string name="custom_url_scheme">com.receiptlocker.app</string>
+</resources>

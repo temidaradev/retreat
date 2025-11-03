@@ -376,61 +376,67 @@ export default function Dashboard() {
         className="border-b sticky top-0 z-40 backdrop-blur-modern"
         style={{
           borderColor: "var(--color-border)",
+          background: "var(--color-bg-primary)",
         }}
       >
         <div className="px-3 sm:px-4 md:px-phi-lg py-2.5 sm:py-3 md:py-phi flex justify-between items-center gap-2">
-          <div className="flex items-center gap-1.5 sm:gap-2 md:gap-phi min-w-0 flex-shrink">
+          {/* Left side - Logo */}
+          <div className="flex items-center gap-2 md:gap-phi min-w-0 flex-shrink">
             <div
-              className="w-7 h-7 sm:w-8 sm:h-8 md:icon-phi-md rounded-lg md:rounded-phi-md flex items-center justify-center flex-shrink-0"
+              className="w-8 h-8 md:icon-phi-md rounded-lg md:rounded-phi-md flex items-center justify-center flex-shrink-0"
               style={{ background: "var(--color-accent-500)" }}
             >
-              <Receipt className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5 text-white" />
+              <Receipt className="w-4 h-4 md:w-5 md:h-5 text-white" />
             </div>
             <span
-              className="text-sm sm:text-base md:text-phi-lg font-bold whitespace-nowrap"
+              className="text-base md:text-phi-lg font-bold whitespace-nowrap"
               style={{ color: "var(--color-text-primary)" }}
             >
               Retreat
             </span>
             {hasRetreatPlan && (
               <div
-                className="flex items-center gap-1 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full text-xs font-medium flex-shrink-0"
+                className="hidden sm:flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium flex-shrink-0"
                 style={{
                   background: "var(--color-accent-500)",
                   color: "white",
                 }}
               >
                 <Crown className="w-3 h-3 flex-shrink-0" />
-                <span className="hidden sm:inline">Sponsor</span>
+                <span>Sponsor</span>
               </div>
             )}
           </div>
-          <div className="flex items-center gap-1 sm:gap-1.5 md:gap-phi flex-shrink-0">
+
+          {/* Right side - Actions */}
+          <div className="flex items-center gap-1.5 md:gap-phi flex-shrink-0">
+            {/* Sponsor Button */}
             {!hasRetreatPlan && (
               <Link
                 to="/pricing"
-                className="flex items-center gap-0.5 sm:gap-1 md:gap-phi px-2 sm:px-3 md:px-phi py-1.5 sm:py-2 md:py-phi-sm rounded-full md:rounded-phi-md text-xs md:text-phi-sm font-medium transition-all duration-200 hover-lift bg-accent-gradient shadow-accent-glow text-white whitespace-nowrap flex-shrink-0"
+                className="p-2 md:px-phi md:py-phi-sm rounded-lg md:rounded-phi-md text-xs md:text-phi-sm font-medium transition-all duration-200 hover-lift bg-accent-gradient shadow-accent-glow text-white flex items-center gap-1 flex-shrink-0"
               >
-                <Crown className="w-3 h-3 md:w-4 md:h-4 flex-shrink-0" />
-                <span className="hidden sm:inline">Become a </span>
-                <span>Sponsor</span>
+                <Crown className="w-4 h-4 flex-shrink-0" />
+                <span className="hidden lg:inline">Become a Sponsor</span>
               </Link>
             )}
-            {/* Mobile BMC Button - Icon Only */}
+
+            {/* Buy Me a Coffee - Mobile Icon Only */}
             <a
               href="https://www.buymeacoffee.com/temidaradev"
               target="_blank"
               rel="noopener noreferrer"
-              className="md:hidden p-1.5 sm:p-2 rounded-lg hover-lift transition-all duration-200 flex items-center justify-center flex-shrink-0 min-w-[2rem] sm:min-w-[2.5rem]"
+              className="md:hidden p-2 rounded-lg hover-lift transition-all duration-200 flex items-center justify-center flex-shrink-0"
               style={{
                 background: "#FFDD00",
                 color: "#000000",
               }}
               title="Buy me a coffee"
             >
-              <Coffee className="w-4 h-4 md:w-5 md:h-5" />
+              <Coffee className="w-4 h-4" />
             </a>
-            {/* Desktop BMC Button */}
+
+            {/* Buy Me a Coffee - Desktop */}
             <a
               href="https://www.buymeacoffee.com/temidaradev"
               target="_blank"
@@ -443,21 +449,25 @@ export default function Dashboard() {
                 className="h-8"
               />
             </a>
+
+            {/* Feedback Button - Hidden on Mobile */}
             <button
               onClick={() => setShowFeedbackModal(true)}
-              className="p-2 rounded-lg transition-all duration-200 hover:scale-105 flex items-center justify-center flex-shrink-0"
+              className="hidden sm:flex items-center justify-center p-2 rounded-lg transition-all duration-200 hover:scale-105 flex-shrink-0"
               style={{
                 background: "var(--color-bg-secondary)",
                 border: "1px solid var(--color-border)",
                 color: "var(--color-text-primary)",
               }}
-              title="Send Feedback to Developer"
+              title="Send Feedback"
             >
               <MessageSquare className="w-5 h-5" />
             </button>
+
+            {/* Email Settings - Hidden on Mobile */}
             <Link
               to="/emails"
-              className="p-2 rounded-lg transition-all duration-200 hover:scale-105 flex items-center justify-center flex-shrink-0"
+              className="hidden sm:flex items-center justify-center p-2 rounded-lg transition-all duration-200 hover:scale-105 flex-shrink-0"
               style={{
                 background: "var(--color-bg-secondary)",
                 border: "1px solid var(--color-border)",
@@ -467,9 +477,28 @@ export default function Dashboard() {
             >
               <Mail className="w-5 h-5" />
             </Link>
-            <div className="flex-shrink-0">
+
+            {/* Download APK Button - Hidden on Mobile */}
+            <a
+              href="/retreat.apk"
+              download
+              className="hidden sm:flex items-center justify-center p-2 rounded-lg transition-all duration-200 hover:scale-105 flex-shrink-0"
+              style={{
+                background: "var(--color-bg-secondary)",
+                border: "1px solid var(--color-border)",
+                color: "var(--color-text-primary)",
+              }}
+              title="Download Android App"
+            >
+              <Download className="w-5 h-5" />
+            </a>
+
+            {/* Theme Selector - Hidden on Mobile */}
+            <div className="hidden sm:block flex-shrink-0">
               <ThemeSelector />
             </div>
+
+            {/* User Button */}
             <div className="flex-shrink-0">
               <UserButton afterSignOutUrl="/" />
             </div>
