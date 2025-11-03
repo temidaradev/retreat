@@ -20,6 +20,7 @@ import FeedbackModal from "../common/FeedbackModal";
 
 export default function Landing() {
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const [showAndroidNotice, setShowAndroidNotice] = useState(true);
 
   return (
     <div
@@ -857,24 +858,27 @@ export default function Landing() {
             >
               © {new Date().getFullYear()} Retreat. All rights reserved.
             </p>
-
-            {/* Android WebView Notice */}
-            <div
-              className="mt-4 px-4 py-2 rounded-lg border inline-block text-xs sm:text-sm"
-              style={{
-                background: "var(--color-warning-bg)",
-                borderColor: "rgba(251, 191, 36, 0.3)",
-                color: "var(--color-warning)",
-              }}
-            >
-              <div className="flex items-center gap-2 justify-center">
-                <Smartphone className="w-4 h-4 flex-shrink-0" />
-                <span>Android WebView is still a work in progress</span>
-              </div>
-            </div>
           </div>
         </div>
       </footer>
+
+      {/* Android WebView Notice */}
+      {showAndroidNotice && (
+        <div
+          onClick={() => setShowAndroidNotice(false)}
+          className="fixed bottom-4 left-1/2 transform -translate-x-1/2 px-4 py-2 rounded-lg shadow-lg border backdrop-blur-sm text-center text-xs sm:text-sm z-50 max-w-md mx-4 cursor-pointer hover:opacity-90 transition-opacity"
+          style={{
+            background: "var(--color-warning-bg)",
+            borderColor: "rgba(251, 191, 36, 0.3)",
+            color: "var(--color-warning)",
+          }}
+        >
+          <div className="flex items-center gap-2 justify-center">
+            <Smartphone className="w-4 h-4 flex-shrink-0" />
+            <span>Android WebView is still a work in progress</span>
+          </div>
+        </div>
+      )}
 
       {/* Feedback Modal */}
       <FeedbackModal
