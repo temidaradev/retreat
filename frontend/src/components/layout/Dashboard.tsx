@@ -14,6 +14,7 @@ import {
   Mail,
   MessageSquare,
   Coffee,
+  Smartphone,
 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
@@ -1747,6 +1748,21 @@ export default function Dashboard() {
         isOpen={showFeedbackModal}
         onClose={() => setShowFeedbackModal(false)}
       />
+
+      {/* Android WebView Notice */}
+      <div
+        className="fixed bottom-4 left-1/2 transform -translate-x-1/2 px-4 py-2 rounded-lg shadow-lg border backdrop-blur-sm text-center text-xs sm:text-sm z-50 max-w-md mx-4"
+        style={{
+          background: "var(--color-warning-bg)",
+          borderColor: "rgba(251, 191, 36, 0.3)",
+          color: "var(--color-warning)",
+        }}
+      >
+        <div className="flex items-center gap-2 justify-center">
+          <Smartphone className="w-4 h-4 flex-shrink-0" />
+          <span>Android WebView is still a work in progress</span>
+        </div>
+      </div>
     </div>
   );
 }
