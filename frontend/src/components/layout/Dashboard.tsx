@@ -521,7 +521,9 @@ export default function Dashboard() {
                           className="text-xs"
                           style={{ color: "var(--color-text-tertiary)" }}
                         >
-                          {receiptLimit - 5} more than free
+                          {receiptLimit === 5
+                            ? "Free tier"
+                            : `${receiptLimit - 5} more than free`}
                         </p>
                       </div>
                     </div>

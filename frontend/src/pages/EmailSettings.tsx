@@ -10,25 +10,40 @@ import EmailInfoBanner from "../components/emails/EmailInfoBanner";
 import HowItWorksModal from "../components/common/HowItWorksModal";
 
 export default function EmailSettings() {
-  const { has, getToken } = useAuth();
+  const { getToken } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [emails, setEmails] = useState<UserEmail[]>([]);
   const [loading, setLoading] = useState(true);
   const [showHowItWorks, setShowHowItWorks] = useState(false);
-  const hasRetreatPlan = has?.({ plan: "retreat" }) ?? false;
+  const [hasRetreatPlan, setHasRetreatPlan] = useState(false);
 
   useEffect(() => {
     loadEmails();
+    checkSubscriptionStatus();
   }, []);
 
   // Refresh emails when navigating to this page from verification
   // Check if we're coming from a verify-email route
   useEffect(() => {
-    if (location.pathname === '/emails' && location.state?.fromVerification) {
+    if (location.pathname === "/emails" && location.state?.fromVerification) {
       loadEmails();
     }
   }, [location]);
+
+  const checkSubscriptionStatus = async () => {
+    try {
+      const token = await getToken();
+      if (!token) return;
+
+      apiService.setAuthToken(token);
+      const subscription = await apiService.getUserSubscription();
+      setHasRetreatPlan(subscription.is_premium);
+    } catch (err) {
+      console.error("Error checking subscription status:", err);
+      setHasRetreatPlan(false);
+    }
+  };
 
   const loadEmails = async () => {
     try {
@@ -50,10 +65,10 @@ export default function EmailSettings() {
       const token = await getToken();
       apiService.setAuthToken(token);
       await apiService.addEmail(email);
-      
+
       // Email is automatically sent by backend, no need to alert here
       // The form will show its own success message
-      
+
       // Reload emails to get updated verification status
       await loadEmails();
     } catch (err: any) {
@@ -73,13 +88,18 @@ export default function EmailSettings() {
       apiService.setAuthToken(token);
       console.log("[DeleteEmail] Sending DELETE for emailId:", emailId);
       await apiService.deleteEmail(emailId);
-      
+
       // Remove from local state
-      setEmails(emails.filter(e => e.id !== emailId));
+      setEmails(emails.filter((e) => e.id !== emailId));
       alert("Email address deleted successfully");
     } catch (err: any) {
       const status = err?.status;
-      console.error("[DeleteEmail] Error deleting email", { emailId, status, message: err?.message, error: err });
+      console.error("[DeleteEmail] Error deleting email", {
+        emailId,
+        status,
+        message: err?.message,
+        error: err,
+      });
       const errorMessage =
         status === 404
           ? "Email delete API not available. Backend route /api/v1/emails/:id is missing."
@@ -93,13 +113,15 @@ export default function EmailSettings() {
       const token = await getToken();
       apiService.setAuthToken(token);
       await apiService.setPrimaryEmail(emailId);
-      
+
       // Update local state
-      setEmails(emails.map(e => ({
-        ...e,
-        is_primary: e.id === emailId
-      })));
-      
+      setEmails(
+        emails.map((e) => ({
+          ...e,
+          is_primary: e.id === emailId,
+        }))
+      );
+
       alert("Primary email updated successfully");
     } catch (err: any) {
       const errorMessage = err.message || "Failed to set primary email";
@@ -112,7 +134,7 @@ export default function EmailSettings() {
       const token = await getToken();
       apiService.setAuthToken(token);
       await apiService.resendVerification(emailId);
-      
+
       alert("Verification email sent successfully! Please check your inbox.");
     } catch (err: any) {
       const errorMessage = err.message || "Failed to resend verification email";
@@ -133,11 +155,11 @@ export default function EmailSettings() {
         <div className="px-4 md:px-phi-lg py-3 md:py-phi flex justify-between items-center">
           <div className="flex items-center gap-2 md:gap-phi">
             <button
-              onClick={() => navigate('/')}
+              onClick={() => navigate("/")}
               className="p-2 rounded-lg hover-lift transition-all duration-200"
               style={{
-                background: 'var(--color-bg-tertiary)',
-                color: 'var(--color-text-primary)',
+                background: "var(--color-bg-tertiary)",
+                color: "var(--color-text-primary)",
               }}
             >
               <ArrowLeft className="w-5 h-5" />
@@ -225,8 +247,10 @@ export default function EmailSettings() {
       </main>
 
       {/* How It Works Modal */}
-      <HowItWorksModal isOpen={showHowItWorks} onClose={() => setShowHowItWorks(false)} />
+      <HowItWorksModal
+        isOpen={showHowItWorks}
+        onClose={() => setShowHowItWorks(false)}
+      />
     </div>
   );
 }
-
