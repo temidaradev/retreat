@@ -137,7 +137,7 @@ export default function Landing() {
                   </button>
                 </SignInButton>
                 <a
-                  href="/retreat.apk"
+                  href="/api/v1/download/android"
                   download
                   className="group px-6 sm:px-8 py-3 sm:py-4 rounded-full font-semibold text-sm sm:text-base transition-all duration-200 hover-lift border flex items-center justify-center gap-2 w-full sm:w-auto"
                   style={{
@@ -147,7 +147,7 @@ export default function Landing() {
                   }}
                 >
                   <Smartphone className="w-4 h-4 sm:w-5 sm:h-5" />
-                  Download for Android
+                  Download Android APK
                 </a>
               </div>
 

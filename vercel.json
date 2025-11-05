@@ -6,6 +6,10 @@
     "framework": "vite",
     "rewrites": [
         {
+            "source": "/api/:path*",
+            "destination": "https://api.retreat-app.tech/api/:path*"
+        },
+        {
             "source": "/(.*)",
             "destination": "/index.html"
         }

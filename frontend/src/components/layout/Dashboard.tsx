@@ -482,7 +482,7 @@ export default function Dashboard() {
 
             {/* Download APK Button - Hidden on Mobile */}
             <a
-              href="/retreat.apk"
+              href="/api/v1/download/android"
               download
               className="hidden sm:flex items-center justify-center p-2 rounded-lg transition-all duration-200 hover:scale-105 flex-shrink-0"
               style={{
@@ -490,7 +490,7 @@ export default function Dashboard() {
                 border: "1px solid var(--color-border)",
                 color: "var(--color-text-primary)",
               }}
-              title="Download Android App"
+              title="Download Android APK"
             >
               <Download className="w-5 h-5" />
             </a>
@@ -1766,6 +1766,20 @@ export default function Dashboard() {
             <span>Android WebView is still a work in progress</span>
           </div>
         </div>
+      )}
+
+      {/* Hidden dev-only health check link - verify Vercel API rewrite */}
+      {import.meta.env.DEV && (
+        <a
+          href="/api/v1/apk/info"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="fixed bottom-2 right-2 text-xs opacity-20 hover:opacity-100 transition-opacity"
+          style={{ color: "var(--color-text-secondary)" }}
+          title="API Health Check (dev only)"
+        >
+          API Health
+        </a>
       )}
     </div>
   );
