@@ -6,14 +6,27 @@ const config: CapacitorConfig = {
   webDir: 'dist',
   server: {
     androidScheme: 'https',
-    // For development, you can use:
-    // url: 'http://localhost:5173',
-    // cleartext: true
+    hostname: 'retreat-app.tech',
+    cleartext: false,
+    // Allow navigation to external URLs (for Clerk OAuth)
+    allowNavigation: [
+      'https://*.clerk.accounts.dev',
+      'https://*.clerk.com',
+      'https://retreat-app.tech',
+      'https://api.retreat-app.tech'
+    ]
   },
   android: {
     allowMixedContent: false,
     captureInput: true,
-    webContentsDebuggingEnabled: true // Temporarily enabled for debugging
+    webContentsDebuggingEnabled: true
+  },
+  plugins: {
+    SplashScreen: {
+      launchShowDuration: 0,
+      backgroundColor: "#0f172a",
+      showSpinner: false
+    }
   }
 };
 
