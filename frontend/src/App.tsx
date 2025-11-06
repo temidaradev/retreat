@@ -10,6 +10,11 @@ import Admin from "./components/layout/Admin";
 import EmailSettings from "./pages/EmailSettings";
 import VerifyEmail from "./pages/VerifyEmail";
 import { clerk, validateConfig } from "./config";
+import {
+  isAndroid,
+  getPlatform,
+  configureAndroidWebView,
+} from "./utils/capacitor";
 import "./App.css";
 
 function App() {
@@ -19,6 +24,13 @@ function App() {
   useEffect(() => {
     // Log environment info for debugging
     console.log("App starting...");
+    console.log("Platform:", getPlatform());
+    console.log("Is Android:", isAndroid());
+
+    // Configure Android WebView if running on Android
+    if (isAndroid()) {
+      configureAndroidWebView();
+    }
 
     // Validate configuration on startup
     try {
