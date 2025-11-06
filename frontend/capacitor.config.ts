@@ -13,7 +13,14 @@ const config: CapacitorConfig = {
   android: {
     allowMixedContent: false,
     captureInput: true,
-    webContentsDebuggingEnabled: true // Temporarily enabled for debugging
+    webContentsDebuggingEnabled: true // Keep enabled for debugging
+  },
+  plugins: {
+    SplashScreen: {
+      launchShowDuration: 0,
+      backgroundColor: "#0f172a",
+      showSpinner: false
+    }
   }
 };
 

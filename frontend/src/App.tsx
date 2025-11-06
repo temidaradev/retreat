@@ -17,9 +17,13 @@ function App() {
   const [isValidating, setIsValidating] = useState(true);
 
   useEffect(() => {
+    // Log environment info for debugging
+    console.log("App starting...");
+
     // Validate configuration on startup
     try {
       const validation = validateConfig();
+      console.log("Validation result:", validation);
       setConfigErrors(validation.errors);
     } catch (error) {
       console.error("Config validation error:", error);
@@ -61,6 +65,8 @@ function App() {
           <div className="mt-6 text-sm text-gray-500">
             <p>Environment: {import.meta.env.MODE}</p>
             <p>Version: 1.0.0</p>
+            <p>Clerk Key: {clerk.publishableKey ? "Present" : "Missing"}</p>
+            <p>API URL: {import.meta.env.VITE_API_URL || "Missing"}</p>
           </div>
         </div>
       </div>
@@ -79,6 +85,14 @@ function App() {
             Authentication is not configured. Please set up the required
             environment variables.
           </p>
+          <div className="mt-4 text-sm text-gray-500">
+            <p>
+              VITE_CLERK_PUBLISHABLE_KEY:{" "}
+              {import.meta.env.VITE_CLERK_PUBLISHABLE_KEY
+                ? "Present"
+                : "Missing"}
+            </p>
+          </div>
         </div>
       </div>
     );
