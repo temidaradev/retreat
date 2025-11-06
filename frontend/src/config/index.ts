@@ -56,7 +56,7 @@ export const config = {
 } as const;
 
 // Validation function for required environment variables
-export const validateConfig = (): void => {
+export const validateConfig = (): { isValid: boolean; errors: string[] } => {
     const errors: string[] = [];
 
     if (!config.clerk.publishableKey) {
@@ -69,9 +69,15 @@ export const validateConfig = (): void => {
         }
     }
 
+    // Log errors but don't throw - let the app handle them gracefully
     if (errors.length > 0) {
-        throw new Error(`Configuration validation failed:\n${errors.join('\n')}`);
+        console.error('Configuration validation failed:', errors);
     }
+
+    return {
+        isValid: errors.length === 0,
+        errors
+    };
 };
 
 // Export individual config sections for convenience
