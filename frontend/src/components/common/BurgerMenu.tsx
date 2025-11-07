@@ -54,13 +54,13 @@ export default function BurgerMenu({ children }: BurgerMenuProps) {
         <>
           {/* Backdrop */}
           <div
-            className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm z-[9998] sm:hidden"
+            className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm z-[99998] sm:hidden"
             onClick={closeMenu}
           />
 
           {/* Menu Panel */}
           <div
-            className="fixed top-0 right-0 h-full w-72 z-[9999] sm:hidden animate-slide-in-right"
+            className="fixed top-0 right-0 h-full w-72 z-[99999] sm:hidden animate-slide-in-right"
             style={{
               background: "var(--color-bg-primary)",
               borderLeft: "1px solid var(--color-border)",
@@ -71,7 +71,7 @@ export default function BurgerMenu({ children }: BurgerMenuProps) {
             <div className="h-full overflow-y-auto">
               {/* Menu Header */}
               <div
-                className="flex items-center justify-between p-4 border-b sticky top-0 z-[9999]"
+                className="flex items-center justify-between p-4 border-b sticky top-0 z-[99999]"
                 style={{
                   borderColor: "var(--color-border)",
                   background: "var(--color-bg-primary)",
