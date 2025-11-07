@@ -17,6 +17,7 @@ import {
 import { useState } from "react";
 import ThemeSelector from "../common/ThemeSelector";
 import FeedbackModal from "../common/FeedbackModal";
+import BurgerMenu from "../common/BurgerMenu";
 
 export default function Landing() {
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
@@ -47,9 +48,10 @@ export default function Landing() {
           </span>
         </div>
         <div className="flex items-center gap-3">
+          {/* Desktop menu items - hidden on mobile */}
           <button
             onClick={() => setShowFeedbackModal(true)}
-            className="flex items-center justify-center p-2 rounded-lg hover-lift transition-all duration-200"
+            className="hidden sm:flex items-center justify-center p-2 rounded-lg hover-lift transition-all duration-200"
             style={{
               background: "var(--color-bg-secondary)",
               color: "var(--color-text-primary)",
@@ -58,10 +60,12 @@ export default function Landing() {
           >
             <MessageSquare className="w-4 h-4 md:w-5 md:h-5" />
           </button>
-          <ThemeSelector />
+          <div className="hidden sm:block">
+            <ThemeSelector />
+          </div>
           <SignInButton mode="modal">
             <button
-              className="px-4 md:px-phi py-2 md:py-phi-sm text-sm md:text-phi-sm rounded-full md:rounded-phi-md font-medium transition-all duration-200 border hover-lift"
+              className="hidden sm:flex px-4 md:px-phi py-2 md:py-phi-sm text-sm md:text-phi-sm rounded-full md:rounded-phi-md font-medium transition-all duration-200 border hover-lift"
               style={{
                 background: "var(--color-bg-secondary)",
                 borderColor: "var(--color-border)",
@@ -71,6 +75,38 @@ export default function Landing() {
               Sign In
             </button>
           </SignInButton>
+
+          {/* Mobile burger menu */}
+          <BurgerMenu>
+            <div className="flex flex-col gap-3">
+              <button
+                onClick={() => setShowFeedbackModal(true)}
+                className="p-2 rounded-lg hover-lift transition-all duration-200"
+                style={{
+                  background: "var(--color-bg-secondary)",
+                  color: "var(--color-text-primary)",
+                }}
+                title="Send Feedback"
+              >
+                <MessageSquare className="w-5 h-5" />
+              </button>
+
+              <ThemeSelector />
+
+              <SignInButton mode="modal">
+                <button
+                  className="px-4 py-2 text-sm rounded-full font-medium transition-all duration-200 border hover-lift"
+                  style={{
+                    background: "var(--color-bg-secondary)",
+                    borderColor: "var(--color-border)",
+                    color: "var(--color-text-primary)",
+                  }}
+                >
+                  Sign In
+                </button>
+              </SignInButton>
+            </div>
+          </BurgerMenu>
         </div>
       </header>
 

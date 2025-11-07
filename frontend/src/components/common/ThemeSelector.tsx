@@ -1,11 +1,13 @@
 import { useState, useEffect, useRef } from "react";
 import { Palette } from "lucide-react";
 import { themes, applyTheme } from "../../config/themes";
+import { useBurgerMenu } from "./BurgerMenu";
 
 export default function ThemeSelector() {
   const [isOpen, setIsOpen] = useState(false);
   const [currentTheme, setCurrentTheme] = useState("gruvbox");
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const burgerMenu = useBurgerMenu();
 
   useEffect(() => {
     // Load saved theme from localStorage
@@ -36,10 +38,28 @@ export default function ThemeSelector() {
     setIsOpen(false);
   };
 
+  const handleButtonClick = () => {
+    // If inside burger menu, close the burger menu first
+    if (burgerMenu) {
+      burgerMenu.closeMenu();
+      // Small delay to let the menu close, then open theme selector
+      setTimeout(() => {
+        setIsOpen(true);
+      }, 100);
+    } else {
+      setIsOpen(!isOpen);
+    }
+  };
+
   return (
-    <div className="relative" ref={dropdownRef} style={{ zIndex: 10001 }}>
+    <div
+      className="relative"
+      ref={dropdownRef}
+      style={{ zIndex: 10001 }}
+      data-theme-selector
+    >
       <button
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={handleButtonClick}
         className="p-2 rounded-lg transition-all duration-200 hover:scale-105 flex items-center justify-center"
         style={{
           background: "var(--color-bg-secondary)",
@@ -58,9 +78,10 @@ export default function ThemeSelector() {
           style={{
             background: "var(--color-bg-secondary)",
             borderColor: "var(--color-border)",
-            zIndex: 10000,
+            zIndex: 10002,
             boxShadow: "0 10px 40px rgba(0, 0, 0, 0.5)",
           }}
+          data-theme-selector
         >
           <div
             className="px-4 py-3 border-b"

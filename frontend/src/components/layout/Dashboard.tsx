@@ -29,6 +29,7 @@ import EmailForwardingCard from "../common/EmailForwardingCard";
 import HowItWorksModal from "../common/HowItWorksModal";
 import ReceiptSourceBadge from "../common/ReceiptSourceBadge";
 import FeedbackModal from "../common/FeedbackModal";
+import BurgerMenu from "../common/BurgerMenu";
 
 export default function Dashboard() {
   const { has, getToken } = useAuth();
@@ -504,6 +505,95 @@ export default function Dashboard() {
             <div className="flex-shrink-0">
               <UserButton afterSignOutUrl="/" />
             </div>
+
+            {/* Mobile burger menu */}
+            <BurgerMenu>
+              <div className="flex flex-col gap-3">
+                {/* Sponsor Button for mobile */}
+                {!hasRetreatPlan && (
+                  <Link
+                    to="/pricing"
+                    className="p-2 rounded-lg text-xs font-medium transition-all duration-200 hover-lift bg-accent-gradient shadow-accent-glow text-white flex items-center gap-1"
+                  >
+                    <Crown className="w-4 h-4 flex-shrink-0" />
+                    <span className="lg:inline">Become a Sponsor</span>
+                  </Link>
+                )}
+
+                {/* Sponsor Badge for mobile */}
+                {hasRetreatPlan && (
+                  <div
+                    className="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium"
+                    style={{
+                      background: "var(--color-accent-500)",
+                      color: "white",
+                    }}
+                  >
+                    <Crown className="w-3 h-3 flex-shrink-0" />
+                    <span>Sponsor</span>
+                  </div>
+                )}
+
+                {/* Buy Me a Coffee */}
+                <a
+                  href="https://www.buymeacoffee.com/temidaradev"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <img
+                    src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=☕&slug=temidaradev&button_colour=FFDD00&font_colour=000000&font_family=Cookie&outline_colour=000000&coffee_colour=ffffff"
+                    alt="Buy me a coffee"
+                    className="h-8"
+                  />
+                </a>
+
+                {/* Feedback Button */}
+                <button
+                  onClick={() => setShowFeedbackModal(true)}
+                  className="p-2 rounded-lg transition-all duration-200 hover:scale-105"
+                  style={{
+                    background: "var(--color-bg-secondary)",
+                    border: "1px solid var(--color-border)",
+                    color: "var(--color-text-primary)",
+                  }}
+                  title="Send Feedback"
+                >
+                  <MessageSquare className="w-5 h-5" />
+                </button>
+
+                {/* Email Settings */}
+                <Link
+                  to="/emails"
+                  className="p-2 rounded-lg transition-all duration-200 hover:scale-105"
+                  style={{
+                    background: "var(--color-bg-secondary)",
+                    border: "1px solid var(--color-border)",
+                    color: "var(--color-text-primary)",
+                  }}
+                  title="Email Settings"
+                >
+                  <Mail className="w-5 h-5" />
+                </Link>
+
+                {/* Download APK Button */}
+                <a
+                  href="/api/v1/download/android"
+                  download
+                  className="p-2 rounded-lg transition-all duration-200 hover:scale-105"
+                  style={{
+                    background: "var(--color-bg-secondary)",
+                    border: "1px solid var(--color-border)",
+                    color: "var(--color-text-primary)",
+                  }}
+                  title="Download Android APK"
+                >
+                  <Download className="w-5 h-5" />
+                </a>
+
+                {/* Theme Selector */}
+                <ThemeSelector />
+              </div>
+            </BurgerMenu>
           </div>
         </div>
       </header>
