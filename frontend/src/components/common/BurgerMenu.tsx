@@ -60,43 +60,46 @@ export default function BurgerMenu({ children }: BurgerMenuProps) {
 
           {/* Menu Panel */}
           <div
-            className="fixed top-0 right-0 h-full w-72 shadow-xl z-[9999] sm:hidden animate-slide-in-right overflow-y-auto"
+            className="fixed top-0 right-0 h-full w-72 z-[9999] sm:hidden animate-slide-in-right"
             style={{
               background: "var(--color-bg-primary)",
               borderLeft: "1px solid var(--color-border)",
+              boxShadow: "-4px 0 24px rgba(0, 0, 0, 0.4)",
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Menu Header */}
-            <div
-              className="flex items-center justify-between p-4 border-b sticky top-0 z-[9999]"
-              style={{
-                borderColor: "var(--color-border)",
-                background: "var(--color-bg-primary)",
-              }}
-            >
-              <span
-                className="text-lg font-bold"
-                style={{ color: "var(--color-text-primary)" }}
-              >
-                Menu
-              </span>
-              <button
-                onClick={closeMenu}
-                className="p-2 rounded-lg hover-lift transition-all duration-200"
+            <div className="h-full overflow-y-auto">
+              {/* Menu Header */}
+              <div
+                className="flex items-center justify-between p-4 border-b sticky top-0 z-[9999]"
                 style={{
-                  background: "var(--color-bg-secondary)",
-                  color: "var(--color-text-primary)",
+                  borderColor: "var(--color-border)",
+                  background: "var(--color-bg-primary)",
                 }}
               >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
+                <span
+                  className="text-lg font-bold"
+                  style={{ color: "var(--color-text-primary)" }}
+                >
+                  Menu
+                </span>
+                <button
+                  onClick={closeMenu}
+                  className="p-2 rounded-lg hover-lift transition-all duration-200"
+                  style={{
+                    background: "var(--color-bg-secondary)",
+                    color: "var(--color-text-primary)",
+                  }}
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
 
-            {/* Menu Items */}
-            <BurgerMenuContext.Provider value={{ closeMenu }}>
-              <div className="p-4 space-y-3">{children}</div>
-            </BurgerMenuContext.Provider>
+              {/* Menu Items */}
+              <BurgerMenuContext.Provider value={{ closeMenu }}>
+                <div className="p-4 space-y-3">{children}</div>
+              </BurgerMenuContext.Provider>
+            </div>
           </div>
         </>
       )}
