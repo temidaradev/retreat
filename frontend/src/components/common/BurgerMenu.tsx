@@ -1,5 +1,5 @@
 import { Menu, X } from "lucide-react";
-import { useState, createContext, useContext } from "react";
+import { useState, createContext, useContext, useEffect } from "react";
 
 interface BurgerMenuContextType {
   closeMenu: () => void;
@@ -20,6 +20,19 @@ export default function BurgerMenu({ children }: BurgerMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   const closeMenu = () => setIsOpen(false);
+
+  // Prevent body scroll when menu is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isOpen]);
 
   return (
     <>
@@ -52,6 +65,7 @@ export default function BurgerMenu({ children }: BurgerMenuProps) {
               background: "var(--color-bg-primary)",
               borderLeft: "1px solid var(--color-border)",
             }}
+            onClick={(e) => e.stopPropagation()}
           >
             {/* Menu Header */}
             <div
