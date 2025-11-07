@@ -376,7 +376,7 @@ export default function Dashboard() {
     >
       {/* Header */}
       <header
-        className="border-b sticky top-0 z-40 backdrop-blur-modern"
+        className="border-b sticky top-0 z-[100] backdrop-blur-modern"
         style={{
           borderColor: "var(--color-border)",
           background: "var(--color-bg-primary)",

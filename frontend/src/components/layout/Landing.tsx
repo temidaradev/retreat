@@ -31,7 +31,7 @@ export default function Landing() {
       {/* Header - Clean and minimal */}
       <header
         className="px-4 md:px-phi-lg py-3 md:py-phi flex justify-between items-center relative border-b backdrop-blur-modern"
-        style={{ borderColor: "var(--color-border)", zIndex: 50 }}
+        style={{ borderColor: "var(--color-border)", zIndex: 100 }}
       >
         <div className="flex items-center gap-2 md:gap-phi">
           <div
