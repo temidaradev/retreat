@@ -199,6 +199,35 @@ class ApiService {
         })
     }
 
+    // Export receipts in different formats
+    async exportReceipts(format: 'csv' | 'json' | 'pdf'): Promise<Blob> {
+        const url = `${API_BASE_URL}/api/v1/receipts/export?format=${format}`
+        
+        const headers: Record<string, string> = {}
+        if (this.authToken) {
+            headers['Authorization'] = `Bearer ${this.authToken}`
+        }
+
+        const response = await fetch(url, {
+            method: 'GET',
+            headers,
+            credentials: 'include',
+        })
+
+        if (!response.ok) {
+            let errorMessage = `Export failed: ${response.statusText}`
+            try {
+                const errorData = await response.json()
+                errorMessage = errorData.error || errorData.message || errorMessage
+            } catch {
+                // Use default error message
+            }
+            throw new Error(errorMessage)
+        }
+
+        return response.blob()
+    }
+
     // Email parsing
     async parseEmail(emailContent: string): Promise<{ parsed_data: ParsedEmailData }> {
         return this.request<{ parsed_data: ParsedEmailData }>('/parse-email', {

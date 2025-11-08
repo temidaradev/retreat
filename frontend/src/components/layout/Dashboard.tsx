@@ -29,7 +29,6 @@ import EmailForwardingCard from "../common/EmailForwardingCard";
 import HowItWorksModal from "../common/HowItWorksModal";
 import ReceiptSourceBadge from "../common/ReceiptSourceBadge";
 import FeedbackModal from "../common/FeedbackModal";
-import BurgerMenu from "../common/BurgerMenu";
 
 export default function Dashboard() {
   const { has, getToken } = useAuth();
@@ -62,6 +61,8 @@ export default function Dashboard() {
   const [subscriptionData, setSubscriptionData] =
     useState<SubscriptionData | null>(null);
   const [showAndroidNotice, setShowAndroidNotice] = useState(true);
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [exporting, setExporting] = useState(false);
 
   // Dynamic plan limits from subscription data
   const receiptLimit = subscriptionData?.receipt_limit || 5;
@@ -187,6 +188,48 @@ export default function Dashboard() {
       }
     } finally {
       setDeleting(false);
+    }
+  };
+
+  const handleExport = async (format: "csv" | "json" | "pdf") => {
+    if (!hasRetreatPlan) {
+      alert(
+        "⚠️ Export is a premium feature!\n\nBecome a sponsor to unlock export functionality and download your receipt data in multiple formats."
+      );
+      return;
+    }
+
+    try {
+      setExporting(true);
+      const token = await getToken();
+      if (!token) {
+        alert("Please sign in to export data");
+        return;
+      }
+
+      apiService.setAuthToken(token);
+      const blob = await apiService.exportReceipts(format);
+
+      // Create download link
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `retreat-receipts-${
+        new Date().toISOString().split("T")[0]
+      }.${format}`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      setShowExportModal(false);
+    } catch (err) {
+      console.error("Error exporting receipts:", err);
+      const errorMessage =
+        err instanceof Error ? err.message : "Failed to export data";
+      alert(`❌ Export failed: ${errorMessage}`);
+    } finally {
+      setExporting(false);
     }
   };
 
@@ -376,7 +419,7 @@ export default function Dashboard() {
     >
       {/* Header */}
       <header
-        className="border-b sticky top-0 z-[100] backdrop-blur-modern"
+        className="border-b sticky top-0 z-40 backdrop-blur-modern"
         style={{
           borderColor: "var(--color-border)",
           background: "var(--color-bg-primary)",
@@ -467,6 +510,36 @@ export default function Dashboard() {
               <MessageSquare className="w-5 h-5" />
             </button>
 
+            {/* Export Button - Premium Feature */}
+            <button
+              onClick={() => setShowExportModal(true)}
+              className="hidden sm:flex items-center justify-center p-2 rounded-lg transition-all duration-200 hover:scale-105 flex-shrink-0 relative"
+              style={{
+                background: hasRetreatPlan
+                  ? "var(--color-success-bg)"
+                  : "var(--color-bg-secondary)",
+                border: `1px solid ${
+                  hasRetreatPlan
+                    ? "var(--color-success)"
+                    : "var(--color-border)"
+                }`,
+                color: hasRetreatPlan
+                  ? "var(--color-success)"
+                  : "var(--color-text-secondary)",
+              }}
+              title={
+                hasRetreatPlan ? "Export Receipts" : "Export (Premium Feature)"
+              }
+            >
+              <Download className="w-5 h-5" />
+              {!hasRetreatPlan && (
+                <Crown
+                  className="w-3 h-3 absolute -top-1 -right-1"
+                  style={{ color: "var(--color-accent-500)" }}
+                />
+              )}
+            </button>
+
             {/* Email Settings - Hidden on Mobile */}
             <Link
               to="/emails"
@@ -505,95 +578,6 @@ export default function Dashboard() {
             <div className="flex-shrink-0">
               <UserButton afterSignOutUrl="/" />
             </div>
-
-            {/* Mobile burger menu */}
-            <BurgerMenu>
-              <div className="flex flex-col gap-3">
-                {/* Sponsor Button for mobile */}
-                {!hasRetreatPlan && (
-                  <Link
-                    to="/pricing"
-                    className="p-2 rounded-lg text-xs font-medium transition-all duration-200 hover-lift bg-accent-gradient shadow-accent-glow text-white flex items-center gap-1"
-                  >
-                    <Crown className="w-4 h-4 flex-shrink-0" />
-                    <span className="lg:inline">Become a Sponsor</span>
-                  </Link>
-                )}
-
-                {/* Sponsor Badge for mobile */}
-                {hasRetreatPlan && (
-                  <div
-                    className="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium"
-                    style={{
-                      background: "var(--color-accent-500)",
-                      color: "white",
-                    }}
-                  >
-                    <Crown className="w-3 h-3 flex-shrink-0" />
-                    <span>Sponsor</span>
-                  </div>
-                )}
-
-                {/* Buy Me a Coffee */}
-                <a
-                  href="https://www.buymeacoffee.com/temidaradev"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <img
-                    src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=☕&slug=temidaradev&button_colour=FFDD00&font_colour=000000&font_family=Cookie&outline_colour=000000&coffee_colour=ffffff"
-                    alt="Buy me a coffee"
-                    className="h-8"
-                  />
-                </a>
-
-                {/* Feedback Button */}
-                <button
-                  onClick={() => setShowFeedbackModal(true)}
-                  className="p-2 rounded-lg transition-all duration-200 hover:scale-105"
-                  style={{
-                    background: "var(--color-bg-secondary)",
-                    border: "1px solid var(--color-border)",
-                    color: "var(--color-text-primary)",
-                  }}
-                  title="Send Feedback"
-                >
-                  <MessageSquare className="w-5 h-5" />
-                </button>
-
-                {/* Email Settings */}
-                <Link
-                  to="/emails"
-                  className="p-2 rounded-lg transition-all duration-200 hover:scale-105"
-                  style={{
-                    background: "var(--color-bg-secondary)",
-                    border: "1px solid var(--color-border)",
-                    color: "var(--color-text-primary)",
-                  }}
-                  title="Email Settings"
-                >
-                  <Mail className="w-5 h-5" />
-                </Link>
-
-                {/* Download APK Button */}
-                <a
-                  href="/api/v1/download/android"
-                  download
-                  className="p-2 rounded-lg transition-all duration-200 hover:scale-105"
-                  style={{
-                    background: "var(--color-bg-secondary)",
-                    border: "1px solid var(--color-border)",
-                    color: "var(--color-text-primary)",
-                  }}
-                  title="Download Android APK"
-                >
-                  <Download className="w-5 h-5" />
-                </a>
-
-                {/* Theme Selector */}
-                <ThemeSelector />
-              </div>
-            </BurgerMenu>
           </div>
         </div>
       </header>
@@ -1839,6 +1823,224 @@ export default function Dashboard() {
         isOpen={showFeedbackModal}
         onClose={() => setShowFeedbackModal(false)}
       />
+
+      {/* Export Modal */}
+      {showExportModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in"
+          style={{
+            background: "rgba(0, 0, 0, 0.7)",
+            backdropFilter: "blur(4px)",
+          }}
+          onClick={() => setShowExportModal(false)}
+        >
+          <div
+            className="card-modern max-w-md w-full p-6 animate-scale-in"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: "var(--color-bg-secondary)",
+              borderColor: "var(--color-border)",
+            }}
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <div
+                className="w-10 h-10 rounded-lg flex items-center justify-center"
+                style={{ background: "var(--color-success-bg)" }}
+              >
+                <Download
+                  className="w-5 h-5"
+                  style={{ color: "var(--color-success)" }}
+                />
+              </div>
+              <h3
+                className="text-lg font-semibold"
+                style={{ color: "var(--color-text-primary)" }}
+              >
+                Export Receipt Data
+              </h3>
+            </div>
+
+            {!hasRetreatPlan ? (
+              <div className="space-y-4">
+                <div
+                  className="p-4 rounded-lg border"
+                  style={{
+                    background: "var(--color-warning-bg)",
+                    borderColor: "rgba(251, 191, 36, 0.3)",
+                  }}
+                >
+                  <div className="flex items-start gap-3">
+                    <Crown
+                      className="w-5 h-5 flex-shrink-0 mt-0.5"
+                      style={{ color: "var(--color-accent-500)" }}
+                    />
+                    <div>
+                      <p
+                        className="text-sm font-medium mb-1"
+                        style={{ color: "var(--color-text-primary)" }}
+                      >
+                        Premium Feature
+                      </p>
+                      <p
+                        className="text-xs"
+                        style={{ color: "var(--color-text-secondary)" }}
+                      >
+                        Export is available for sponsors. Become a sponsor to
+                        unlock export functionality and download your receipt
+                        data in multiple formats.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setShowExportModal(false)}
+                    className="flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200"
+                    style={{
+                      background: "var(--color-bg-primary)",
+                      border: "1px solid var(--color-border)",
+                      color: "var(--color-text-primary)",
+                    }}
+                  >
+                    Close
+                  </button>
+                  <Link
+                    to="/pricing"
+                    className="flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover-lift text-center"
+                    style={{
+                      background: "var(--color-accent-500)",
+                      color: "white",
+                    }}
+                  >
+                    Become a Sponsor
+                  </Link>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <p
+                  className="text-sm"
+                  style={{ color: "var(--color-text-secondary)" }}
+                >
+                  Choose a format to export your {receipts.length} receipt
+                  {receipts.length !== 1 ? "s" : ""}:
+                </p>
+
+                <div className="space-y-2">
+                  {/* CSV Option */}
+                  <button
+                    onClick={() => handleExport("csv")}
+                    disabled={exporting}
+                    className="w-full p-4 rounded-lg border text-left transition-all duration-200 hover-lift disabled:opacity-50"
+                    style={{
+                      background: "var(--color-bg-primary)",
+                      borderColor: "var(--color-border)",
+                    }}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p
+                          className="font-medium text-sm mb-1"
+                          style={{ color: "var(--color-text-primary)" }}
+                        >
+                          CSV (Spreadsheet)
+                        </p>
+                        <p
+                          className="text-xs"
+                          style={{ color: "var(--color-text-tertiary)" }}
+                        >
+                          Open in Excel, Google Sheets, etc.
+                        </p>
+                      </div>
+                      <Download
+                        className="w-5 h-5"
+                        style={{ color: "var(--color-text-tertiary)" }}
+                      />
+                    </div>
+                  </button>
+
+                  {/* JSON Option */}
+                  <button
+                    onClick={() => handleExport("json")}
+                    disabled={exporting}
+                    className="w-full p-4 rounded-lg border text-left transition-all duration-200 hover-lift disabled:opacity-50"
+                    style={{
+                      background: "var(--color-bg-primary)",
+                      borderColor: "var(--color-border)",
+                    }}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p
+                          className="font-medium text-sm mb-1"
+                          style={{ color: "var(--color-text-primary)" }}
+                        >
+                          JSON (Raw Data)
+                        </p>
+                        <p
+                          className="text-xs"
+                          style={{ color: "var(--color-text-tertiary)" }}
+                        >
+                          For developers and data analysis
+                        </p>
+                      </div>
+                      <Download
+                        className="w-5 h-5"
+                        style={{ color: "var(--color-text-tertiary)" }}
+                      />
+                    </div>
+                  </button>
+
+                  {/* PDF Option */}
+                  <button
+                    onClick={() => handleExport("pdf")}
+                    disabled={exporting}
+                    className="w-full p-4 rounded-lg border text-left transition-all duration-200 hover-lift disabled:opacity-50"
+                    style={{
+                      background: "var(--color-bg-primary)",
+                      borderColor: "var(--color-border)",
+                    }}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p
+                          className="font-medium text-sm mb-1"
+                          style={{ color: "var(--color-text-primary)" }}
+                        >
+                          PDF (Document)
+                        </p>
+                        <p
+                          className="text-xs"
+                          style={{ color: "var(--color-text-tertiary)" }}
+                        >
+                          Printable formatted document
+                        </p>
+                      </div>
+                      <Download
+                        className="w-5 h-5"
+                        style={{ color: "var(--color-text-tertiary)" }}
+                      />
+                    </div>
+                  </button>
+                </div>
+
+                <button
+                  onClick={() => setShowExportModal(false)}
+                  disabled={exporting}
+                  className="w-full px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 disabled:opacity-50"
+                  style={{
+                    background: "var(--color-bg-primary)",
+                    border: "1px solid var(--color-border)",
+                    color: "var(--color-text-primary)",
+                  }}
+                >
+                  {exporting ? "Exporting..." : "Cancel"}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Android WebView Notice */}
       {showAndroidNotice && (
