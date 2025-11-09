@@ -1,7 +1,5 @@
 # Retreat
 
-### !! Mail forwarding is still work in progress !!
-
 ### Mobile is work in progress
 
 Never lose your receipts again.
