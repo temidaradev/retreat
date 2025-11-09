@@ -510,36 +510,6 @@ export default function Dashboard() {
               <MessageSquare className="w-5 h-5" />
             </button>
 
-            {/* Export Button - Premium Feature */}
-            <button
-              onClick={() => setShowExportModal(true)}
-              className="hidden sm:flex items-center justify-center p-2 rounded-lg transition-all duration-200 hover:scale-105 flex-shrink-0 relative"
-              style={{
-                background: hasRetreatPlan
-                  ? "var(--color-success-bg)"
-                  : "var(--color-bg-secondary)",
-                border: `1px solid ${
-                  hasRetreatPlan
-                    ? "var(--color-success)"
-                    : "var(--color-border)"
-                }`,
-                color: hasRetreatPlan
-                  ? "var(--color-success)"
-                  : "var(--color-text-secondary)",
-              }}
-              title={
-                hasRetreatPlan ? "Export Receipts" : "Export (Premium Feature)"
-              }
-            >
-              <Download className="w-5 h-5" />
-              {!hasRetreatPlan && (
-                <Crown
-                  className="w-3 h-3 absolute -top-1 -right-1"
-                  style={{ color: "var(--color-accent-500)" }}
-                />
-              )}
-            </button>
-
             {/* Email Settings - Hidden on Mobile */}
             <Link
               to="/emails"
@@ -961,6 +931,42 @@ export default function Dashboard() {
                   receipts
                 </div>
               )}
+
+              {/* Export Button */}
+              <button
+                onClick={() => setShowExportModal(true)}
+                className="font-medium transition-all duration-200 hover-lift flex items-center justify-center gap-2 md:gap-phi whitespace-nowrap border flex-1 sm:flex-none relative"
+                style={{
+                  height: "var(--input-height-sm)",
+                  minWidth: "auto",
+                  padding: "0 var(--space-md)",
+                  fontSize: "var(--text-sm)",
+                  borderRadius: "var(--radius-full)",
+                  background: hasRetreatPlan
+                    ? "var(--color-success-bg)"
+                    : "var(--color-bg-secondary)",
+                  borderColor: hasRetreatPlan
+                    ? "var(--color-success)"
+                    : "var(--color-border)",
+                  color: hasRetreatPlan
+                    ? "var(--color-success)"
+                    : "var(--color-text-secondary)",
+                }}
+                title={
+                  hasRetreatPlan
+                    ? "Export Receipts"
+                    : "Export (Premium Feature)"
+                }
+              >
+                <Download className="w-4 h-4 md:w-5 md:h-5" />
+                <span className="text-sm md:text-base">Export</span>
+                {!hasRetreatPlan && (
+                  <Crown
+                    className="w-3 h-3 absolute -top-1 -right-1"
+                    style={{ color: "var(--color-accent-500)" }}
+                  />
+                )}
+              </button>
 
               {/* Show "Become a Sponsor" only when at limit */}
               {isAtLimit ? (
@@ -1691,9 +1697,11 @@ export default function Dashboard() {
                           setManualPhoto(null);
                           await loadReceipts();
                           setShowUploadModal(false);
-                        } catch (err: any) {
+                        } catch (err) {
                           const msg =
-                            err?.message || "Failed to create receipt";
+                            err instanceof Error
+                              ? err.message
+                              : "Failed to create receipt";
                           console.error("[ManualCreate] error", err);
                           alert(msg);
                         } finally {
