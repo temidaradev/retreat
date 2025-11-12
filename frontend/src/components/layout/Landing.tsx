@@ -21,7 +21,10 @@ import BurgerMenu from "../common/BurgerMenu";
 
 export default function Landing() {
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
-  const [showAndroidNotice, setShowAndroidNotice] = useState(true);
+  // Only show Android notice in development mode
+  const [showAndroidNotice, setShowAndroidNotice] = useState(
+    import.meta.env.DEV && window.navigator.userAgent.includes("Android")
+  );
 
   return (
     <div

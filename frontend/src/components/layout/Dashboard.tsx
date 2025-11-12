@@ -60,7 +60,10 @@ export default function Dashboard() {
   const [hasRetreatPlan, setHasRetreatPlan] = useState(false);
   const [subscriptionData, setSubscriptionData] =
     useState<SubscriptionData | null>(null);
-  const [showAndroidNotice, setShowAndroidNotice] = useState(true);
+  // Only show Android notice in development mode
+  const [showAndroidNotice, setShowAndroidNotice] = useState(
+    import.meta.env.DEV && window.navigator.userAgent.includes("Android")
+  );
   const [showExportModal, setShowExportModal] = useState(false);
   const [exporting, setExporting] = useState(false);
 
@@ -460,7 +463,7 @@ export default function Dashboard() {
             {!hasRetreatPlan && (
               <Link
                 to="/pricing"
-                className="p-2 md:px-phi md:py-phi-sm rounded-lg md:rounded-phi-md text-xs md:text-phi-sm font-medium transition-all duration-200 hover-lift bg-accent-gradient shadow-accent-glow text-white flex items-center gap-1 flex-shrink-0"
+                className="p-3 md:px-phi md:py-phi-sm rounded-lg md:rounded-phi-md text-xs md:text-phi-sm font-medium transition-all duration-200 hover-lift bg-accent-gradient shadow-accent-glow text-white flex items-center gap-1 flex-shrink-0 min-h-[44px]"
               >
                 <Crown className="w-4 h-4 flex-shrink-0" />
                 <span className="hidden lg:inline">Become a Sponsor</span>
@@ -472,14 +475,14 @@ export default function Dashboard() {
               href="https://www.buymeacoffee.com/temidaradev"
               target="_blank"
               rel="noopener noreferrer"
-              className="md:hidden p-2 rounded-lg hover-lift transition-all duration-200 flex items-center justify-center flex-shrink-0"
+              className="md:hidden p-3 rounded-lg hover-lift transition-all duration-200 flex items-center justify-center flex-shrink-0 min-h-[44px] min-w-[44px]"
               style={{
                 background: "#FFDD00",
                 color: "#000000",
               }}
               title="Buy me a coffee"
             >
-              <Coffee className="w-4 h-4" />
+              <Coffee className="w-5 h-5" />
             </a>
 
             {/* Buy Me a Coffee - Desktop */}
@@ -499,7 +502,7 @@ export default function Dashboard() {
             {/* Feedback Button - Hidden on Mobile */}
             <button
               onClick={() => setShowFeedbackModal(true)}
-              className="hidden sm:flex items-center justify-center p-2 rounded-lg transition-all duration-200 hover:scale-105 flex-shrink-0"
+              className="hidden sm:flex items-center justify-center p-3 rounded-lg transition-all duration-200 hover:scale-105 flex-shrink-0 min-h-[44px] min-w-[44px]"
               style={{
                 background: "var(--color-bg-secondary)",
                 border: "1px solid var(--color-border)",
@@ -513,7 +516,7 @@ export default function Dashboard() {
             {/* Email Settings - Hidden on Mobile */}
             <Link
               to="/emails"
-              className="hidden sm:flex items-center justify-center p-2 rounded-lg transition-all duration-200 hover:scale-105 flex-shrink-0"
+              className="hidden sm:flex items-center justify-center p-3 rounded-lg transition-all duration-200 hover:scale-105 flex-shrink-0 min-h-[44px] min-w-[44px]"
               style={{
                 background: "var(--color-bg-secondary)",
                 border: "1px solid var(--color-border)",
@@ -528,7 +531,7 @@ export default function Dashboard() {
             <a
               href="/api/v1/download/android"
               download
-              className="hidden sm:flex items-center justify-center p-2 rounded-lg transition-all duration-200 hover:scale-105 flex-shrink-0"
+              className="hidden sm:flex items-center justify-center p-3 rounded-lg transition-all duration-200 hover:scale-105 flex-shrink-0 min-h-[44px] min-w-[44px]"
               style={{
                 background: "var(--color-bg-secondary)",
                 border: "1px solid var(--color-border)",
@@ -1188,7 +1191,7 @@ export default function Dashboard() {
                           </div>
                           <button
                             onClick={() => setDeleteConfirm(receipt.id)}
-                            className="w-8 h-8 md:w-10 md:h-10 rounded-lg flex items-center justify-center transition-all duration-200 hover-lift border flex-shrink-0"
+                            className="w-11 h-11 md:w-10 md:h-10 rounded-lg flex items-center justify-center transition-all duration-200 hover-lift border flex-shrink-0 min-h-[44px] min-w-[44px]"
                             style={{
                               background: "var(--color-bg-primary)",
                               borderColor: "var(--color-border)",
@@ -1208,7 +1211,7 @@ export default function Dashboard() {
                             }}
                             title="Delete receipt"
                           >
-                            <Trash2 className="w-4 h-4 md:w-5 md:h-5" />
+                            <Trash2 className="w-5 h-5 md:w-5 md:h-5" />
                           </button>
                         </div>
                       </div>
@@ -1223,7 +1226,7 @@ export default function Dashboard() {
                             return next;
                           });
                         }}
-                        className="mt-2 text-left w-full"
+                        className="mt-2 text-left w-full py-2 min-h-[44px]"
                         style={{ color: "var(--color-accent-400)" }}
                         aria-expanded={expandedIds.has(receipt.id)}
                       >

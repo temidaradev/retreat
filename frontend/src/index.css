@@ -657,6 +657,47 @@
     }
   }
 
+  /* Android-specific optimizations */
+  @supports (-webkit-touch-callout: none) {
+    /* iOS specific */
+  }
+
+  /* Android WebView optimizations */
+  @media (max-width: 768px) {
+    /* Prevent text size adjustment on Android */
+    html {
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
+    }
+
+    /* Better scrolling on Android */
+    body {
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior-y: contain;
+    }
+
+    /* Improve input field appearance on Android */
+    input,
+    textarea,
+    select {
+      -webkit-appearance: none;
+      appearance: none;
+      font-size: 16px; /* Prevents zoom on focus in iOS, helps Android too */
+    }
+
+    /* Better tap highlight on Android */
+    a,
+    button {
+      -webkit-tap-highlight-color: rgba(59, 130, 246, 0.2);
+      tap-highlight-color: rgba(59, 130, 246, 0.2);
+    }
+
+    /* Prevent pull-to-refresh on Android */
+    body {
+      overscroll-behavior-y: contain;
+    }
+  }
+
   /* Backdrop blur for modern effects - Gruvbox */
   .backdrop-blur-modern {
     backdrop-filter: blur(20px) saturate(180%);

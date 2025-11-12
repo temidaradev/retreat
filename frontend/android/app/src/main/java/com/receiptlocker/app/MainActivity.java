@@ -14,6 +14,16 @@ public class MainActivity extends BridgeActivity {
 
         // Make status bar dark/translucent but let system handle the padding
         getWindow().setStatusBarColor(Color.parseColor("#282828"));
+        
+        // Enable edge-to-edge display for modern Android devices
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
+            getWindow().setDecorFitsSystemWindows(false);
+        } else if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+            getWindow().getDecorView().setSystemUiVisibility(
+                android.view.View.SYSTEM_UI_FLAG_LAYOUT_STABLE |
+                android.view.View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+            );
+        }
 
         // Configure WebView for Clerk authentication
         configureWebViewForAuth();
@@ -58,5 +68,28 @@ public class MainActivity extends BridgeActivity {
 
         // Enable safe browsing
         settings.setSafeBrowsingEnabled(true);
+
+        // Android WebView optimizations for better mobile experience
+        settings.setLoadWithOverviewMode(true);
+        settings.setUseWideViewPort(true);
+        
+        // Better text rendering
+        settings.setTextZoom(100);
+        
+        // Enable smooth scrolling
+        settings.setLayoutAlgorithm(WebSettings.LayoutAlgorithm.TEXT_AUTOSIZING);
+        
+        // Better performance
+        settings.setRenderPriority(WebSettings.RenderPriority.HIGH);
+        
+        // Enable built-in zoom controls (if needed)
+        settings.setBuiltInZoomControls(false);
+        settings.setDisplayZoomControls(false);
+        
+        // Better keyboard handling
+        settings.setSupportZoom(false);
+        
+        // Enable mixed content for development (if needed)
+        // settings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
     }
 }
