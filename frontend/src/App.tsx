@@ -2,6 +2,7 @@ import { ClerkProvider, SignedIn, SignedOut } from "@clerk/clerk-react";
 import { dark } from "@clerk/themes";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { useState, useEffect } from "react";
+import { Analytics } from "@vercel/analytics/react";
 import Dashboard from "./components/layout/Dashboard";
 import Landing from "./components/layout/Landing";
 import Pricing from "./components/layout/Pricing";
@@ -141,6 +142,7 @@ function App() {
           </Routes>
         </div>
       </Router>
+      <Analytics />
     </ClerkProvider>
   );
 }
