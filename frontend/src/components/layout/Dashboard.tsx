@@ -490,12 +490,12 @@ export default function Dashboard() {
               href="https://www.buymeacoffee.com/temidaradev"
               target="_blank"
               rel="noopener noreferrer"
-              className="hidden md:inline-block flex-shrink-0"
+              className="hidden md:flex items-center justify-center flex-shrink-0 min-h-[44px]"
             >
               <img
                 src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=☕&slug=temidaradev&button_colour=FFDD00&font_colour=000000&font_family=Cookie&outline_colour=000000&coffee_colour=ffffff"
                 alt="Buy me a coffee"
-                className="h-8"
+                className="h-[44px]"
               />
             </a>
 
@@ -548,8 +548,16 @@ export default function Dashboard() {
             </div>
 
             {/* User Button */}
-            <div className="flex-shrink-0">
-              <UserButton afterSignOutUrl="/" />
+            <div className="flex-shrink-0 min-h-[44px] min-w-[44px] flex items-center justify-center">
+              <UserButton 
+                afterSignOutUrl="/"
+                appearance={{
+                  elements: {
+                    avatarBox: "w-[44px] h-[44px]",
+                    userButtonTrigger: "focus:shadow-none",
+                  }
+                }}
+              />
             </div>
           </div>
         </div>

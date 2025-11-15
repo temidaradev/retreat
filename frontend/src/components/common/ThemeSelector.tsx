@@ -60,7 +60,7 @@ export default function ThemeSelector() {
     >
       <button
         onClick={handleButtonClick}
-        className="p-2 rounded-lg transition-all duration-200 hover:scale-105 flex items-center justify-center"
+        className="p-3 rounded-lg transition-all duration-200 hover:scale-105 flex items-center justify-center min-h-[44px] min-w-[44px]"
         style={{
           background: "var(--color-bg-secondary)",
           border: "1px solid var(--color-border)",
