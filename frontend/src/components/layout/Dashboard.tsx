@@ -495,7 +495,7 @@ export default function Dashboard() {
               <img
                 src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=☕&slug=temidaradev&button_colour=FFDD00&font_colour=000000&font_family=Cookie&outline_colour=000000&coffee_colour=ffffff"
                 alt="Buy me a coffee"
-                className="h-[44px]"
+                className="h-[36px]"
               />
             </a>
 
@@ -548,13 +548,19 @@ export default function Dashboard() {
             </div>
 
             {/* User Button */}
-            <div className="flex-shrink-0 min-h-[44px] min-w-[44px] flex items-center justify-center">
+            <div className="flex-shrink-0 flex items-center justify-center" style={{ width: '44px', height: '44px' }}>
               <UserButton 
                 afterSignOutUrl="/"
                 appearance={{
                   elements: {
-                    avatarBox: "w-[44px] h-[44px]",
-                    userButtonTrigger: "focus:shadow-none",
+                    avatarBox: {
+                      width: '44px',
+                      height: '44px',
+                    },
+                    userButtonTrigger: {
+                      width: '44px',
+                      height: '44px',
+                    }
                   }
                 }}
               />
