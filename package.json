@@ -1,20 +1,14 @@
 {
-    "name": "receiptlocker",
+    "name": "retreat",
     "version": "1.0.0",
-    "description": "Warranty & Receipt Locker - Never lose your receipts again",
+    "description": "Retreat - Never lose your receipts again",
     "scripts": {
-        "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\"",
-        "dev:frontend": "cd frontend && npm run dev",
-        "dev:backend": "cd backend && go run cmd/server/main.go",
+        "dev": "cd frontend && npm run dev",
         "build": "cd frontend && npm run build",
-        "build:frontend": "cd frontend && npm run build",
-        "start": "cd backend && go run cmd/server/main.go",
+        "start": "cd frontend && npm run preview",
         "docker:up": "docker-compose up -d",
         "docker:down": "docker-compose down",
         "docker:logs": "docker-compose logs -f"
-    },
-    "devDependencies": {
-        "concurrently": "^8.2.2"
     },
     "keywords": [
         "receipts",
@@ -24,7 +18,7 @@
         "go",
         "postgresql"
     ],
-    "author": "Your Name",
+    "author": "Temidaradev",
     "license": "MIT",
     "dependencies": {
         "pdfkit": "^0.17.2"

@@ -884,6 +884,30 @@ export default function Landing() {
             className="mt-6 sm:mt-8 pt-4 sm:pt-6 border-t text-center"
             style={{ borderColor: "var(--color-border)" }}
           >
+            {/* Policy Links */}
+            <div className="flex flex-wrap justify-center gap-4 sm:gap-6 mb-4 sm:mb-6">
+              <a
+                href="/privacy-policy"
+                className="text-xs sm:text-sm transition-colors duration-200 hover:opacity-80"
+                style={{ color: "var(--color-text-secondary)" }}
+              >
+                Privacy Policy
+              </a>
+              <a
+                href="/terms-of-use"
+                className="text-xs sm:text-sm transition-colors duration-200 hover:opacity-80"
+                style={{ color: "var(--color-text-secondary)" }}
+              >
+                Terms of Use
+              </a>
+              <a
+                href="/refund-policy"
+                className="text-xs sm:text-sm transition-colors duration-200 hover:opacity-80"
+                style={{ color: "var(--color-text-secondary)" }}
+              >
+                Refund Policy
+              </a>
+            </div>
             <p
               className="text-xs sm:text-sm mb-2 sm:mb-3 px-2"
               style={{ color: "var(--color-text-secondary)" }}

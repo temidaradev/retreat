@@ -10,6 +10,9 @@ import SubscriptionStatus from "./components/common/SubscriptionStatus";
 import Admin from "./components/layout/Admin";
 import EmailSettings from "./pages/EmailSettings";
 import VerifyEmail from "./pages/VerifyEmail";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsOfUse from "./pages/TermsOfUse";
+import RefundPolicy from "./pages/RefundPolicy";
 import { clerk, validateConfig } from "./config";
 import {
   isAndroid,
@@ -123,22 +126,78 @@ function App() {
     >
       <Router>
         <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-          <SignedOut>
-            <Landing />
-          </SignedOut>
-          <SignedIn>
-            <Routes>
-              <Route path="/" element={<Dashboard />} />
-              <Route path="/pricing" element={<Pricing />} />
-              <Route path="/subscription" element={<SubscriptionStatus />} />
-              <Route path="/admin" element={<Admin />} />
-              <Route path="/emails" element={<EmailSettings />} />
-              <Route path="*" element={<Dashboard />} />
-            </Routes>
-          </SignedIn>
-          {/* Public routes (no auth required) */}
           <Routes>
+            {/* Public routes (no auth required) */}
             <Route path="/verify-email/:token" element={<VerifyEmail />} />
+            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+            <Route path="/terms-of-use" element={<TermsOfUse />} />
+            <Route path="/refund-policy" element={<RefundPolicy />} />
+            
+            {/* Protected routes (require auth) */}
+            <Route
+              path="/"
+              element={
+                <>
+                  <SignedOut>
+                    <Landing />
+                  </SignedOut>
+                  <SignedIn>
+                    <Dashboard />
+                  </SignedIn>
+                </>
+              }
+            />
+            <Route
+              path="/pricing"
+              element={
+                <>
+                  <SignedOut>
+                    <Landing />
+                  </SignedOut>
+                  <SignedIn>
+                    <Pricing />
+                  </SignedIn>
+                </>
+              }
+            />
+            <Route
+              path="/subscription"
+              element={
+                <SignedIn>
+                  <SubscriptionStatus />
+                </SignedIn>
+              }
+            />
+            <Route
+              path="/admin"
+              element={
+                <SignedIn>
+                  <Admin />
+                </SignedIn>
+              }
+            />
+            <Route
+              path="/emails"
+              element={
+                <SignedIn>
+                  <EmailSettings />
+                </SignedIn>
+              }
+            />
+            {/* Catch-all for signed out users shows landing, signed in shows dashboard */}
+            <Route
+              path="*"
+              element={
+                <>
+                  <SignedOut>
+                    <Landing />
+                  </SignedOut>
+                  <SignedIn>
+                    <Dashboard />
+                  </SignedIn>
+                </>
+              }
+            />
           </Routes>
         </div>
       </Router>
