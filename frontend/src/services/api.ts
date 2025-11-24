@@ -82,17 +82,10 @@ export interface UserEmail {
 class ApiService {
     private authToken: string | null = null
 
-    /**
-     * Set the authentication token from Clerk
-     * This should be called after user authentication
-     */
     setAuthToken(token: string | null) {
         this.authToken = token
     }
 
-    /**
-     * Make an authenticated API request
-     */
     private async request<T>(
         endpoint: string,
         options: RequestInit = {}
@@ -518,6 +511,13 @@ class ApiService {
         return this.request<{ message: string }>('/feedback', {
             method: 'POST',
             body: JSON.stringify(data),
+        })
+    }
+
+    async createCryptomusSession(plan: string = 'sponsor'): Promise<{ checkout_url: string }> {
+        return this.request<{ checkout_url: string }>(`/payments/cryptomus`, {
+            method: 'POST',
+            body: JSON.stringify({ plan }),
         })
     }
 }

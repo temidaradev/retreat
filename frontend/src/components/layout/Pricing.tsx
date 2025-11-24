@@ -1,4 +1,10 @@
-import { ArrowLeft, Coffee, Crown, Link as LinkIcon, CheckCircle } from "lucide-react";
+import {
+  ArrowLeft,
+  Coffee,
+  Crown,
+  Link as LinkIcon,
+  CheckCircle,
+} from "lucide-react";
 import { Link } from "react-router-dom";
 import { useState } from "react";
 import { useAuth } from "@clerk/clerk-react";
@@ -12,6 +18,8 @@ export default function Pricing() {
   const [linking, setLinking] = useState(false);
   const [linkSuccess, setLinkSuccess] = useState(false);
   const [linkError, setLinkError] = useState<string | null>(null);
+  const [cryptomusLoading, setCryptomusLoading] = useState(false);
+  const [cryptomusError, setCryptomusError] = useState<string | null>(null);
 
   const handleLinkUsername = async () => {
     if (!bmcUsername.trim()) {
@@ -26,7 +34,7 @@ export default function Pricing() {
     try {
       const token = await getToken();
       apiService.setAuthToken(token);
-      
+
       await apiService.linkBMCUsernameUser(bmcUsername.trim());
       setLinkSuccess(true);
       setBmcUsername("");
@@ -34,6 +42,27 @@ export default function Pricing() {
       setLinkError(err.message || "Failed to link username. Please try again.");
     } finally {
       setLinking(false);
+    }
+  };
+
+  const handleCryptomusPayment = async () => {
+    setCryptomusError(null);
+    setCryptomusLoading(true);
+    try {
+      const token = await getToken();
+      apiService.setAuthToken(token);
+
+      const resp = await apiService.createCryptomusSession("sponsor");
+      if (resp && (resp as any).checkout_url) {
+        window.location.href = (resp as any).checkout_url;
+      } else {
+        setCryptomusError("Payment URL not returned from server");
+      }
+    } catch (err: any) {
+      console.error("[Cryptomus] payment error", err);
+      setCryptomusError(err?.message || "Failed to start Cryptomus payment");
+    } finally {
+      setCryptomusLoading(false);
     }
   };
   return (
@@ -151,6 +180,26 @@ export default function Pricing() {
                       <Coffee className="w-4 h-4" />
                       Visit Buy Me a Coffee
                     </a>
+                    <div className="mt-3">
+                      <button
+                        onClick={handleCryptomusPayment}
+                        disabled={cryptomusLoading}
+                        className="inline-flex items-center justify-center gap-2 px-3 md:px-phi py-2 md:py-phi-sm rounded-phi-md text-xs md:text-phi-sm font-medium transition-all duration-200 hover-lift"
+                        style={{
+                          background: "#0b74de",
+                          color: "white",
+                        }}
+                      >
+                        {cryptomusLoading
+                          ? "Processing..."
+                          : "Pay with Cryptomus"}
+                      </button>
+                      {cryptomusError && (
+                        <div className="text-xs text-red-400 mt-2">
+                          {cryptomusError}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
 
@@ -175,13 +224,18 @@ export default function Pricing() {
                       className="text-xs md:text-phi-sm mb-3 md:mb-phi font-semibold"
                       style={{ color: "var(--color-text-secondary)" }}
                     >
-                      Enter your Buy Me a Coffee username exactly as it appears on your BMC profile (this is your username, not your email).
+                      Enter your Buy Me a Coffee username exactly as it appears
+                      on your BMC profile (this is your username, not your
+                      email).
                     </p>
                     <p
                       className="text-xs md:text-phi-sm mb-3 md:mb-phi font-semibold"
                       style={{ color: "var(--color-error, #ef4444)" }}
                     >
-                      ⚠️ Important: Your username in retreat-app and Buy Me a Coffee MUST match exactly. The system will only grant premium access if the usernames match when your membership webhook is received.
+                      ⚠️ Important: Your username in retreat-app and Buy Me a
+                      Coffee MUST match exactly. The system will only grant
+                      premium access if the usernames match when your membership
+                      webhook is received.
                     </p>
                     <div className="space-y-2">
                       <div className="flex flex-col sm:flex-row gap-2">
@@ -223,13 +277,14 @@ export default function Pricing() {
                       {linkSuccess && (
                         <div className="flex items-center gap-2 text-xs text-green-400">
                           <CheckCircle className="w-4 h-4" />
-                          <span>Username linked! Your membership will be synced automatically.</span>
+                          <span>
+                            Username linked! Your membership will be synced
+                            automatically.
+                          </span>
                         </div>
                       )}
                       {linkError && (
-                        <div className="text-xs text-red-400">
-                          {linkError}
-                        </div>
+                        <div className="text-xs text-red-400">{linkError}</div>
                       )}
                     </div>
                   </div>
@@ -256,7 +311,10 @@ export default function Pricing() {
                       className="text-xs md:text-phi-sm"
                       style={{ color: "var(--color-text-secondary)" }}
                     >
-                      Once you've linked your username, our system will automatically detect your Buy Me a Coffee membership and grant you access to 50 receipts and premium features immediately!
+                      Once you've linked your username, our system will
+                      automatically detect your Buy Me a Coffee membership and
+                      grant you access to 50 receipts and premium features
+                      immediately!
                     </p>
                   </div>
                 </div>
