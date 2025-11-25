@@ -17,7 +17,7 @@ The main thing: forward your purchase emails to `save@retreat-app.tech` and we'l
 - **PDF uploads** - Got a PDF receipt? Upload it manually if you want
 - **Simple dashboard** - See all your receipts in one place
 - **Free to use** - 5 receipts included, no credit card needed
-- **Sponsor for more** - $5 gets you 50 receipts + premium features (I'm using Buy Me a Coffee since I can't use Stripe yet)
+- **Sponsor for more** - $8 gets you 50 receipts + premium features (I'm using Buy Me a Coffee since I can't use Stripe yet)
 
 ## What's under the hood
 

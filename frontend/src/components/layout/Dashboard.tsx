@@ -548,20 +548,23 @@ export default function Dashboard() {
             </div>
 
             {/* User Button */}
-            <div className="flex-shrink-0 flex items-center justify-center" style={{ width: '44px', height: '44px' }}>
-              <UserButton 
+            <div
+              className="flex-shrink-0 flex items-center justify-center"
+              style={{ width: "44px", height: "44px" }}
+            >
+              <UserButton
                 afterSignOutUrl="/"
                 appearance={{
                   elements: {
                     avatarBox: {
-                      width: '44px',
-                      height: '44px',
+                      width: "44px",
+                      height: "44px",
                     },
                     userButtonTrigger: {
-                      width: '44px',
-                      height: '44px',
-                    }
-                  }
+                      width: "44px",
+                      height: "44px",
+                    },
+                  },
                 }}
               />
             </div>
