@@ -29,8 +29,6 @@ export default function Pricing() {
   const [linkError, setLinkError] = useState<string | null>(null);
   const [cryptomusLoading, setCryptomusLoading] = useState(false);
   const [cryptomusError, setCryptomusError] = useState<string | null>(null);
-  const [stripeLoading, setStripeLoading] = useState(false);
-  const [stripeError, setStripeError] = useState<string | null>(null);
 
   const handleLinkUsername = async () => {
     if (!bmcUsername.trim()) {
@@ -85,34 +83,6 @@ export default function Pricing() {
       );
     } finally {
       setCryptomusLoading(false);
-    }
-  };
-
-  const handleStripePayment = async () => {
-    setStripeError(null);
-    setStripeLoading(true);
-    try {
-      const token = await getToken();
-      apiService.setAuthToken(token);
-
-      const resp = await apiService.createStripeSession("sponsor");
-      if (
-        resp &&
-        typeof resp === "object" &&
-        "checkout_url" in resp &&
-        typeof (resp as Record<string, unknown>).checkout_url === "string"
-      ) {
-        window.location.href = (resp as Record<string, string>).checkout_url;
-      } else {
-        setStripeError("Payment URL not returned from server");
-      }
-    } catch (err: unknown) {
-      console.error("[Stripe] payment error", err);
-      setStripeError(
-        err instanceof Error ? err.message : "Failed to start Stripe payment"
-      );
-    } finally {
-      setStripeLoading(false);
     }
   };
 
