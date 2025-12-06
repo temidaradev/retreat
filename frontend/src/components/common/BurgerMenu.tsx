@@ -95,7 +95,7 @@ export default function BurgerMenu({ children }: BurgerMenuProps) {
 
           {/* Menu Items */}
           <BurgerMenuContext.Provider value={{ closeMenu }}>
-            <div className="flex-1 overflow-y-auto p-4">
+            <div className="flex-1 overflow-y-auto p-4" onClick={closeMenu}>
               <div className="space-y-3">{children}</div>
             </div>
           </BurgerMenuContext.Provider>

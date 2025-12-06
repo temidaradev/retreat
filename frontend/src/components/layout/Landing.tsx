@@ -34,7 +34,13 @@ export default function Landing() {
       {/* Header - Clean and minimal */}
       <header
         className="px-4 md:px-phi-lg py-3 md:py-phi flex justify-between items-center relative border-b backdrop-blur-modern"
-        style={{ borderColor: "var(--color-border)" }}
+        style={{
+          borderColor: "var(--color-border)",
+          paddingTop:
+            "max(0.75rem, calc(0.75rem + var(--safe-area-inset-top)))",
+          zIndex: 50,
+          overflow: "visible",
+        }}
       >
         <div className="flex items-center gap-2 md:gap-phi">
           <div

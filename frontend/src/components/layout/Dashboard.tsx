@@ -428,7 +428,13 @@ export default function Dashboard() {
           background: "var(--color-bg-primary)",
         }}
       >
-        <div className="px-3 sm:px-4 md:px-phi-lg py-2.5 sm:py-3 md:py-phi flex justify-between items-center gap-2">
+        <div
+          className="px-3 sm:px-4 md:px-phi-lg py-2.5 sm:py-3 md:py-phi flex justify-between items-center gap-2"
+          style={{
+            paddingTop:
+              "max(0.625rem, calc(0.625rem + var(--safe-area-inset-top)))",
+          }}
+        >
           {/* Left side - Logo */}
           <div className="flex items-center gap-2 md:gap-phi min-w-0 flex-shrink">
             <div

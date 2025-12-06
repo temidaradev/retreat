@@ -152,7 +152,13 @@ export default function EmailSettings() {
         className="border-b sticky top-0 z-40 backdrop-blur-modern"
         style={{ borderColor: "var(--color-border)" }}
       >
-        <div className="px-4 md:px-phi-lg py-3 md:py-phi flex justify-between items-center">
+        <div
+          className="px-4 md:px-phi-lg py-3 md:py-phi flex justify-between items-center"
+          style={{
+            paddingTop:
+              "max(0.75rem, calc(0.75rem + var(--safe-area-inset-top)))",
+          }}
+        >
           <div className="flex items-center gap-2 md:gap-phi">
             <button
               onClick={() => navigate("/")}
