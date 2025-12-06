@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Palette } from "lucide-react";
+import { Palette, Check } from "lucide-react";
 import { themes, applyTheme } from "../../config/themes";
 import { useBurgerMenu } from "./BurgerMenu";
 
@@ -38,18 +38,60 @@ export default function ThemeSelector() {
     setIsOpen(false);
   };
 
-  const handleButtonClick = () => {
-    // If inside burger menu, close the burger menu first
-    if (burgerMenu) {
-      burgerMenu.closeMenu();
-      // Small delay to let the menu close, then open theme selector
-      setTimeout(() => {
-        setIsOpen(true);
-      }, 100);
-    } else {
-      setIsOpen(!isOpen);
-    }
-  };
+  // If inside burger menu, render inline theme list
+  if (burgerMenu) {
+    return (
+      <div className="flex flex-col gap-1">
+        <div
+          className="flex items-center gap-3 px-3 py-2"
+          style={{ color: "var(--color-text-secondary)" }}
+        >
+          <Palette className="w-4 h-4" />
+          <span className="text-xs font-medium uppercase tracking-wide">
+            Theme
+          </span>
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          {Object.entries(themes).map(([key, theme]) => (
+            <button
+              key={key}
+              onClick={() => handleThemeChange(key)}
+              className="flex items-center gap-2 p-2 rounded-lg transition-all duration-150"
+              style={{
+                background:
+                  currentTheme === key
+                    ? "var(--color-bg-tertiary)"
+                    : "var(--color-bg-secondary)",
+                border:
+                  currentTheme === key
+                    ? "1px solid var(--color-accent-500)"
+                    : "1px solid var(--color-border)",
+                color: "var(--color-text-primary)",
+              }}
+            >
+              <div className="flex gap-0.5">
+                <div
+                  className="w-3 h-3 rounded-full"
+                  style={{ background: theme.colors.bgPrimary }}
+                />
+                <div
+                  className="w-3 h-3 rounded-full"
+                  style={{ background: theme.colors.accent500 }}
+                />
+              </div>
+              <span className="text-xs truncate">{theme.name}</span>
+              {currentTheme === key && (
+                <Check
+                  className="w-3 h-3 ml-auto flex-shrink-0"
+                  style={{ color: "var(--color-accent-500)" }}
+                />
+              )}
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -59,7 +101,7 @@ export default function ThemeSelector() {
       data-theme-selector
     >
       <button
-        onClick={handleButtonClick}
+        onClick={() => setIsOpen(!isOpen)}
         className="p-3 rounded-lg transition-all duration-200 hover:scale-105 flex items-center justify-center min-h-[44px] min-w-[44px]"
         style={{
           background: "var(--color-bg-secondary)",

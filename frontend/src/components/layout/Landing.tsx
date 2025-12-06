@@ -54,14 +54,15 @@ export default function Landing() {
           {/* Desktop menu items - hidden on mobile */}
           <button
             onClick={() => setShowFeedbackModal(true)}
-            className="hidden sm:flex items-center justify-center p-2 rounded-lg hover-lift transition-all duration-200"
+            className="hidden sm:flex items-center justify-center p-3 rounded-lg hover-lift transition-all duration-200 min-h-[44px] min-w-[44px]"
             style={{
               background: "var(--color-bg-secondary)",
+              border: "1px solid var(--color-border)",
               color: "var(--color-text-primary)",
             }}
             title="Send Feedback"
           >
-            <MessageSquare className="w-4 h-4 md:w-5 md:h-5" />
+            <MessageSquare className="w-5 h-5" />
           </button>
           <div className="hidden sm:block">
             <ThemeSelector />
@@ -81,28 +82,27 @@ export default function Landing() {
 
           {/* Mobile burger menu */}
           <BurgerMenu>
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-2">
               <button
                 onClick={() => setShowFeedbackModal(true)}
-                className="p-2 rounded-lg hover-lift transition-all duration-200"
+                className="flex items-center gap-3 w-full p-3 rounded-lg hover-lift transition-all duration-200"
                 style={{
                   background: "var(--color-bg-secondary)",
                   color: "var(--color-text-primary)",
                 }}
-                title="Send Feedback"
               >
                 <MessageSquare className="w-5 h-5" />
+                <span className="text-sm font-medium">Send Feedback</span>
               </button>
 
               <ThemeSelector />
 
               <SignInButton mode="modal">
                 <button
-                  className="px-4 py-2 text-sm rounded-full font-medium transition-all duration-200 border hover-lift"
+                  className="flex items-center justify-center gap-2 w-full px-4 py-3 text-sm rounded-lg font-semibold transition-all duration-200 hover-lift mt-2"
                   style={{
-                    background: "var(--color-bg-secondary)",
-                    borderColor: "var(--color-border)",
-                    color: "var(--color-text-primary)",
+                    background: "var(--color-accent-500)",
+                    color: "white",
                   }}
                 >
                   Sign In

@@ -463,9 +463,9 @@ export default function Dashboard() {
             {!hasRetreatPlan && (
               <Link
                 to="/pricing"
-                className="p-3 md:px-phi md:py-phi-sm rounded-lg md:rounded-phi-md text-xs md:text-phi-sm font-medium transition-all duration-200 hover-lift bg-accent-gradient shadow-accent-glow text-white flex items-center gap-1 flex-shrink-0 min-h-[44px]"
+                className="p-3 lg:px-phi lg:py-phi-sm rounded-lg md:rounded-phi-md text-xs md:text-phi-sm font-medium transition-all duration-200 hover-lift bg-accent-gradient shadow-accent-glow text-white flex items-center justify-center gap-1 flex-shrink-0 min-h-[44px] min-w-[44px]"
               >
-                <Crown className="w-4 h-4 flex-shrink-0" />
+                <Crown className="w-5 h-5 flex-shrink-0" />
                 <span className="hidden lg:inline">Become a Sponsor</span>
               </Link>
             )}

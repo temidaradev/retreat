@@ -1,5 +1,6 @@
 import { Menu, X } from "lucide-react";
 import { useState, createContext, useContext, useEffect } from "react";
+import { createPortal } from "react-dom";
 
 interface BurgerMenuContextType {
   closeMenu: () => void;
@@ -34,6 +35,75 @@ export default function BurgerMenu({ children }: BurgerMenuProps) {
     };
   }, [isOpen]);
 
+  const menuOverlay = isOpen ? (
+    <div
+      className="fixed inset-0 sm:hidden"
+      style={{
+        zIndex: 99999,
+        isolation: "isolate",
+      }}
+    >
+      {/* Backdrop */}
+      <div
+        className="absolute inset-0 animate-fade-in"
+        onClick={closeMenu}
+        style={{
+          animationDuration: "200ms",
+          background: "rgba(0, 0, 0, 0.7)",
+          backdropFilter: "blur(4px)",
+          WebkitBackdropFilter: "blur(4px)",
+        }}
+      />
+
+      {/* Menu Panel */}
+      <div
+        className="absolute top-0 right-0 h-full w-[280px] max-w-[85vw] animate-slide-in-right"
+        style={{
+          background: "var(--color-bg-primary)",
+          borderLeft: "1px solid var(--color-border)",
+          boxShadow: "-4px 0 24px rgba(0, 0, 0, 0.4)",
+          animationDuration: "250ms",
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="h-full flex flex-col overflow-hidden">
+          {/* Menu Header */}
+          <div
+            className="flex items-center justify-between p-4 border-b flex-shrink-0"
+            style={{
+              borderColor: "var(--color-border)",
+              background: "var(--color-bg-primary)",
+            }}
+          >
+            <span
+              className="text-lg font-bold"
+              style={{ color: "var(--color-text-primary)" }}
+            >
+              Menu
+            </span>
+            <button
+              onClick={closeMenu}
+              className="p-2 rounded-lg transition-all duration-200"
+              style={{
+                background: "var(--color-bg-secondary)",
+                color: "var(--color-text-primary)",
+              }}
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          {/* Menu Items */}
+          <BurgerMenuContext.Provider value={{ closeMenu }}>
+            <div className="flex-1 overflow-y-auto p-4">
+              <div className="space-y-3">{children}</div>
+            </div>
+          </BurgerMenuContext.Provider>
+        </div>
+      </div>
+    </div>
+  ) : null;
+
   return (
     <>
       {/* Burger Menu Button */}
@@ -49,64 +119,8 @@ export default function BurgerMenu({ children }: BurgerMenuProps) {
         {isOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
       </button>
 
-      {/* Mobile Menu Overlay */}
-      {isOpen && (
-        <div className="fixed inset-0 z-[99999] sm:hidden">
-          {/* Backdrop */}
-          <div
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-fade-in"
-            onClick={closeMenu}
-            style={{ animationDuration: "200ms" }}
-          />
-
-          {/* Menu Panel */}
-          <div
-            className="absolute top-0 right-0 h-full w-[280px] max-w-[85vw] animate-slide-in-right"
-            style={{
-              background: "var(--color-bg-primary)",
-              borderLeft: "1px solid var(--color-border)",
-              boxShadow: "-4px 0 24px rgba(0, 0, 0, 0.4)",
-              animationDuration: "250ms",
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="h-full flex flex-col overflow-hidden">
-              {/* Menu Header */}
-              <div
-                className="flex items-center justify-between p-4 border-b flex-shrink-0"
-                style={{
-                  borderColor: "var(--color-border)",
-                  background: "var(--color-bg-primary)",
-                }}
-              >
-                <span
-                  className="text-lg font-bold"
-                  style={{ color: "var(--color-text-primary)" }}
-                >
-                  Menu
-                </span>
-                <button
-                  onClick={closeMenu}
-                  className="p-2 rounded-lg transition-all duration-200"
-                  style={{
-                    background: "var(--color-bg-secondary)",
-                    color: "var(--color-text-primary)",
-                  }}
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-
-              {/* Menu Items */}
-              <BurgerMenuContext.Provider value={{ closeMenu }}>
-                <div className="flex-1 overflow-y-auto p-4">
-                  <div className="space-y-3">{children}</div>
-                </div>
-              </BurgerMenuContext.Provider>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Portal the menu to document body to avoid z-index issues */}
+      {createPortal(menuOverlay, document.body)}
     </>
   );
 }
