@@ -208,18 +208,6 @@ export default function Pricing() {
                   <CreditCard className="w-5 h-5" />
                   Coming Soon
                 </button>
-                {stripeError && (
-                  <div
-                    className="mt-3 p-3 rounded-lg text-xs flex items-start gap-2"
-                    style={{
-                      background: "var(--color-danger-bg)",
-                      color: "var(--color-danger)",
-                    }}
-                  >
-                    <span>⚠️</span>
-                    <span>{stripeError}</span>
-                  </div>
-                )}
               </div>
             </div>
 
