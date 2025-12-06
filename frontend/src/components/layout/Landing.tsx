@@ -34,7 +34,7 @@ export default function Landing() {
       {/* Header - Clean and minimal */}
       <header
         className="px-4 md:px-phi-lg py-3 md:py-phi flex justify-between items-center relative border-b backdrop-blur-modern"
-        style={{ borderColor: "var(--color-border)", zIndex: 100 }}
+        style={{ borderColor: "var(--color-border)" }}
       >
         <div className="flex items-center gap-2 md:gap-phi">
           <div
@@ -114,10 +114,7 @@ export default function Landing() {
       </header>
 
       {/* Hero Section */}
-      <main
-        className="flex-1 flex items-center justify-center px-4 md:px-8 lg:px-phi-lg py-8 sm:py-12 md:py-16 lg:py-phi-2xl relative"
-        style={{ zIndex: 1 }}
-      >
+      <main className="flex-1 flex items-center justify-center px-4 md:px-8 lg:px-phi-lg py-8 sm:py-12 md:py-16 lg:py-phi-2xl relative">
         <div className="w-full max-w-7xl mx-auto">
           <div className="flex flex-col lg:flex-row items-center gap-8 md:gap-12 lg:gap-phi-2xl">
             {/* Left side - Content */}
