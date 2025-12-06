@@ -15,6 +15,11 @@ import {
   AlertCircle,
   Copy,
   Check,
+  CreditCard,
+  Coffee,
+  Zap,
+  UserCircle,
+  Search,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
@@ -25,7 +30,26 @@ interface DashboardStats {
   total_receipts: number;
   active_subscriptions: number;
   bmc_linked_users: number;
+  stripe_users: number;
+  cryptomus_users: number;
+  free_users: number;
   receipts_by_status: Record<string, number>;
+}
+
+interface AdminUser {
+  clerk_user_id: string;
+  email?: string;
+  plan: string;
+  status: string;
+  payment_source: "free" | "bmc" | "stripe" | "cryptomus" | "manual";
+  stripe_customer_id?: string;
+  stripe_subscription_id?: string;
+  bmc_username?: string;
+  cryptomus_order_id?: string;
+  current_period_end?: string;
+  receipt_count: number;
+  created_at: string;
+  updated_at: string;
 }
 
 interface Subscription {
@@ -56,18 +80,28 @@ interface EnhancedError {
 
 export default function Admin() {
   const { getToken } = useAuth();
-  const [activeTab, setActiveTab] = useState<"dashboard" | "subscriptions" | "bmc" | "system">("dashboard");
+  const [activeTab, setActiveTab] = useState<
+    "dashboard" | "users" | "subscriptions" | "bmc" | "system"
+  >("dashboard");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [enhancedError, setEnhancedError] = useState<EnhancedError | null>(null);
+  const [enhancedError, setEnhancedError] = useState<EnhancedError | null>(
+    null
+  );
   const [copied, setCopied] = useState(false);
 
   // Dashboard state
   const [stats, setStats] = useState<DashboardStats | null>(null);
 
+  // Users state
+  const [users, setUsers] = useState<AdminUser[]>([]);
+  const [userFilter, setUserFilter] = useState<string>("");
+  const [userSearch, setUserSearch] = useState<string>("");
+
   // Subscriptions state
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
-  const [subscriptionStatusFilter, setSubscriptionStatusFilter] = useState<string>("");
+  const [subscriptionStatusFilter, setSubscriptionStatusFilter] =
+    useState<string>("");
   const [grantModalOpen, setGrantModalOpen] = useState(false);
   const [revokeModalOpen, setRevokeModalOpen] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState("");
@@ -85,7 +119,7 @@ export default function Admin() {
 
   useEffect(() => {
     loadData();
-  }, [activeTab, subscriptionStatusFilter]);
+  }, [activeTab, subscriptionStatusFilter, userFilter]);
 
   const loadData = async () => {
     try {
@@ -98,8 +132,15 @@ export default function Admin() {
       if (activeTab === "dashboard") {
         const response = await apiService.getAdminDashboard();
         setStats(response.data);
+      } else if (activeTab === "users") {
+        const response = await apiService.getAdminUsers(
+          userFilter || undefined
+        );
+        setUsers(response.data);
       } else if (activeTab === "subscriptions") {
-        const response = await apiService.getAdminSubscriptions(subscriptionStatusFilter || undefined);
+        const response = await apiService.getAdminSubscriptions(
+          subscriptionStatusFilter || undefined
+        );
         setSubscriptions(response.data);
       } else if (activeTab === "bmc") {
         const response = await apiService.getBMCUsers();
@@ -111,8 +152,14 @@ export default function Admin() {
     } catch (err: any) {
       console.error("Failed to load admin data:", err);
       const errorMessage = err.message || "Failed to load data";
-      
-      if (err.status === 403 || err.status === 401 || errorMessage.includes("Admin access required") || errorMessage.includes("admin") || errorMessage.includes("Admin")) {
+
+      if (
+        err.status === 403 ||
+        err.status === 401 ||
+        errorMessage.includes("Admin access required") ||
+        errorMessage.includes("admin") ||
+        errorMessage.includes("Admin")
+      ) {
         // Enhanced error handling - extract additional info from API response
         const enhanced: EnhancedError = {
           message: err.message || errorMessage,
@@ -120,7 +167,7 @@ export default function Admin() {
           email: err.email,
           config_help: err.config_help,
         };
-        
+
         setEnhancedError(enhanced);
         setError(errorMessage || "Admin access required");
       } else {
@@ -148,33 +195,40 @@ export default function Admin() {
       setProcessing(true);
       const token = await getToken();
       apiService.setAuthToken(token);
-      const response = await apiService.grantSubscription(selectedUserId, durationMonths);
-      
+      const response = await apiService.grantSubscription(
+        selectedUserId,
+        durationMonths
+      );
+
       // Close modal and reset form
       setGrantModalOpen(false);
       setSelectedUserId("");
       setDurationMonths(1);
-      
+
       // Refresh the subscriptions list
       await loadData();
-      
+
       // Show success message with details
-      const expiresAt = response.data?.expires_at 
+      const expiresAt = response.data?.expires_at
         ? new Date(response.data.expires_at).toLocaleDateString()
-        : 'N/A';
-      alert(`✅ Premium subscription granted successfully!\n\nUser: ${selectedUserId}\nDuration: ${durationMonths} month(s)\nExpires: ${expiresAt}\n\nNote: The user may need to refresh their page to see premium features.`);
+        : "N/A";
+      alert(
+        `✅ Premium subscription granted successfully!\n\nUser: ${selectedUserId}\nDuration: ${durationMonths} month(s)\nExpires: ${expiresAt}\n\nNote: The user may need to refresh their page to see premium features.`
+      );
     } catch (err: any) {
       let errorMessage = "Failed to grant subscription";
-      
+
       // Handle specific error cases per API documentation
       if (err.status === 400) {
-        errorMessage = err.message || "Invalid request. Please check the Clerk User ID and duration.";
+        errorMessage =
+          err.message ||
+          "Invalid request. Please check the Clerk User ID and duration.";
       } else if (err.status === 500) {
         errorMessage = "Server error occurred. Please try again later.";
       } else if (err.message) {
         errorMessage = err.message;
       }
-      
+
       alert(`❌ Error: ${errorMessage}`);
     } finally {
       setProcessing(false);
@@ -194,7 +248,9 @@ export default function Admin() {
 
     let confirmMessage = `Are you sure you want to revoke the premium subscription for ${selectedUserId}?`;
     if (subscription && subscription.current_period_end) {
-      const expiresAt = new Date(subscription.current_period_end).toLocaleDateString();
+      const expiresAt = new Date(
+        subscription.current_period_end
+      ).toLocaleDateString();
       confirmMessage += `\n\nThis subscription expires on ${expiresAt} and will be cancelled immediately.`;
     }
 
@@ -213,18 +269,20 @@ export default function Admin() {
       alert("✅ Premium subscription revoked successfully!");
     } catch (err: any) {
       let errorMessage = "Failed to revoke subscription";
-      
+
       // Handle specific error cases per API documentation
       if (err.status === 404) {
-        errorMessage = "No active subscription found for this user. They may not have an active premium subscription.";
+        errorMessage =
+          "No active subscription found for this user. They may not have an active premium subscription.";
       } else if (err.status === 400) {
-        errorMessage = err.message || "Invalid request. Please check the Clerk User ID.";
+        errorMessage =
+          err.message || "Invalid request. Please check the Clerk User ID.";
       } else if (err.status === 500) {
         errorMessage = "Server error occurred. Please try again later.";
       } else if (err.message) {
         errorMessage = err.message;
       }
-      
+
       alert(`❌ Error: ${errorMessage}`);
     } finally {
       setProcessing(false);
@@ -263,9 +321,11 @@ export default function Admin() {
     const now = new Date();
     const diffMs = date.getTime() - now.getTime();
     const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-    
+
     if (diffDays < 0) {
-      return `${Math.abs(diffDays)} day${Math.abs(diffDays) !== 1 ? 's' : ''} ago`;
+      return `${Math.abs(diffDays)} day${
+        Math.abs(diffDays) !== 1 ? "s" : ""
+      } ago`;
     } else if (diffDays === 0) {
       return "Today";
     } else if (diffDays === 1) {
@@ -274,8 +334,63 @@ export default function Admin() {
       return `In ${diffDays} days`;
     } else {
       const diffMonths = Math.floor(diffDays / 30);
-      return `In ${diffMonths} month${diffMonths !== 1 ? 's' : ''}`;
+      return `In ${diffMonths} month${diffMonths !== 1 ? "s" : ""}`;
     }
+  };
+
+  const PaymentSourceBadge = ({ source }: { source: string }) => {
+    const config: Record<
+      string,
+      {
+        icon: React.ReactNode;
+        label: string;
+        bgColor: string;
+        textColor: string;
+      }
+    > = {
+      stripe: {
+        icon: <CreditCard className="w-3.5 h-3.5" />,
+        label: "Stripe",
+        bgColor: "rgba(99, 91, 255, 0.2)",
+        textColor: "#635BFF",
+      },
+      bmc: {
+        icon: <Coffee className="w-3.5 h-3.5" />,
+        label: "BMC",
+        bgColor: "rgba(255, 221, 0, 0.2)",
+        textColor: "#FFDD00",
+      },
+      cryptomus: {
+        icon: <Zap className="w-3.5 h-3.5" />,
+        label: "Cryptomus",
+        bgColor: "rgba(11, 116, 222, 0.2)",
+        textColor: "#0b74de",
+      },
+      manual: {
+        icon: <Crown className="w-3.5 h-3.5" />,
+        label: "Manual",
+        bgColor: "rgba(168, 85, 247, 0.2)",
+        textColor: "#A855F7",
+      },
+      free: {
+        icon: <UserCircle className="w-3.5 h-3.5" />,
+        label: "Free",
+        bgColor: "rgba(156, 163, 175, 0.2)",
+        textColor: "#9CA3AF",
+      },
+    };
+
+    const { icon, label, bgColor, textColor } = config[source] || config.free;
+
+    return (
+      <span
+        className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium"
+        style={{ background: bgColor, color: textColor }}
+      >
+        {icon}
+        {label}
+      </span>
+    );
   };
 
   const copyConfigHelp = async () => {
@@ -286,9 +401,17 @@ export default function Admin() {
     }
   };
 
-  if (error && (error.includes("Access denied") || error.includes("Admin access required") || error.includes("admin"))) {
+  if (
+    error &&
+    (error.includes("Access denied") ||
+      error.includes("Admin access required") ||
+      error.includes("admin"))
+  ) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4" style={{ background: "var(--color-bg-primary)" }}>
+      <div
+        className="min-h-screen flex items-center justify-center p-4"
+        style={{ background: "var(--color-bg-primary)" }}
+      >
         <div className="max-w-2xl w-full">
           <div
             className="rounded-phi-lg border p-6 md:p-8"
@@ -297,14 +420,23 @@ export default function Admin() {
               borderColor: "var(--color-danger)",
             }}
           >
-            <AlertCircle className="w-16 h-16 mx-auto mb-4" style={{ color: "var(--color-danger)" }} />
-            <h1 className="text-2xl font-bold mb-4 text-center" style={{ color: "var(--color-text-primary)" }}>
+            <AlertCircle
+              className="w-16 h-16 mx-auto mb-4"
+              style={{ color: "var(--color-danger)" }}
+            />
+            <h1
+              className="text-2xl font-bold mb-4 text-center"
+              style={{ color: "var(--color-text-primary)" }}
+            >
               Access Denied
             </h1>
-            
+
             {/* Main error message */}
             <div className="mb-6">
-              <p className="text-base mb-2 text-center" style={{ color: "var(--color-text-secondary)" }}>
+              <p
+                className="text-base mb-2 text-center"
+                style={{ color: "var(--color-text-secondary)" }}
+              >
                 {enhancedError?.message || error}
               </p>
             </div>
@@ -321,10 +453,16 @@ export default function Admin() {
                       borderColor: "var(--color-border)",
                     }}
                   >
-                    <p className="text-xs mb-1 font-medium" style={{ color: "var(--color-text-tertiary)" }}>
+                    <p
+                      className="text-xs mb-1 font-medium"
+                      style={{ color: "var(--color-text-tertiary)" }}
+                    >
                       Your Clerk User ID:
                     </p>
-                    <code className="text-sm font-mono" style={{ color: "var(--color-text-primary)" }}>
+                    <code
+                      className="text-sm font-mono"
+                      style={{ color: "var(--color-text-primary)" }}
+                    >
                       {enhancedError.user_id}
                     </code>
                   </div>
@@ -339,10 +477,16 @@ export default function Admin() {
                       borderColor: "var(--color-border)",
                     }}
                   >
-                    <p className="text-xs mb-1 font-medium" style={{ color: "var(--color-text-tertiary)" }}>
+                    <p
+                      className="text-xs mb-1 font-medium"
+                      style={{ color: "var(--color-text-tertiary)" }}
+                    >
                       Your Email:
                     </p>
-                    <code className="text-sm font-mono" style={{ color: "var(--color-text-primary)" }}>
+                    <code
+                      className="text-sm font-mono"
+                      style={{ color: "var(--color-text-primary)" }}
+                    >
                       {enhancedError.email}
                     </code>
                   </div>
@@ -359,11 +503,18 @@ export default function Admin() {
                   >
                     <div className="flex items-start justify-between gap-3 mb-2">
                       <div>
-                        <p className="text-sm font-semibold mb-2" style={{ color: "var(--color-warning)" }}>
+                        <p
+                          className="text-sm font-semibold mb-2"
+                          style={{ color: "var(--color-warning)" }}
+                        >
                           Configuration Required
                         </p>
-                        <p className="text-xs mb-3" style={{ color: "var(--color-text-secondary)" }}>
-                          A backend administrator needs to add your user ID to the admin list. Use the following configuration:
+                        <p
+                          className="text-xs mb-3"
+                          style={{ color: "var(--color-text-secondary)" }}
+                        >
+                          A backend administrator needs to add your user ID to
+                          the admin list. Use the following configuration:
                         </p>
                       </div>
                     </div>
@@ -382,21 +533,35 @@ export default function Admin() {
                         onClick={copyConfigHelp}
                         className="absolute top-2 right-2 p-2 rounded transition-all duration-200 hover-lift"
                         style={{
-                          background: copied ? "var(--color-success-bg)" : "var(--color-bg-secondary)",
-                          borderColor: copied ? "var(--color-success)" : "var(--color-border)",
+                          background: copied
+                            ? "var(--color-success-bg)"
+                            : "var(--color-bg-secondary)",
+                          borderColor: copied
+                            ? "var(--color-success)"
+                            : "var(--color-border)",
                           border: "1px solid",
                         }}
                         title="Copy configuration"
                       >
                         {copied ? (
-                          <Check className="w-4 h-4" style={{ color: "var(--color-success)" }} />
+                          <Check
+                            className="w-4 h-4"
+                            style={{ color: "var(--color-success)" }}
+                          />
                         ) : (
-                          <Copy className="w-4 h-4" style={{ color: "var(--color-text-tertiary)" }} />
+                          <Copy
+                            className="w-4 h-4"
+                            style={{ color: "var(--color-text-tertiary)" }}
+                          />
                         )}
                       </button>
                     </div>
-                    <p className="text-xs mt-3" style={{ color: "var(--color-text-tertiary)" }}>
-                      Contact your backend administrator to add this to your environment variables.
+                    <p
+                      className="text-xs mt-3"
+                      style={{ color: "var(--color-text-tertiary)" }}
+                    >
+                      Contact your backend administrator to add this to your
+                      environment variables.
                     </p>
                   </div>
                 )}
@@ -408,7 +573,10 @@ export default function Admin() {
               <Link
                 to="/"
                 className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-medium transition-all duration-200 hover-lift"
-                style={{ background: "var(--color-accent-500)", color: "white" }}
+                style={{
+                  background: "var(--color-accent-500)",
+                  color: "white",
+                }}
               >
                 <ArrowLeft className="w-4 h-4" />
                 Back to Dashboard
@@ -421,7 +589,10 @@ export default function Admin() {
   }
 
   return (
-    <div className="min-h-screen" style={{ background: "var(--color-bg-primary)" }}>
+    <div
+      className="min-h-screen"
+      style={{ background: "var(--color-bg-primary)" }}
+    >
       {/* Header */}
       <header
         className="border-b sticky top-0 z-40 backdrop-blur-modern"
@@ -439,7 +610,10 @@ export default function Admin() {
               <span className="sm:hidden">Back</span>
             </Link>
             <span className="text-gray-400 mx-2">|</span>
-            <h1 className="text-base md:text-phi-lg font-bold" style={{ color: "var(--color-text-primary)" }}>
+            <h1
+              className="text-base md:text-phi-lg font-bold"
+              style={{ color: "var(--color-text-primary)" }}
+            >
               Admin Panel
             </h1>
           </div>
@@ -450,11 +624,15 @@ export default function Admin() {
       <main className="px-4 md:px-phi-lg py-6 md:py-phi-xl">
         <div className="max-w-7xl mx-auto">
           {/* Tabs */}
-          <div className="flex flex-wrap gap-2 mb-6 border-b" style={{ borderColor: "var(--color-border)" }}>
+          <div
+            className="flex flex-wrap gap-2 mb-6 border-b"
+            style={{ borderColor: "var(--color-border)" }}
+          >
             {[
               { id: "dashboard", label: "Dashboard", icon: TrendingUp },
+              { id: "users", label: "All Users", icon: UserCircle },
               { id: "subscriptions", label: "Subscriptions", icon: Crown },
-              { id: "bmc", label: "BMC Users", icon: Users },
+              { id: "bmc", label: "BMC Users", icon: Coffee },
               { id: "system", label: "System Info", icon: Settings },
             ].map((tab) => {
               const Icon = tab.icon;
@@ -466,8 +644,14 @@ export default function Admin() {
                     activeTab === tab.id ? "font-semibold" : ""
                   }`}
                   style={{
-                    borderBottomColor: activeTab === tab.id ? "var(--color-accent-500)" : "transparent",
-                    color: activeTab === tab.id ? "var(--color-accent-500)" : "var(--color-text-secondary)",
+                    borderBottomColor:
+                      activeTab === tab.id
+                        ? "var(--color-accent-500)"
+                        : "transparent",
+                    color:
+                      activeTab === tab.id
+                        ? "var(--color-accent-500)"
+                        : "var(--color-text-secondary)",
                   }}
                 >
                   <Icon className="w-4 h-4" />
@@ -480,17 +664,28 @@ export default function Admin() {
           {/* Content */}
           {loading ? (
             <div className="text-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto mb-4" style={{ borderColor: "var(--color-accent-500)" }} />
+              <div
+                className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto mb-4"
+                style={{ borderColor: "var(--color-accent-500)" }}
+              />
               <p style={{ color: "var(--color-text-secondary)" }}>Loading...</p>
             </div>
           ) : error ? (
             <div className="card-modern p-6 text-center">
-              <XCircle className="w-12 h-12 mx-auto mb-4" style={{ color: "var(--color-danger)" }} />
-              <p className="mb-4" style={{ color: "var(--color-danger)" }}>{error}</p>
+              <XCircle
+                className="w-12 h-12 mx-auto mb-4"
+                style={{ color: "var(--color-danger)" }}
+              />
+              <p className="mb-4" style={{ color: "var(--color-danger)" }}>
+                {error}
+              </p>
               <button
                 onClick={loadData}
                 className="px-4 py-2 rounded-lg"
-                style={{ background: "var(--color-accent-500)", color: "white" }}
+                style={{
+                  background: "var(--color-accent-500)",
+                  color: "white",
+                }}
               >
                 <RefreshCw className="w-4 h-4 inline mr-2" />
                 Retry
@@ -501,69 +696,489 @@ export default function Admin() {
               {/* Dashboard Tab */}
               {activeTab === "dashboard" && stats && (
                 <div className="space-y-6">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {/* Main Stats */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     <div className="card-modern p-4 md:p-6">
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="text-xs md:text-sm mb-1" style={{ color: "var(--color-text-tertiary)" }}>
+                          <p
+                            className="text-xs md:text-sm mb-1"
+                            style={{ color: "var(--color-text-tertiary)" }}
+                          >
                             Total Receipts
                           </p>
-                          <p className="text-2xl md:text-3xl font-bold" style={{ color: "var(--color-text-primary)" }}>
+                          <p
+                            className="text-2xl md:text-3xl font-bold"
+                            style={{ color: "var(--color-text-primary)" }}
+                          >
                             {stats.total_receipts}
                           </p>
                         </div>
-                        <Receipt className="w-10 h-10 md:w-12 md:h-12" style={{ color: "var(--color-accent-400)" }} />
+                        <Receipt
+                          className="w-10 h-10 md:w-12 md:h-12"
+                          style={{ color: "var(--color-accent-400)" }}
+                        />
                       </div>
                     </div>
 
                     <div className="card-modern p-4 md:p-6">
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="text-xs md:text-sm mb-1" style={{ color: "var(--color-text-tertiary)" }}>
+                          <p
+                            className="text-xs md:text-sm mb-1"
+                            style={{ color: "var(--color-text-tertiary)" }}
+                          >
                             Active Subscriptions
                           </p>
-                          <p className="text-2xl md:text-3xl font-bold" style={{ color: "var(--color-success)" }}>
+                          <p
+                            className="text-2xl md:text-3xl font-bold"
+                            style={{ color: "var(--color-success)" }}
+                          >
                             {stats.active_subscriptions}
                           </p>
                         </div>
-                        <Crown className="w-10 h-10 md:w-12 md:h-12" style={{ color: "var(--color-success)" }} />
+                        <Crown
+                          className="w-10 h-10 md:w-12 md:h-12"
+                          style={{ color: "var(--color-success)" }}
+                        />
                       </div>
                     </div>
 
                     <div className="card-modern p-4 md:p-6">
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="text-xs md:text-sm mb-1" style={{ color: "var(--color-text-tertiary)" }}>
-                            BMC Linked Users
-                          </p>
-                          <p className="text-2xl md:text-3xl font-bold" style={{ color: "var(--color-text-primary)" }}>
-                            {stats.bmc_linked_users}
-                          </p>
-                        </div>
-                        <Users className="w-10 h-10 md:w-12 md:h-12" style={{ color: "var(--color-accent-400)" }} />
-                      </div>
-                    </div>
-
-                    <div className="card-modern p-4 md:p-6">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-xs md:text-sm mb-1" style={{ color: "var(--color-text-tertiary)" }}>
+                          <p
+                            className="text-xs md:text-sm mb-1"
+                            style={{ color: "var(--color-text-tertiary)" }}
+                          >
                             Receipts by Status
                           </p>
                           <div className="mt-2 space-y-1">
-                            {stats.receipts_by_status && Object.entries(stats.receipts_by_status).map(([status, count]) => (
-                              <div key={status} className="flex items-center justify-between text-xs">
-                                <span className="capitalize" style={{ color: "var(--color-text-secondary)" }}>
-                                  {status}:
-                                </span>
-                                <span className="font-semibold" style={{ color: "var(--color-text-primary)" }}>
-                                  {count}
-                                </span>
-                              </div>
-                            ))}
+                            {stats.receipts_by_status &&
+                              Object.entries(stats.receipts_by_status).map(
+                                ([status, count]) => (
+                                  <div
+                                    key={status}
+                                    className="flex items-center justify-between text-xs"
+                                  >
+                                    <span
+                                      className="capitalize"
+                                      style={{
+                                        color: "var(--color-text-secondary)",
+                                      }}
+                                    >
+                                      {status}:
+                                    </span>
+                                    <span
+                                      className="font-semibold"
+                                      style={{
+                                        color: "var(--color-text-primary)",
+                                      }}
+                                    >
+                                      {count}
+                                    </span>
+                                  </div>
+                                )
+                              )}
                           </div>
                         </div>
                       </div>
+                    </div>
+                  </div>
+
+                  {/* Payment Sources Stats */}
+                  <div>
+                    <h3
+                      className="text-lg font-semibold mb-4"
+                      style={{ color: "var(--color-text-primary)" }}
+                    >
+                      Users by Payment Source
+                    </h3>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                      <div className="card-modern p-4">
+                        <div className="flex items-center gap-3">
+                          <div
+                            className="p-2 rounded-lg"
+                            style={{ background: "rgba(156, 163, 175, 0.2)" }}
+                          >
+                            <UserCircle
+                              className="w-6 h-6"
+                              style={{ color: "#9CA3AF" }}
+                            />
+                          </div>
+                          <div>
+                            <p
+                              className="text-xs"
+                              style={{ color: "var(--color-text-tertiary)" }}
+                            >
+                              Free
+                            </p>
+                            <p
+                              className="text-xl font-bold"
+                              style={{ color: "var(--color-text-primary)" }}
+                            >
+                              {stats.free_users || 0}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="card-modern p-4">
+                        <div className="flex items-center gap-3">
+                          <div
+                            className="p-2 rounded-lg"
+                            style={{ background: "rgba(99, 91, 255, 0.2)" }}
+                          >
+                            <CreditCard
+                              className="w-6 h-6"
+                              style={{ color: "#635BFF" }}
+                            />
+                          </div>
+                          <div>
+                            <p
+                              className="text-xs"
+                              style={{ color: "var(--color-text-tertiary)" }}
+                            >
+                              Stripe
+                            </p>
+                            <p
+                              className="text-xl font-bold"
+                              style={{ color: "#635BFF" }}
+                            >
+                              {stats.stripe_users || 0}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="card-modern p-4">
+                        <div className="flex items-center gap-3">
+                          <div
+                            className="p-2 rounded-lg"
+                            style={{ background: "rgba(255, 221, 0, 0.2)" }}
+                          >
+                            <Coffee
+                              className="w-6 h-6"
+                              style={{ color: "#FFDD00" }}
+                            />
+                          </div>
+                          <div>
+                            <p
+                              className="text-xs"
+                              style={{ color: "var(--color-text-tertiary)" }}
+                            >
+                              BMC
+                            </p>
+                            <p
+                              className="text-xl font-bold"
+                              style={{ color: "#FFDD00" }}
+                            >
+                              {stats.bmc_linked_users || 0}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="card-modern p-4">
+                        <div className="flex items-center gap-3">
+                          <div
+                            className="p-2 rounded-lg"
+                            style={{ background: "rgba(11, 116, 222, 0.2)" }}
+                          >
+                            <Zap
+                              className="w-6 h-6"
+                              style={{ color: "#0b74de" }}
+                            />
+                          </div>
+                          <div>
+                            <p
+                              className="text-xs"
+                              style={{ color: "var(--color-text-tertiary)" }}
+                            >
+                              Cryptomus
+                            </p>
+                            <p
+                              className="text-xl font-bold"
+                              style={{ color: "#0b74de" }}
+                            >
+                              {stats.cryptomus_users || 0}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Users Tab */}
+              {activeTab === "users" && (
+                <div className="space-y-4">
+                  <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+                    {/* Filter buttons */}
+                    <div className="flex flex-wrap gap-2">
+                      {[
+                        { id: "", label: "All", icon: Users },
+                        { id: "free", label: "Free", icon: UserCircle },
+                        { id: "stripe", label: "Stripe", icon: CreditCard },
+                        { id: "bmc", label: "BMC", icon: Coffee },
+                        { id: "cryptomus", label: "Cryptomus", icon: Zap },
+                        { id: "manual", label: "Manual", icon: Crown },
+                      ].map((filter) => {
+                        const Icon = filter.icon;
+                        return (
+                          <button
+                            key={filter.id}
+                            onClick={() => setUserFilter(filter.id)}
+                            className={`px-3 py-1.5 rounded-lg text-sm flex items-center gap-1.5 ${
+                              userFilter === filter.id ? "font-semibold" : ""
+                            }`}
+                            style={{
+                              background:
+                                userFilter === filter.id
+                                  ? "var(--color-accent-500)"
+                                  : "var(--color-bg-secondary)",
+                              color:
+                                userFilter === filter.id
+                                  ? "white"
+                                  : "var(--color-text-primary)",
+                            }}
+                          >
+                            <Icon className="w-3.5 h-3.5" />
+                            {filter.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {/* Search */}
+                    <div className="relative w-full sm:w-auto">
+                      <Search
+                        className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4"
+                        style={{ color: "var(--color-text-tertiary)" }}
+                      />
+                      <input
+                        type="text"
+                        placeholder="Search by email or ID..."
+                        value={userSearch}
+                        onChange={(e) => setUserSearch(e.target.value)}
+                        className="pl-9 pr-4 py-2 rounded-lg text-sm w-full sm:w-64 border focus:outline-none focus:ring-2"
+                        style={{
+                          background: "var(--color-bg-secondary)",
+                          borderColor: "var(--color-border)",
+                          color: "var(--color-text-primary)",
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Users Table */}
+                  <div className="card-modern overflow-hidden">
+                    <div className="overflow-x-auto">
+                      <table className="w-full">
+                        <thead>
+                          <tr
+                            className="border-b"
+                            style={{ borderColor: "var(--color-border)" }}
+                          >
+                            <th
+                              className="px-4 py-3 text-left text-sm font-semibold"
+                              style={{ color: "var(--color-text-primary)" }}
+                            >
+                              User
+                            </th>
+                            <th
+                              className="px-4 py-3 text-left text-sm font-semibold"
+                              style={{ color: "var(--color-text-primary)" }}
+                            >
+                              Payment Source
+                            </th>
+                            <th
+                              className="px-4 py-3 text-left text-sm font-semibold"
+                              style={{ color: "var(--color-text-primary)" }}
+                            >
+                              Plan / Status
+                            </th>
+                            <th
+                              className="px-4 py-3 text-left text-sm font-semibold"
+                              style={{ color: "var(--color-text-primary)" }}
+                            >
+                              Receipts
+                            </th>
+                            <th
+                              className="px-4 py-3 text-left text-sm font-semibold"
+                              style={{ color: "var(--color-text-primary)" }}
+                            >
+                              Expires
+                            </th>
+                            <th
+                              className="px-4 py-3 text-left text-sm font-semibold"
+                              style={{ color: "var(--color-text-primary)" }}
+                            >
+                              Actions
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {!users || users.length === 0 ? (
+                            <tr>
+                              <td
+                                colSpan={6}
+                                className="px-4 py-8 text-center"
+                                style={{ color: "var(--color-text-secondary)" }}
+                              >
+                                No users found
+                              </td>
+                            </tr>
+                          ) : (
+                            users
+                              .filter((user) => {
+                                if (!userSearch) return true;
+                                const search = userSearch.toLowerCase();
+                                return (
+                                  user.clerk_user_id
+                                    ?.toLowerCase()
+                                    .includes(search) ||
+                                  user.email?.toLowerCase().includes(search) ||
+                                  user.bmc_username
+                                    ?.toLowerCase()
+                                    .includes(search)
+                                );
+                              })
+                              .map((user) => (
+                                <tr
+                                  key={user.clerk_user_id}
+                                  className="border-b hover:bg-opacity-50 transition-colors"
+                                  style={{ borderColor: "var(--color-border)" }}
+                                >
+                                  <td className="px-4 py-3">
+                                    <div>
+                                      <p
+                                        className="text-sm font-medium"
+                                        style={{
+                                          color: "var(--color-text-primary)",
+                                        }}
+                                      >
+                                        {user.email || "No email"}
+                                      </p>
+                                      <p
+                                        className="text-xs font-mono"
+                                        style={{
+                                          color: "var(--color-text-tertiary)",
+                                        }}
+                                      >
+                                        {user.clerk_user_id}
+                                      </p>
+                                    </div>
+                                  </td>
+                                  <td className="px-4 py-3">
+                                    <PaymentSourceBadge
+                                      source={user.payment_source}
+                                    />
+                                  </td>
+                                  <td className="px-4 py-3">
+                                    <div className="flex flex-col gap-1">
+                                      <span
+                                        className={`px-2 py-0.5 rounded-full text-xs font-medium inline-block w-fit ${
+                                          user.plan === "premium"
+                                            ? "bg-purple-900/30 text-purple-400"
+                                            : "bg-gray-700/50 text-gray-400"
+                                        }`}
+                                      >
+                                        {user.plan === "premium"
+                                          ? "Premium"
+                                          : "Free"}
+                                      </span>
+                                      <span
+                                        className={`px-2 py-0.5 rounded-full text-xs font-medium inline-block w-fit ${
+                                          user.status === "active"
+                                            ? "bg-green-900/30 text-green-400"
+                                            : user.status === "cancelled"
+                                            ? "bg-red-900/30 text-red-400"
+                                            : "bg-gray-700/50 text-gray-400"
+                                        }`}
+                                      >
+                                        {user.status || "none"}
+                                      </span>
+                                    </div>
+                                  </td>
+                                  <td
+                                    className="px-4 py-3 text-sm"
+                                    style={{
+                                      color: "var(--color-text-primary)",
+                                    }}
+                                  >
+                                    {user.receipt_count}
+                                  </td>
+                                  <td
+                                    className="px-4 py-3 text-sm"
+                                    style={{
+                                      color: "var(--color-text-secondary)",
+                                    }}
+                                  >
+                                    {user.current_period_end ? (
+                                      <div>
+                                        <div>
+                                          {formatDate(user.current_period_end)}
+                                        </div>
+                                        <div
+                                          className="text-xs"
+                                          style={{
+                                            color: "var(--color-text-tertiary)",
+                                          }}
+                                        >
+                                          {formatRelativeTime(
+                                            user.current_period_end
+                                          )}
+                                        </div>
+                                      </div>
+                                    ) : (
+                                      "—"
+                                    )}
+                                  </td>
+                                  <td className="px-4 py-3">
+                                    <div className="flex gap-2">
+                                      {user.status === "active" ? (
+                                        <button
+                                          onClick={() => {
+                                            setSelectedUserId(
+                                              user.clerk_user_id
+                                            );
+                                            setRevokeModalOpen(true);
+                                          }}
+                                          className="px-2 py-1 rounded text-xs font-medium"
+                                          style={{
+                                            background: "var(--color-danger)",
+                                            color: "white",
+                                          }}
+                                        >
+                                          Revoke
+                                        </button>
+                                      ) : (
+                                        <button
+                                          onClick={() => {
+                                            setSelectedUserId(
+                                              user.clerk_user_id
+                                            );
+                                            setDurationMonths(1);
+                                            setGrantModalOpen(true);
+                                          }}
+                                          className="px-2 py-1 rounded text-xs font-medium"
+                                          style={{
+                                            background: "var(--color-success)",
+                                            color: "white",
+                                          }}
+                                        >
+                                          Grant
+                                        </button>
+                                      )}
+                                    </div>
+                                  </td>
+                                </tr>
+                              ))
+                          )}
+                        </tbody>
+                      </table>
                     </div>
                   </div>
                 </div>
@@ -580,8 +1195,14 @@ export default function Admin() {
                           subscriptionStatusFilter === "" ? "font-semibold" : ""
                         }`}
                         style={{
-                          background: subscriptionStatusFilter === "" ? "var(--color-accent-500)" : "var(--color-bg-secondary)",
-                          color: subscriptionStatusFilter === "" ? "white" : "var(--color-text-primary)",
+                          background:
+                            subscriptionStatusFilter === ""
+                              ? "var(--color-accent-500)"
+                              : "var(--color-bg-secondary)",
+                          color:
+                            subscriptionStatusFilter === ""
+                              ? "white"
+                              : "var(--color-text-primary)",
                         }}
                       >
                         All
@@ -591,11 +1212,19 @@ export default function Admin() {
                           key={status}
                           onClick={() => setSubscriptionStatusFilter(status)}
                           className={`px-3 py-1.5 rounded-lg text-sm capitalize ${
-                            subscriptionStatusFilter === status ? "font-semibold" : ""
+                            subscriptionStatusFilter === status
+                              ? "font-semibold"
+                              : ""
                           }`}
                           style={{
-                            background: subscriptionStatusFilter === status ? "var(--color-accent-500)" : "var(--color-bg-secondary)",
-                            color: subscriptionStatusFilter === status ? "white" : "var(--color-text-primary)",
+                            background:
+                              subscriptionStatusFilter === status
+                                ? "var(--color-accent-500)"
+                                : "var(--color-bg-secondary)",
+                            color:
+                              subscriptionStatusFilter === status
+                                ? "white"
+                                : "var(--color-text-primary)",
                           }}
                         >
                           {status}
@@ -610,7 +1239,11 @@ export default function Admin() {
                           setGrantModalOpen(true);
                         }}
                         className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover-lift"
-                        style={{ background: "var(--color-success)", color: "white", boxShadow: "0 2px 8px rgba(34, 197, 94, 0.3)" }}
+                        style={{
+                          background: "var(--color-success)",
+                          color: "white",
+                          boxShadow: "0 2px 8px rgba(34, 197, 94, 0.3)",
+                        }}
                       >
                         <Plus className="w-4 h-4" />
                         Grant Subscription
@@ -622,20 +1255,38 @@ export default function Admin() {
                     <div className="overflow-x-auto">
                       <table className="w-full">
                         <thead>
-                          <tr className="border-b" style={{ borderColor: "var(--color-border)" }}>
-                            <th className="px-4 py-3 text-left text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>
+                          <tr
+                            className="border-b"
+                            style={{ borderColor: "var(--color-border)" }}
+                          >
+                            <th
+                              className="px-4 py-3 text-left text-sm font-semibold"
+                              style={{ color: "var(--color-text-primary)" }}
+                            >
                               Clerk User ID
                             </th>
-                            <th className="px-4 py-3 text-left text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>
+                            <th
+                              className="px-4 py-3 text-left text-sm font-semibold"
+                              style={{ color: "var(--color-text-primary)" }}
+                            >
                               Plan
                             </th>
-                            <th className="px-4 py-3 text-left text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>
+                            <th
+                              className="px-4 py-3 text-left text-sm font-semibold"
+                              style={{ color: "var(--color-text-primary)" }}
+                            >
                               Status
                             </th>
-                            <th className="px-4 py-3 text-left text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>
+                            <th
+                              className="px-4 py-3 text-left text-sm font-semibold"
+                              style={{ color: "var(--color-text-primary)" }}
+                            >
                               Period End
                             </th>
-                            <th className="px-4 py-3 text-left text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>
+                            <th
+                              className="px-4 py-3 text-left text-sm font-semibold"
+                              style={{ color: "var(--color-text-primary)" }}
+                            >
                               Actions
                             </th>
                           </tr>
@@ -643,7 +1294,11 @@ export default function Admin() {
                         <tbody>
                           {!subscriptions || subscriptions.length === 0 ? (
                             <tr>
-                              <td colSpan={5} className="px-4 py-8 text-center" style={{ color: "var(--color-text-secondary)" }}>
+                              <td
+                                colSpan={5}
+                                className="px-4 py-8 text-center"
+                                style={{ color: "var(--color-text-secondary)" }}
+                              >
                                 No subscriptions found
                               </td>
                             </tr>
@@ -654,11 +1309,20 @@ export default function Admin() {
                                 className="border-b hover:bg-opacity-50 transition-colors"
                                 style={{ borderColor: "var(--color-border)" }}
                               >
-                                <td className="px-4 py-3 text-sm font-mono" style={{ color: "var(--color-text-primary)" }}>
+                                <td
+                                  className="px-4 py-3 text-sm font-mono"
+                                  style={{ color: "var(--color-text-primary)" }}
+                                >
                                   {sub.clerk_user_id || sub.user_id || "N/A"}
                                 </td>
-                                <td className="px-4 py-3 text-sm font-medium" style={{ color: "var(--color-text-primary)" }}>
-                                  {sub.plan === "premium" ? "Premium" : sub.plan.charAt(0).toUpperCase() + sub.plan.slice(1)}
+                                <td
+                                  className="px-4 py-3 text-sm font-medium"
+                                  style={{ color: "var(--color-text-primary)" }}
+                                >
+                                  {sub.plan === "premium"
+                                    ? "Premium"
+                                    : sub.plan.charAt(0).toUpperCase() +
+                                      sub.plan.slice(1)}
                                 </td>
                                 <td className="px-4 py-3">
                                   <span
@@ -673,12 +1337,26 @@ export default function Admin() {
                                     {sub.status}
                                   </span>
                                 </td>
-                                <td className="px-4 py-3 text-sm" style={{ color: "var(--color-text-secondary)" }}>
+                                <td
+                                  className="px-4 py-3 text-sm"
+                                  style={{
+                                    color: "var(--color-text-secondary)",
+                                  }}
+                                >
                                   {sub.current_period_end ? (
                                     <div>
-                                      <div>{formatDate(sub.current_period_end)}</div>
-                                      <div className="text-xs mt-1" style={{ color: "var(--color-text-tertiary)" }}>
-                                        {formatRelativeTime(sub.current_period_end)}
+                                      <div>
+                                        {formatDate(sub.current_period_end)}
+                                      </div>
+                                      <div
+                                        className="text-xs mt-1"
+                                        style={{
+                                          color: "var(--color-text-tertiary)",
+                                        }}
+                                      >
+                                        {formatRelativeTime(
+                                          sub.current_period_end
+                                        )}
                                       </div>
                                     </div>
                                   ) : (
@@ -686,18 +1364,22 @@ export default function Admin() {
                                   )}
                                 </td>
                                 <td className="px-4 py-3">
-                                  {sub.status === "active" && sub.clerk_user_id && (
-                                    <button
-                                      onClick={() => {
-                                        setSelectedUserId(sub.clerk_user_id!);
-                                        setRevokeModalOpen(true);
-                                      }}
-                                      className="px-3 py-1.5 rounded-lg text-xs font-medium"
-                                      style={{ background: "var(--color-danger)", color: "white" }}
-                                    >
-                                      Revoke
-                                    </button>
-                                  )}
+                                  {sub.status === "active" &&
+                                    sub.clerk_user_id && (
+                                      <button
+                                        onClick={() => {
+                                          setSelectedUserId(sub.clerk_user_id!);
+                                          setRevokeModalOpen(true);
+                                        }}
+                                        className="px-3 py-1.5 rounded-lg text-xs font-medium"
+                                        style={{
+                                          background: "var(--color-danger)",
+                                          color: "white",
+                                        }}
+                                      >
+                                        Revoke
+                                      </button>
+                                    )}
                                 </td>
                               </tr>
                             ))
@@ -720,7 +1402,10 @@ export default function Admin() {
                         setLinkModalOpen(true);
                       }}
                       className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium"
-                      style={{ background: "var(--color-accent-500)", color: "white" }}
+                      style={{
+                        background: "var(--color-accent-500)",
+                        color: "white",
+                      }}
                     >
                       <LinkIcon className="w-4 h-4" />
                       Link BMC Username
@@ -731,17 +1416,32 @@ export default function Admin() {
                     <div className="overflow-x-auto">
                       <table className="w-full">
                         <thead>
-                          <tr className="border-b" style={{ borderColor: "var(--color-border)" }}>
-                            <th className="px-4 py-3 text-left text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>
+                          <tr
+                            className="border-b"
+                            style={{ borderColor: "var(--color-border)" }}
+                          >
+                            <th
+                              className="px-4 py-3 text-left text-sm font-semibold"
+                              style={{ color: "var(--color-text-primary)" }}
+                            >
                               Clerk User ID
                             </th>
-                            <th className="px-4 py-3 text-left text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>
+                            <th
+                              className="px-4 py-3 text-left text-sm font-semibold"
+                              style={{ color: "var(--color-text-primary)" }}
+                            >
                               BMC Username
                             </th>
-                            <th className="px-4 py-3 text-left text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>
+                            <th
+                              className="px-4 py-3 text-left text-sm font-semibold"
+                              style={{ color: "var(--color-text-primary)" }}
+                            >
                               Linked At
                             </th>
-                            <th className="px-4 py-3 text-left text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>
+                            <th
+                              className="px-4 py-3 text-left text-sm font-semibold"
+                              style={{ color: "var(--color-text-primary)" }}
+                            >
                               Last Updated
                             </th>
                           </tr>
@@ -749,7 +1449,11 @@ export default function Admin() {
                         <tbody>
                           {!bmcUsers || bmcUsers.length === 0 ? (
                             <tr>
-                              <td colSpan={4} className="px-4 py-8 text-center" style={{ color: "var(--color-text-secondary)" }}>
+                              <td
+                                colSpan={4}
+                                className="px-4 py-8 text-center"
+                                style={{ color: "var(--color-text-secondary)" }}
+                              >
                                 No BMC linked users found
                               </td>
                             </tr>
@@ -760,16 +1464,32 @@ export default function Admin() {
                                 className="border-b hover:bg-opacity-50 transition-colors"
                                 style={{ borderColor: "var(--color-border)" }}
                               >
-                                <td className="px-4 py-3 text-sm font-mono" style={{ color: "var(--color-text-primary)" }}>
+                                <td
+                                  className="px-4 py-3 text-sm font-mono"
+                                  style={{ color: "var(--color-text-primary)" }}
+                                >
                                   {user.clerk_user_id}
                                 </td>
-                                <td className="px-4 py-3 text-sm font-semibold" style={{ color: "var(--color-accent-400)" }}>
+                                <td
+                                  className="px-4 py-3 text-sm font-semibold"
+                                  style={{ color: "var(--color-accent-400)" }}
+                                >
                                   {user.bmc_username}
                                 </td>
-                                <td className="px-4 py-3 text-sm" style={{ color: "var(--color-text-secondary)" }}>
+                                <td
+                                  className="px-4 py-3 text-sm"
+                                  style={{
+                                    color: "var(--color-text-secondary)",
+                                  }}
+                                >
                                   {formatDate(user.created_at)}
                                 </td>
-                                <td className="px-4 py-3 text-sm" style={{ color: "var(--color-text-secondary)" }}>
+                                <td
+                                  className="px-4 py-3 text-sm"
+                                  style={{
+                                    color: "var(--color-text-secondary)",
+                                  }}
+                                >
                                   {formatDate(user.updated_at)}
                                 </td>
                               </tr>
@@ -789,14 +1509,23 @@ export default function Admin() {
                     {/* Database Status */}
                     <div className="card-modern p-6">
                       <div className="flex items-center gap-3 mb-4">
-                        <Database className="w-6 h-6" style={{ color: "var(--color-accent-400)" }} />
-                        <h3 className="text-lg font-semibold" style={{ color: "var(--color-text-primary)" }}>
+                        <Database
+                          className="w-6 h-6"
+                          style={{ color: "var(--color-accent-400)" }}
+                        />
+                        <h3
+                          className="text-lg font-semibold"
+                          style={{ color: "var(--color-text-primary)" }}
+                        >
                           Database
                         </h3>
                       </div>
                       <div className="space-y-2">
                         <div className="flex items-center justify-between">
-                          <span className="text-sm" style={{ color: "var(--color-text-secondary)" }}>
+                          <span
+                            className="text-sm"
+                            style={{ color: "var(--color-text-secondary)" }}
+                          >
                             Status:
                           </span>
                           <span
@@ -811,10 +1540,16 @@ export default function Admin() {
                         </div>
                         {systemInfo.database.version && (
                           <div className="flex items-center justify-between">
-                            <span className="text-sm" style={{ color: "var(--color-text-secondary)" }}>
+                            <span
+                              className="text-sm"
+                              style={{ color: "var(--color-text-secondary)" }}
+                            >
                               Version:
                             </span>
-                            <span className="text-sm font-mono" style={{ color: "var(--color-text-primary)" }}>
+                            <span
+                              className="text-sm font-mono"
+                              style={{ color: "var(--color-text-primary)" }}
+                            >
                               {systemInfo.database.version.split(" ")[0]}
                             </span>
                           </div>
@@ -825,37 +1560,67 @@ export default function Admin() {
                     {/* Configuration Status */}
                     <div className="card-modern p-6">
                       <div className="flex items-center gap-3 mb-4">
-                        <Settings className="w-6 h-6" style={{ color: "var(--color-accent-400)" }} />
-                        <h3 className="text-lg font-semibold" style={{ color: "var(--color-text-primary)" }}>
+                        <Settings
+                          className="w-6 h-6"
+                          style={{ color: "var(--color-accent-400)" }}
+                        />
+                        <h3
+                          className="text-lg font-semibold"
+                          style={{ color: "var(--color-text-primary)" }}
+                        >
                           Configuration
                         </h3>
                       </div>
                       <div className="space-y-2">
                         <div className="flex items-center justify-between">
-                          <span className="text-sm" style={{ color: "var(--color-text-secondary)" }}>
+                          <span
+                            className="text-sm"
+                            style={{ color: "var(--color-text-secondary)" }}
+                          >
                             BMC Webhook:
                           </span>
                           {systemInfo.config.bmc_webhook_configured ? (
-                            <CheckCircle className="w-5 h-5" style={{ color: "var(--color-success)" }} />
+                            <CheckCircle
+                              className="w-5 h-5"
+                              style={{ color: "var(--color-success)" }}
+                            />
                           ) : (
-                            <XCircle className="w-5 h-5" style={{ color: "var(--color-danger)" }} />
+                            <XCircle
+                              className="w-5 h-5"
+                              style={{ color: "var(--color-danger)" }}
+                            />
                           )}
                         </div>
                         <div className="flex items-center justify-between">
-                          <span className="text-sm" style={{ color: "var(--color-text-secondary)" }}>
+                          <span
+                            className="text-sm"
+                            style={{ color: "var(--color-text-secondary)" }}
+                          >
                             SMTP:
                           </span>
                           {systemInfo.config.smtp_configured ? (
-                            <CheckCircle className="w-5 h-5" style={{ color: "var(--color-success)" }} />
+                            <CheckCircle
+                              className="w-5 h-5"
+                              style={{ color: "var(--color-success)" }}
+                            />
                           ) : (
-                            <XCircle className="w-5 h-5" style={{ color: "var(--color-danger)" }} />
+                            <XCircle
+                              className="w-5 h-5"
+                              style={{ color: "var(--color-danger)" }}
+                            />
                           )}
                         </div>
                         <div className="flex items-center justify-between">
-                          <span className="text-sm" style={{ color: "var(--color-text-secondary)" }}>
+                          <span
+                            className="text-sm"
+                            style={{ color: "var(--color-text-secondary)" }}
+                          >
                             Environment:
                           </span>
-                          <span className="text-sm capitalize" style={{ color: "var(--color-text-primary)" }}>
+                          <span
+                            className="text-sm capitalize"
+                            style={{ color: "var(--color-text-primary)" }}
+                          >
                             {systemInfo.config.env}
                           </span>
                         </div>
@@ -865,31 +1630,52 @@ export default function Admin() {
 
                   {/* Server Info */}
                   <div className="card-modern p-6">
-                    <h3 className="text-lg font-semibold mb-4" style={{ color: "var(--color-text-primary)" }}>
+                    <h3
+                      className="text-lg font-semibold mb-4"
+                      style={{ color: "var(--color-text-primary)" }}
+                    >
                       Server Information
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div>
-                        <span className="text-sm" style={{ color: "var(--color-text-secondary)" }}>
+                        <span
+                          className="text-sm"
+                          style={{ color: "var(--color-text-secondary)" }}
+                        >
                           Port:
                         </span>
-                        <p className="text-sm font-mono mt-1" style={{ color: "var(--color-text-primary)" }}>
+                        <p
+                          className="text-sm font-mono mt-1"
+                          style={{ color: "var(--color-text-primary)" }}
+                        >
                           {systemInfo.server.port}
                         </p>
                       </div>
                       <div>
-                        <span className="text-sm" style={{ color: "var(--color-text-secondary)" }}>
+                        <span
+                          className="text-sm"
+                          style={{ color: "var(--color-text-secondary)" }}
+                        >
                           Environment:
                         </span>
-                        <p className="text-sm capitalize mt-1" style={{ color: "var(--color-text-primary)" }}>
+                        <p
+                          className="text-sm capitalize mt-1"
+                          style={{ color: "var(--color-text-primary)" }}
+                        >
                           {systemInfo.server.env}
                         </p>
                       </div>
                       <div>
-                        <span className="text-sm" style={{ color: "var(--color-text-secondary)" }}>
+                        <span
+                          className="text-sm"
+                          style={{ color: "var(--color-text-secondary)" }}
+                        >
                           Dev Mode:
                         </span>
-                        <p className="text-sm mt-1" style={{ color: "var(--color-text-primary)" }}>
+                        <p
+                          className="text-sm mt-1"
+                          style={{ color: "var(--color-text-primary)" }}
+                        >
                           {systemInfo.server.dev_mode ? "Yes" : "No"}
                         </p>
                       </div>
@@ -906,11 +1692,14 @@ export default function Admin() {
       {grantModalOpen && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4"
-          style={{ background: "rgba(0, 0, 0, 0.7)", backdropFilter: "blur(4px)" }}
+          style={{
+            background: "rgba(0, 0, 0, 0.7)",
+            backdropFilter: "blur(4px)",
+          }}
           onClick={() => setGrantModalOpen(false)}
         >
-          <div 
-            className="card-modern max-w-md w-full p-6 animate-scale-in" 
+          <div
+            className="card-modern max-w-md w-full p-6 animate-scale-in"
             onClick={(e) => e.stopPropagation()}
             style={{
               background: "var(--color-bg-secondary)",
@@ -918,15 +1707,25 @@ export default function Admin() {
             }}
           >
             <div className="flex items-center gap-3 mb-4">
-              <Crown className="w-6 h-6" style={{ color: "var(--color-success)" }} />
-              <h3 className="text-lg font-semibold" style={{ color: "var(--color-text-primary)" }}>
+              <Crown
+                className="w-6 h-6"
+                style={{ color: "var(--color-success)" }}
+              />
+              <h3
+                className="text-lg font-semibold"
+                style={{ color: "var(--color-text-primary)" }}
+              >
                 Grant Premium Subscription
               </h3>
             </div>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-2" style={{ color: "var(--color-text-primary)" }}>
-                  Clerk User ID <span style={{ color: "var(--color-danger)" }}>*</span>
+                <label
+                  className="block text-sm font-medium mb-2"
+                  style={{ color: "var(--color-text-primary)" }}
+                >
+                  Clerk User ID{" "}
+                  <span style={{ color: "var(--color-danger)" }}>*</span>
                 </label>
                 <input
                   type="text"
@@ -940,18 +1739,30 @@ export default function Admin() {
                   }}
                   placeholder="user_xxxxxxxx"
                   onKeyDown={(e) => {
-                    if (e.key === "Enter" && !processing && selectedUserId.trim()) {
+                    if (
+                      e.key === "Enter" &&
+                      !processing &&
+                      selectedUserId.trim()
+                    ) {
                       handleGrantSubscription();
                     }
                   }}
                 />
-                <p className="text-xs mt-1" style={{ color: "var(--color-text-tertiary)" }}>
-                  Enter the Clerk User ID of the user you want to grant premium access to
+                <p
+                  className="text-xs mt-1"
+                  style={{ color: "var(--color-text-tertiary)" }}
+                >
+                  Enter the Clerk User ID of the user you want to grant premium
+                  access to
                 </p>
               </div>
               <div>
-                <label className="block text-sm font-medium mb-2" style={{ color: "var(--color-text-primary)" }}>
-                  Duration (months) <span style={{ color: "var(--color-danger)" }}>*</span>
+                <label
+                  className="block text-sm font-medium mb-2"
+                  style={{ color: "var(--color-text-primary)" }}
+                >
+                  Duration (months){" "}
+                  <span style={{ color: "var(--color-danger)" }}>*</span>
                 </label>
                 <input
                   type="number"
@@ -969,8 +1780,12 @@ export default function Admin() {
                     color: "var(--color-text-primary)",
                   }}
                 />
-                <p className="text-xs mt-1" style={{ color: "var(--color-text-tertiary)" }}>
-                  Subscription will be active for {durationMonths} month{durationMonths !== 1 ? 's' : ''}
+                <p
+                  className="text-xs mt-1"
+                  style={{ color: "var(--color-text-tertiary)" }}
+                >
+                  Subscription will be active for {durationMonths} month
+                  {durationMonths !== 1 ? "s" : ""}
                 </p>
               </div>
             </div>
@@ -991,10 +1806,12 @@ export default function Admin() {
                 onClick={handleGrantSubscription}
                 disabled={processing || !selectedUserId.trim()}
                 className="flex-1 px-4 py-2 rounded-lg font-medium transition-all duration-200 hover-lift disabled:opacity-50 disabled:cursor-not-allowed"
-                style={{ 
-                  background: "var(--color-success)", 
+                style={{
+                  background: "var(--color-success)",
                   color: "white",
-                  boxShadow: processing ? "none" : "0 2px 8px rgba(34, 197, 94, 0.3)",
+                  boxShadow: processing
+                    ? "none"
+                    : "0 2px 8px rgba(34, 197, 94, 0.3)",
                 }}
               >
                 {processing ? (
@@ -1018,15 +1835,27 @@ export default function Admin() {
       {revokeModalOpen && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4"
-          style={{ background: "rgba(0, 0, 0, 0.7)", backdropFilter: "blur(4px)" }}
+          style={{
+            background: "rgba(0, 0, 0, 0.7)",
+            backdropFilter: "blur(4px)",
+          }}
           onClick={() => setRevokeModalOpen(false)}
         >
-          <div className="card-modern max-w-md w-full p-6" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-lg font-semibold mb-4" style={{ color: "var(--color-text-primary)" }}>
+          <div
+            className="card-modern max-w-md w-full p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3
+              className="text-lg font-semibold mb-4"
+              style={{ color: "var(--color-text-primary)" }}
+            >
               Revoke Subscription
             </h3>
             <div className="mb-4">
-              <label className="block text-sm font-medium mb-2" style={{ color: "var(--color-text-primary)" }}>
+              <label
+                className="block text-sm font-medium mb-2"
+                style={{ color: "var(--color-text-primary)" }}
+              >
                 Clerk User ID
               </label>
               <input
@@ -1071,16 +1900,28 @@ export default function Admin() {
       {linkModalOpen && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4"
-          style={{ background: "rgba(0, 0, 0, 0.7)", backdropFilter: "blur(4px)" }}
+          style={{
+            background: "rgba(0, 0, 0, 0.7)",
+            backdropFilter: "blur(4px)",
+          }}
           onClick={() => setLinkModalOpen(false)}
         >
-          <div className="card-modern max-w-md w-full p-6" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-lg font-semibold mb-4" style={{ color: "var(--color-text-primary)" }}>
+          <div
+            className="card-modern max-w-md w-full p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3
+              className="text-lg font-semibold mb-4"
+              style={{ color: "var(--color-text-primary)" }}
+            >
               Link BMC Username
             </h3>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-2" style={{ color: "var(--color-text-primary)" }}>
+                <label
+                  className="block text-sm font-medium mb-2"
+                  style={{ color: "var(--color-text-primary)" }}
+                >
                   Clerk User ID
                 </label>
                 <input
@@ -1097,7 +1938,10 @@ export default function Admin() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-2" style={{ color: "var(--color-text-primary)" }}>
+                <label
+                  className="block text-sm font-medium mb-2"
+                  style={{ color: "var(--color-text-primary)" }}
+                >
                   BMC Username
                 </label>
                 <input
@@ -1130,7 +1974,10 @@ export default function Admin() {
                 onClick={handleLinkBMC}
                 disabled={processing}
                 className="flex-1 px-4 py-2 rounded-lg font-medium"
-                style={{ background: "var(--color-accent-500)", color: "white" }}
+                style={{
+                  background: "var(--color-accent-500)",
+                  color: "white",
+                }}
               >
                 {processing ? "Processing..." : "Link"}
               </button>
@@ -1141,4 +1988,3 @@ export default function Admin() {
     </div>
   );
 }
-

@@ -12,6 +12,7 @@ import {
   FileText,
   Clock,
   Bell,
+  CreditCard,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useState } from "react";
@@ -28,6 +29,8 @@ export default function Pricing() {
   const [linkError, setLinkError] = useState<string | null>(null);
   const [cryptomusLoading, setCryptomusLoading] = useState(false);
   const [cryptomusError, setCryptomusError] = useState<string | null>(null);
+  const [stripeLoading, setStripeLoading] = useState(false);
+  const [stripeError, setStripeError] = useState<string | null>(null);
 
   const handleLinkUsername = async () => {
     if (!bmcUsername.trim()) {
@@ -84,6 +87,35 @@ export default function Pricing() {
       setCryptomusLoading(false);
     }
   };
+
+  const handleStripePayment = async () => {
+    setStripeError(null);
+    setStripeLoading(true);
+    try {
+      const token = await getToken();
+      apiService.setAuthToken(token);
+
+      const resp = await apiService.createStripeSession("sponsor");
+      if (
+        resp &&
+        typeof resp === "object" &&
+        "checkout_url" in resp &&
+        typeof (resp as Record<string, unknown>).checkout_url === "string"
+      ) {
+        window.location.href = (resp as Record<string, string>).checkout_url;
+      } else {
+        setStripeError("Payment URL not returned from server");
+      }
+    } catch (err: unknown) {
+      console.error("[Stripe] payment error", err);
+      setStripeError(
+        err instanceof Error ? err.message : "Failed to start Stripe payment"
+      );
+    } finally {
+      setStripeLoading(false);
+    }
+  };
+
   return (
     <div
       className="min-h-screen"
@@ -151,7 +183,77 @@ export default function Pricing() {
             </div>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-6 mb-12">
+          <div className="grid md:grid-cols-3 gap-6 mb-12">
+            {/* Stripe Card */}
+            <div
+              className="rounded-xl border overflow-hidden group hover:shadow-2xl transition-all duration-300 hover:-translate-y-1"
+              style={{
+                background: "var(--color-bg-secondary)",
+                borderColor: "var(--color-border)",
+              }}
+            >
+              <div className="p-6 md:p-8">
+                <div className="flex items-start justify-between mb-4">
+                  <div
+                    className="p-3 rounded-lg"
+                    style={{
+                      background: "rgba(99, 91, 255, 0.1)",
+                    }}
+                  >
+                    <CreditCard
+                      className="w-8 h-8"
+                      style={{ color: "#635BFF" }}
+                    />
+                  </div>
+                  <div
+                    className="px-3 py-1 rounded-full text-xs font-semibold"
+                    style={{
+                      background: "rgba(251, 191, 36, 0.2)",
+                      color: "#FBB336",
+                    }}
+                  >
+                    Coming Soon
+                  </div>
+                </div>
+                <h3
+                  className="text-xl font-bold mb-2"
+                  style={{ color: "var(--color-text-primary)" }}
+                >
+                  Stripe
+                </h3>
+                <p
+                  className="text-sm mb-6"
+                  style={{ color: "var(--color-text-secondary)" }}
+                >
+                  Pay securely with card via Stripe
+                </p>
+                <button
+                  disabled
+                  className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg text-sm font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  style={{
+                    background: "#635BFF",
+                    color: "white",
+                  }}
+                >
+                  <CreditCard className="w-5 h-5" />
+                  Coming Soon
+                </button>
+                {stripeError && (
+                  <div
+                    className="mt-3 p-3 rounded-lg text-xs flex items-start gap-2"
+                    style={{
+                      background: "var(--color-danger-bg)",
+                      color: "var(--color-danger)",
+                    }}
+                  >
+                    <span>⚠️</span>
+                    <span>{stripeError}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Buy Me a Coffee Card */}
             <div
               className="rounded-xl border overflow-hidden group hover:shadow-2xl transition-all duration-300 hover:-translate-y-1"
               style={{
@@ -207,6 +309,7 @@ export default function Pricing() {
               </div>
             </div>
 
+            {/* Cryptomus Card */}
             <div
               className="rounded-xl border overflow-hidden group hover:shadow-2xl transition-all duration-300 hover:-translate-y-1"
               style={{
@@ -331,9 +434,9 @@ export default function Pricing() {
                       className="text-sm mb-4"
                       style={{ color: "var(--color-text-secondary)" }}
                     >
-                      Select Buy Me a Coffee for traditional payment or
-                      Cryptomus for cryptocurrency. Both methods unlock the same
-                      premium features.
+                      Select Stripe for card payments, Buy Me a Coffee for
+                      membership support, or Cryptomus for cryptocurrency. All
+                      methods unlock the same premium features.
                     </p>
                   </div>
                 </div>

@@ -373,11 +373,37 @@ class ApiService {
             total_receipts: number
             active_subscriptions: number
             bmc_linked_users: number
+            stripe_users: number
+            cryptomus_users: number
+            free_users: number
             receipts_by_status: Record<string, number>
             timestamp: string
         }
     }> {
         return this.request('/admin/dashboard')
+    }
+
+    async getAdminUsers(filter?: string): Promise<{
+        status: string
+        count: number
+        data: Array<{
+            clerk_user_id: string
+            email?: string
+            plan: string
+            status: string
+            payment_source: 'free' | 'bmc' | 'stripe' | 'cryptomus' | 'manual'
+            stripe_customer_id?: string
+            stripe_subscription_id?: string
+            bmc_username?: string
+            cryptomus_order_id?: string
+            current_period_end?: string
+            receipt_count: number
+            created_at: string
+            updated_at: string
+        }>
+    }> {
+        const endpoint = filter ? `/admin/users?filter=${filter}` : '/admin/users'
+        return this.request(endpoint)
     }
 
     async getAdminSubscriptions(status?: string): Promise<{
@@ -516,6 +542,13 @@ class ApiService {
 
     async createCryptomusSession(plan: string = 'sponsor'): Promise<{ checkout_url: string }> {
         return this.request<{ checkout_url: string }>(`/payments/cryptomus`, {
+            method: 'POST',
+            body: JSON.stringify({ plan }),
+        })
+    }
+
+    async createStripeSession(plan: string = 'sponsor'): Promise<{ checkout_url: string }> {
+        return this.request<{ checkout_url: string }>(`/payments/stripe/checkout`, {
             method: 'POST',
             body: JSON.stringify({ plan }),
         })
