@@ -51,7 +51,7 @@ export default function BurgerMenu({ children }: BurgerMenuProps) {
 
       {/* Mobile Menu Overlay */}
       {isOpen && (
-        <div className="fixed inset-0 z-[9999] sm:hidden">
+        <div className="fixed inset-0 z-[99999] sm:hidden">
           {/* Backdrop */}
           <div
             className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-fade-in"
