@@ -20,6 +20,7 @@
     "@capacitor/ios": "^7.4.4",
     "@clerk/clerk-react": "^5.53.3",
     "@clerk/themes": "^2.4.29",
+    "@stripe/stripe-js": "^8.5.3",
     "@vercel/analytics": "^1.5.0",
     "lucide-react": "^0.546.0",
     "react": "^19.1.1",

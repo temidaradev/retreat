@@ -13,6 +13,11 @@ export const config = {
         publishableKey: import.meta.env.VITE_CLERK_PUBLISHABLE_KEY,
     },
 
+    // Stripe Configuration
+    stripe: {
+        publishableKey: import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY,
+    },
+
     // Application Settings
     app: {
         name: 'Retreat',
@@ -63,6 +68,10 @@ export const validateConfig = (): { isValid: boolean; errors: string[] } => {
         errors.push('Missing Clerk Publishable Key. Please set VITE_CLERK_PUBLISHABLE_KEY in your environment variables.');
     }
 
+    if (!config.stripe.publishableKey) {
+        console.warn('Missing Stripe Publishable Key. Stripe payments will not be available.');
+    }
+
     if (import.meta.env.MODE === 'production') {
         if (!config.api.baseUrl.startsWith('https://')) {
             errors.push('Production API URL must use HTTPS');
@@ -81,4 +90,4 @@ export const validateConfig = (): { isValid: boolean; errors: string[] } => {
 };
 
 // Export individual config sections for convenience
-export const { api, clerk, app, external, ui, upload, dateFormats, features } = config;
+export const { api, clerk, stripe, app, external, ui, upload, dateFormats, features } = config;

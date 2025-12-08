@@ -29,6 +29,8 @@ export default function Pricing() {
   const [linkError, setLinkError] = useState<string | null>(null);
   const [cryptomusLoading, setCryptomusLoading] = useState(false);
   const [cryptomusError, setCryptomusError] = useState<string | null>(null);
+  const [stripeLoading, setStripeLoading] = useState(false);
+  const [stripeError, setStripeError] = useState<string | null>(null);
 
   const handleLinkUsername = async () => {
     if (!bmcUsername.trim()) {
@@ -83,6 +85,34 @@ export default function Pricing() {
       );
     } finally {
       setCryptomusLoading(false);
+    }
+  };
+
+  const handleStripePayment = async () => {
+    setStripeError(null);
+    setStripeLoading(true);
+    try {
+      const token = await getToken();
+      apiService.setAuthToken(token);
+
+      const resp = await apiService.createStripeSession("sponsor");
+      if (
+        resp &&
+        typeof resp === "object" &&
+        "checkout_url" in resp &&
+        typeof (resp as Record<string, unknown>).checkout_url === "string"
+      ) {
+        window.location.href = (resp as Record<string, string>).checkout_url;
+      } else {
+        setStripeError("Payment URL not returned from server");
+      }
+    } catch (err: unknown) {
+      console.error("[Stripe] payment error", err);
+      setStripeError(
+        err instanceof Error ? err.message : "Failed to start Stripe payment"
+      );
+    } finally {
+      setStripeLoading(false);
     }
   };
 
@@ -184,11 +214,11 @@ export default function Pricing() {
                   <div
                     className="px-3 py-1 rounded-full text-xs font-semibold"
                     style={{
-                      background: "rgba(251, 191, 36, 0.2)",
-                      color: "#FBB336",
+                      background: "var(--color-accent-500)",
+                      color: "white",
                     }}
                   >
-                    Coming Soon
+                    Recommended
                   </div>
                 </div>
                 <h3
@@ -203,16 +233,37 @@ export default function Pricing() {
                 >
                   Pay securely with card via Stripe
                 </p>
+                {stripeError && (
+                  <div
+                    className="mb-4 p-3 rounded-lg text-xs"
+                    style={{
+                      background: "var(--color-danger-bg)",
+                      color: "var(--color-danger)",
+                    }}
+                  >
+                    {stripeError}
+                  </div>
+                )}
                 <button
-                  disabled
-                  className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg text-sm font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  onClick={handleStripePayment}
+                  disabled={stripeLoading}
+                  className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg text-sm font-semibold transition-all duration-200 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
                   style={{
                     background: "#635BFF",
                     color: "white",
                   }}
                 >
-                  <CreditCard className="w-5 h-5" />
-                  Coming Soon
+                  {stripeLoading ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    <>
+                      <CreditCard className="w-5 h-5" />
+                      Pay with Stripe
+                    </>
+                  )}
                 </button>
               </div>
             </div>
@@ -238,11 +289,11 @@ export default function Pricing() {
                   <div
                     className="px-3 py-1 rounded-full text-xs font-semibold"
                     style={{
-                      background: "var(--color-accent-500)",
-                      color: "white",
+                      background: "rgba(255, 221, 0, 0.2)",
+                      color: "#FFDD00",
                     }}
                   >
-                    Popular
+                    Alternative
                   </div>
                 </div>
                 <h3
