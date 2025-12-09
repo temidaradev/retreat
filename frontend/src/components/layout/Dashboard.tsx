@@ -634,15 +634,15 @@ export default function Dashboard() {
                     >
                       {isAtLimit
                         ? `You've reached the ${receiptLimit} receipt limit. ${
-                            receiptLimit === 5
-                              ? `Become a sponsor for up to 50 receipts.`
+                            receiptLimit === 10
+                              ? `Become a sponsor for up to 100 receipts.`
                               : "Contact support for higher limits."
                           }`
                         : `You have ${receiptLimit - receipts.length} receipt${
                             receiptLimit - receipts.length !== 1 ? "s" : ""
                           } remaining. ${
-                            receiptLimit === 5
-                              ? "Become a sponsor for up to 50 receipts and premium features."
+                            receiptLimit === 10
+                              ? "Become a sponsor for up to 100 receipts and premium features."
                               : ""
                           }`}
                     </p>

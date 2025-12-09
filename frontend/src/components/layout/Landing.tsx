@@ -663,7 +663,7 @@ export default function Landing() {
                   className="text-xs sm:text-sm"
                   style={{ color: "var(--color-text-secondary)" }}
                 >
-                  Store up to 50 receipts. Free plan limited to 5 receipts.
+                  Store up to 100 receipts. Free plan limited to 10 receipts.
                 </p>
                 <span
                   className="inline-block mt-3 px-2.5 sm:px-3 py-1 rounded-full text-xs font-medium shadow-accent-glow"
