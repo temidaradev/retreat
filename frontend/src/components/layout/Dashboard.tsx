@@ -68,7 +68,7 @@ export default function Dashboard() {
   const [exporting, setExporting] = useState(false);
 
   // Dynamic plan limits from subscription data
-  const receiptLimit = subscriptionData?.receipt_limit || 5;
+  const receiptLimit = subscriptionData?.receipt_limit || 10;
   const currentReceiptCount = receipts.length;
   const isAtLimit = !hasRetreatPlan && currentReceiptCount >= receiptLimit;
 
@@ -106,7 +106,7 @@ export default function Dashboard() {
       setSubscriptionData({
         is_premium: subscription.is_premium,
         plan: subscription.plan || "free",
-        receipt_limit: subscription.receipt_limit || 5,
+        receipt_limit: subscription.receipt_limit || 10,
         receipt_count: subscription.receipt_count || 0,
         expires_at: subscription.expires_at,
       });
@@ -117,7 +117,7 @@ export default function Dashboard() {
       setSubscriptionData({
         is_premium: false,
         plan: "free",
-        receipt_limit: 5,
+        receipt_limit: 10,
         receipt_count: 0,
       });
     }
@@ -1327,8 +1327,8 @@ export default function Dashboard() {
                           className="text-xs"
                           style={{ color: "var(--color-text-tertiary)" }}
                         >
-                          {receiptLimit > 5
-                            ? `${receiptLimit - 5} more than free tier`
+                          {receiptLimit > 10
+                            ? `${receiptLimit - 10} more than free tier`
                             : "Premium access"}
                         </p>
                       </div>

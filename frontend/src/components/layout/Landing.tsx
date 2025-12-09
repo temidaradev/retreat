@@ -228,7 +228,7 @@ export default function Landing() {
                     className="text-xs sm:text-sm whitespace-nowrap"
                     style={{ color: "var(--color-text-secondary)" }}
                   >
-                    5 Receipts Included
+                    10 Receipts Included
                   </span>
                 </div>
               </div>
@@ -779,7 +779,7 @@ export default function Landing() {
                 Ready to Get Started?
               </h2>
               <p className="text-xs sm:text-base md:text-lg mb-6 sm:mb-8 text-white opacity-90 max-w-2xl mx-auto px-2">
-                Free forever with 5 receipts. Need more? Sponsor us for $8 to
+                Free forever with 10 receipts. Need more? Sponsor us for $8 to
                 get 3 premium perks!
               </p>
 
@@ -870,7 +870,7 @@ export default function Landing() {
                   className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0"
                   style={{ color: "var(--color-success)" }}
                 />
-                <span className="whitespace-nowrap">5 Receipts Included</span>
+                <span className="whitespace-nowrap">10 Receipts Included</span>
               </div>
               <div className="flex items-center gap-1.5 sm:gap-2">
                 <Crown
