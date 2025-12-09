@@ -591,7 +591,7 @@ export default function Pricing() {
                     >
                       Once you've linked your username, our system will
                       automatically detect your Buy Me a Coffee membership and
-                      grant you access to 50 receipts and premium features
+                      grant you access to 100 receipts and premium features
                       immediately!
                     </p>
                   </div>
@@ -635,8 +635,8 @@ export default function Pricing() {
                   {[
                     {
                       icon: FileText,
-                      title: "50 Receipt Storage",
-                      desc: "Store up to 50 receipts securely",
+                      title: "100 Receipt Storage",
+                      desc: "Store up to 100 receipts securely",
                     },
                     {
                       icon: Download,

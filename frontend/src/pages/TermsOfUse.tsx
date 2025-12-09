@@ -189,7 +189,7 @@ export default function TermsOfUse() {
                       </li>
                       <li className="text-sm md:text-base">
                         Resource usage limits. Free accounts are limited to 5
-                        receipts. Sponsor accounts may store up to 50 receipts.
+                        receipts. Sponsor accounts may store up to 100 receipts.
                         Excessive usage or abuse may result in account
                         suspension
                       </li>

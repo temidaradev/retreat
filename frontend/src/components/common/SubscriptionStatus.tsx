@@ -26,7 +26,7 @@ export default function SubscriptionStatus() {
       setSubscriptionData({
         is_premium: subscription.is_premium,
         plan: subscription.plan || "free",
-        receipt_limit: subscription.receipt_limit || 5,
+        receipt_limit: subscription.receipt_limit || 10,
         receipt_count: subscription.receipt_count || 0,
         expires_at: subscription.expires_at,
       });
@@ -37,7 +37,7 @@ export default function SubscriptionStatus() {
       setSubscriptionData({
         is_premium: false,
         plan: "free",
-        receipt_limit: 5,
+        receipt_limit: 10,
         receipt_count: 0,
       });
     } finally {
@@ -66,7 +66,7 @@ export default function SubscriptionStatus() {
     hasRetreatPlan || subscriptionData?.is_premium
       ? "var(--color-accent-500)"
       : "var(--color-text-tertiary)";
-  const receiptLimit = subscriptionData?.receipt_limit || 5;
+  const receiptLimit = subscriptionData?.receipt_limit || 10;
   const receiptLimitText = `${receiptLimit} receipts`;
 
   return (
@@ -179,7 +179,7 @@ export default function SubscriptionStatus() {
                   {[
                     {
                       feature: "Receipt Storage",
-                      free: "5 receipts",
+                      free: "10 receipts",
                       sponsor: receiptLimitText,
                       highlight: true,
                     },
@@ -400,14 +400,14 @@ export default function SubscriptionStatus() {
                         className="text-sm md:text-phi-base font-semibold mb-2 md:mb-phi"
                         style={{ color: "var(--color-text-primary)" }}
                       >
-                        Get up to 50 receipts
+                        Get up to 100 receipts
                       </h4>
                       <p
                         className="text-xs md:text-phi-sm"
                         style={{ color: "var(--color-text-secondary)" }}
                       >
                         We'll verify your sponsorship and upgrade your account
-                        to 50 receipts and premium features within 24 hours!
+                        to 100 receipts and premium features within 24 hours!
                       </p>
                     </div>
                   </div>

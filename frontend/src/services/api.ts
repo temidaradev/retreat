@@ -338,11 +338,11 @@ class ApiService {
             }
 
             // Final fallback: return free plan
-            return { is_premium: false, plan: 'free', status: 'none', receipt_limit: 5, receipt_count: 0 }
+            return { is_premium: false, plan: 'free', status: 'none', receipt_limit: 10, receipt_count: 0 }
         } catch (error) {
             console.error('Error checking subscription status:', error)
             // Default to free on any error
-            return { is_premium: false, plan: 'free', status: 'none', receipt_limit: 5, receipt_count: 0 }
+            return { is_premium: false, plan: 'free', status: 'none', receipt_limit: 10, receipt_count: 0 }
         }
     }
 
